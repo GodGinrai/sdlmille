@@ -2,7 +2,7 @@
 #define	_SDLMILLE_DECK_H
 
 #include "Surface.h"
-#include <ctime>
+#include <time.h>
 
 namespace	_SDLMille
 {

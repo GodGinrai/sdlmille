@@ -1,3 +1,22 @@
+/*
+This file is part of SDL Mille.
+
+SDL Mille is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+SDL Mille is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
+
+(See file LICENSE for full text of license)
+*/
+
 #include "Game.h"
 
 namespace _SDLMille
@@ -25,6 +44,7 @@ namespace _SDLMille
 
 	Dirty = true;
 	Extended = false;
+	Running = true;
 
 	OldDiscardTop = DiscardTop = CARD_NULL_NULL;
 
@@ -282,24 +302,37 @@ void		Game::OnEvent		(SDL_Event * Event)
 bool		Game::OnExecute		(void)
 {
 	if (!OnInit())
+	{
+		printf("Init error.\n");
 		return false;
+	}
 
 	SDL_Event	Event;
 
 	// Main loop
 	while (Running)
 	{
+		//printf("Entered main loop.\n");
 		while (SDL_PollEvent(&Event))
+		{
+			//printf("-Processed event.\n");
 			OnEvent(&Event);
+		}
 
 		// We have to render twice because the computer moves during OnLoop() and we
 		// want to render the human's move before the 500ms delay. Hopefully this will
 		// be fixed soon.
+		//printf("-OnRender() 1.\n");
 		OnRender(); 
+		//printf("-OnLoop().\n");
 		OnLoop();
+		//printf("-OnRender() 2.\n");
 		OnRender();
+		SDL_Delay(25);
 	}
 
+	printf("Quitting.\n");
+	
 	return true;
 
 }
@@ -308,12 +341,23 @@ bool		Game::OnInit		(void)
 {
 	if (!Window)
 	{
+		printf("Trying to init window.\n");
 		// Set up our display if we haven't already
-		if(SDL_Init(SDL_INIT_EVERYTHING) < 0)
+		if(SDL_Init(SDL_INIT_VIDEO) < 0)
+		{
+			printf("SDL_Init error.\n");
 			return false;
+		}
 
+		#ifdef WEBOS_DEVICE
+		if(!(Window = SDL_SetVideoMode(0, 0, 0, SDL_SWSURFACE)))
+		#else
 		if(!(Window = SDL_SetVideoMode(320, 480, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)))
+		#endif
+		{
+			printf("Could not set video mode.");
 			return false;
+		}
 
 		SDL_WM_SetCaption("SDL Mille", "mille.ico");
 	}
@@ -357,19 +401,30 @@ bool		Game::OnInit		(void)
 		SDL_FreeSurface(ScoresSurface);
 		ScoresSurface = 0;
 	}
+	
+	printf("Surfaces freed.\n");
 
 	if (Scene == SCENE_MAIN)
 	{
+		printf("Loading scene MAIN.\n");
+		
 		Background = Surface::Load("main-menu.bmp");
 
 		if (!Background)
+		{
+			printf("Could not load background");
 			return false;
+		}
 
+		printf("Background loaded.\n");
+		
 		return true;
 	}
 
 	else if (Scene == SCENE_GAME_PLAY)
 	{
+		printf("Loading scene GAME PLAY.\n");
+		
 		Background = Surface::Load("game-play.bmp");
 
 		DiscardSurface = Card::GetImageFromValue(DiscardTop);
@@ -395,6 +450,8 @@ bool		Game::OnInit		(void)
 
 	else if (Scene == SCENE_LEARN)
 	{
+		printf("Loading scene LEARN.\n");
+		
 		Background = Surface::Load("learn.bmp");
 
 		if (!Background)
@@ -405,6 +462,8 @@ bool		Game::OnInit		(void)
 
 	else if (Scene == SCENE_GAME_OVER)
 	{
+		printf("Loading scene GAME OVER.\n");
+		
 		Background = Surface::Load("gfx/scene_game_over.png");
 
 		if (GameOverFont)
@@ -424,6 +483,8 @@ bool		Game::OnInit		(void)
 		return true;
 	}
 
+	printf ("Default false from OnInit().\n");
+	
 	return false;
 }
 
@@ -553,6 +614,7 @@ void		Game::OnRender		(void)
 	// Also if we're otherwise dirty
 	if (Dirty)
 	{
+		printf("We're dirty.\n");
 		SceneChanged = true;
 		Dirty = false;
 	}
@@ -564,7 +626,10 @@ void		Game::OnRender		(void)
 
 		// Render the appropriate surfaces
 		if (Background)
+		{
+			printf("Drew background.\n");
 			Surface::Draw(Window, Background, 0, 0);
+		}
 
 		if (Scene == SCENE_GAME_PLAY)
 		{
@@ -594,7 +659,10 @@ void		Game::OnRender		(void)
 	}
 
 	if (RefreshedSomething)
+	{
+		printf("Flipped window.");
 		SDL_Flip(Window);
+	}
 }
 
 
