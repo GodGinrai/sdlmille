@@ -100,7 +100,7 @@ bool	Hand::IsPopped	(Uint8 Index)
 void	Hand::OnInit	(void)
 {
 	if (!Overlay)
-		Overlay = Surface::Load("orb.png");
+		Overlay = Surface::Load("gfx/orb.png");
 
 	for (int i = 0; i < HAND_SIZE; ++i)
 	{

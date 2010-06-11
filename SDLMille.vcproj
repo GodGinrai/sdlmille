@@ -165,35 +165,35 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\Card.cpp"
+				RelativePath="src\Card.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Deck.cpp"
+				RelativePath="src\Deck.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Game.cpp"
+				RelativePath="src\Game.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Hand.cpp"
+				RelativePath="src\Hand.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Main.cpp"
+				RelativePath="src\Main.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Player.cpp"
+				RelativePath="src\Player.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Surface.cpp"
+				RelativePath="src\Surface.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Tableau.cpp"
+				RelativePath="src\Tableau.cpp"
 				>
 			</File>
 		</Filter>
@@ -203,31 +203,31 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\Card.h"
+				RelativePath="src\Card.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Deck.h"
+				RelativePath="src\Deck.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Game.h"
+				RelativePath="src\Game.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Hand.h"
+				RelativePath="src\Hand.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Player.h"
+				RelativePath="src\Player.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Surface.h"
+				RelativePath="src\Surface.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Tableau.h"
+				RelativePath="src\Tableau.h"
 				>
 			</File>
 		</Filter>

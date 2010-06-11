@@ -1,4 +1,8 @@
 @echo off
+
+@rem change directory
+cd src
+
 @rem Set the device you want to build for to 1
 set PRE=1
 set PIXI=0
@@ -11,7 +15,7 @@ set SRC=Card.cpp Deck.cpp Player.cpp Main.cpp Game.cpp Hand.cpp Surface.cpp Tabl
 set LIBS=-lSDL -lSDL_ttf -lSDL_image 
 
 @rem Name your output executable
-set OUTFILE=SDLMille.elf
+set OUTFILE=..\SDLMille.elf
 
 if %PRE% equ 0 if %PIXI% equ 0 goto :END
 

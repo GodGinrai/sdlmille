@@ -322,11 +322,8 @@ bool		Game::OnExecute		(void)
 		// We have to render twice because the computer moves during OnLoop() and we
 		// want to render the human's move before the 500ms delay. Hopefully this will
 		// be fixed soon.
-		//printf("-OnRender() 1.\n");
 		OnRender(); 
-		//printf("-OnLoop().\n");
 		OnLoop();
-		//printf("-OnRender() 2.\n");
 		OnRender();
 		SDL_Delay(25);
 	}
@@ -408,7 +405,7 @@ bool		Game::OnInit		(void)
 	{
 		printf("Loading scene MAIN.\n");
 		
-		Background = Surface::Load("main-menu.bmp");
+		Background = Surface::Load("gfx/scenes/main.png");
 
 		if (!Background)
 		{
@@ -425,7 +422,7 @@ bool		Game::OnInit		(void)
 	{
 		printf("Loading scene GAME PLAY.\n");
 		
-		Background = Surface::Load("game-play.bmp");
+		Background = Surface::Load("gfx/scenes/game-play.png");
 
 		DiscardSurface = Card::GetImageFromValue(DiscardTop);
 
@@ -452,7 +449,7 @@ bool		Game::OnInit		(void)
 	{
 		printf("Loading scene LEARN.\n");
 		
-		Background = Surface::Load("learn.bmp");
+		Background = Surface::Load("gfx/scenes/learn.png");
 
 		if (!Background)
 			return false;
@@ -464,7 +461,7 @@ bool		Game::OnInit		(void)
 	{
 		printf("Loading scene GAME OVER.\n");
 		
-		Background = Surface::Load("gfx/scene_game_over.png");
+		Background = Surface::Load("gfx/scenes/game_over.png");
 
 		if (GameOverFont)
 		{

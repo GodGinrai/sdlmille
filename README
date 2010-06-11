@@ -1,0 +1,47 @@
+SDL Mille is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+SDL Mille is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
+
+(See file LICENSE for full text of license)
+
+**********
+
+Author:		Karl (dallashigh)
+Contact:	PreCentral.net: dallashigh
+			Email: karl@webosnerd.com
+Website:	http://webosnerd.com/
+
+**********
+
+To build for Palm Pre using PDK on Windows, run buildit.cmd in the top directory. This will create an executable, "SDLMille.elf".
+
+To build for Windows using Visual Studio 2008 or newer, open "SDLMille.vcproj" in the top directory. Make sure to comment out the first line of Game.h (#define WEBOS_DEVICE) before building.
+
+SDL Mille uses the Liberation Mono font, which can be found in the top directory. Although the Liberation Fonts are not 100% GPL-compatible, they do meet Debian Free Software Guidlines. Liberation Fonts can also be downloaded from the project homepage at https://fedorahosted.org/liberation-fonts/
+
+The "src" directory contains the C++ source. The source files (*.xcf) for the in-game images are in the "src/gfx" directory.
+
+**********
+
+What I haven't provided that you may need:
+
+++	These packages should be available from your package manager on Linux and UNIX systems.
+	(e.g. aptitude install libsdl-dev). Make sure you get the development versions. ++
+	
+SDL ( http://www.libsdl.org/ )
+SDL_image ( http://www.libsdl.org/projects/SDL_image )
+SDL_ttf ( http://www.libsdl.org/projects/SDL_ttf )
+GIMP ( http://www.gimp.org/ )
+
+**********
+
+Many thanks to Rod (rwhitby) of WebOS Internals for hosting this project, and for encouraging open-source projects for webOS.
