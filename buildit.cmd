@@ -12,7 +12,7 @@ set DEBUG=0
 set SRC=Card.cpp Deck.cpp Player.cpp Main.cpp Game.cpp Hand.cpp Surface.cpp Tableau.cpp
 
 @rem List the libraries needed
-set LIBS=-lSDL -lSDL_ttf -lSDL_image 
+set LIBS=-lSDL -lSDL_ttf -lSDL_image -lpdl
 
 @rem Name your output executable
 set OUTFILE=..\SDLMille.elf
@@ -36,6 +36,8 @@ if %PIXI% equ 1 (
 echo %DEVICEOPTS%
 
 arm-none-linux-gnueabi-g++ %DEVICEOPTS% -o %OUTFILE% %SRC% "-I%PALMPDK%\include" "-I%PALMPDK%\include\SDL" "-L%PALMPDK%\device\lib" -Wl,--allow-shlib-undefined %LIBS%
+
+cd ..
 
 goto :EOF
 

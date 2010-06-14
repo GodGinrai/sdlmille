@@ -18,12 +18,27 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "Game.h"
+#ifdef WEBOS_DEVICE
+#include <unistd.h>
+#include "PDL.h"
+#endif
 
 using namespace _SDLMille;
 
 int	main	(int argc, char* argv[])
 {
 	printf("Started.");
+	
+	#ifdef WEBOS_DEVICE
+	/*
+	char WorkingDir[101];
+	PDL_GetCallingPath(WorkingDir, 100);
+	chdir(WorkingDir);
+	
+	Hack: PDL_GetCallingPath is not actually present yet :(
+	*/
+	chdir("/media/cryptofs/apps/usr/palm/applications/com.webosnerd.sdl-mille/");
+	#endif
 	
 	try
 	{
