@@ -1,0 +1,9 @@
+{
+	"id": "com.webosnerd.sdl-mille",
+	"version": "0.1.0",
+	"vendor": "webOSnerd.com",
+	"type": "game",
+	"main": "SDLMille.elf",
+	"title": "SDL Mille",
+	"requiredMemory": 12
+}

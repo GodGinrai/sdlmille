@@ -26,7 +26,7 @@ To build for Palm Pre using PDK on Windows, run buildit.cmd in the top directory
 
 To build for Windows using Visual Studio 2008 or newer, open "SDLMille.vcproj" in the top directory. Make sure to comment out the first line of Game.h (#define WEBOS_DEVICE) before building.
 
-SDL Mille uses the Liberation Mono font, which can be found in the top directory. Although the Liberation Fonts are not 100% GPL-compatible, they do meet Debian Free Software Guidlines. Liberation Fonts can also be downloaded from the project homepage at https://fedorahosted.org/liberation-fonts/
+SDL Mille uses the Liberation Mono font, which can be found in the pkg directory. Although the Liberation Fonts are not 100% GPL-compatible, they do meet Debian Free Software Guidlines. Liberation Fonts can also be downloaded from the project homepage at https://fedorahosted.org/liberation-fonts/
 
 The "src" directory contains the C++ source. The source files (*.xcf) for the in-game images are in the "src/gfx" directory.
 
