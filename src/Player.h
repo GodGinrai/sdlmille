@@ -32,6 +32,7 @@ public:
 	bool		OnRender		(SDL_Surface * Surface, Uint8 PlayerIndex, bool Force = false);
 	bool		Pop				(Uint8 Index);
 	bool		ReceiveHazard	(Uint8 Value);
+	void		Reset			(void);
 	void		SetSource		(Deck * ArgSource);
 	void		UnPop			(Uint8 Index);
 private:

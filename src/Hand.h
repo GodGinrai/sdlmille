@@ -21,6 +21,7 @@ public:
 	void		OnInit		(void);
 	bool		OnRender	(SDL_Surface * Surface, bool Force = false);
 	bool		Pop			(Uint8 Index);
+	void		Reset		(void);
 	void		UnPop		(Uint8 Index);
 private:
 	Card		ThisHand[HAND_SIZE];

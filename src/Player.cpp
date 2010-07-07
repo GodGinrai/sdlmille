@@ -198,6 +198,15 @@ bool	Player::ReceiveHazard	(Uint8 Value)
 	return false;
 }
 
+void	Player::Reset			(void)
+{
+	SourceDeck = 0;
+	QualifiedCoupFourre = 0xFF;
+
+	PlayerHand.Reset();
+	MyTableau.Reset();
+}
+
 void	Player::SetSource		(Deck * ArgSource)
 {
 	// TODO: Move initial drawing of cards to Game so we can stagger between players

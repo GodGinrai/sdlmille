@@ -150,18 +150,6 @@ void	Tableau::OnInit			(void)
 {
 	// Free our surfaces
 
-	for (int i = 0; i < MILEAGE_PILES; ++i)
-	{
-		if (CardCount[i])
-		{
-			for (int j = 0; j < CardCount[i]; ++j)
-			{
-				if (!PileSurfaces[i][j])
-					PileSurfaces[i][j] = Card::GetImageFromValue(i + MILEAGE_OFFSET);
-			}
-		}
-	}
-
 	if (BattleSurface)
 	{
 		SDL_FreeSurface(BattleSurface);
@@ -178,6 +166,18 @@ void	Tableau::OnInit			(void)
 
 	BattleSurface = Card::GetImageFromValue(TopCard);
 	LimitSurface = Card::GetImageFromValue(LimitCard);
+
+	for (int i = 0; i < MILEAGE_PILES; ++i)
+	{
+		if (CardCount[i])
+		{
+			for (int j = 0; j < CardCount[i]; ++j)
+			{
+				if (!PileSurfaces[i][j])
+					PileSurfaces[i][j] = Card::GetImageFromValue(i + MILEAGE_OFFSET);
+			}
+		}
+	}
 
 	for (int i = 0; i < SAFETY_COUNT; ++i)
 	{
@@ -358,6 +358,40 @@ bool	Tableau::OnRender		(SDL_Surface * Surface, Uint8 PlayerIndex, bool Force)
 	}
 
 	return false;
+}
+
+void	Tableau::Reset			(void)
+{
+	for (int i = 0; i < MILEAGE_PILES; ++i)
+	{
+		for (int j = 0; j < MAX_PILE_SIZE; ++j)
+		{
+			if (PileSurfaces[i][j])
+			{
+				SDL_FreeSurface(PileSurfaces[i][j]);
+				PileSurfaces[i][j] = 0;
+			}
+		}
+
+		CardCount[i] = 0;
+	}
+
+	for (int i = 0; i < SAFETY_COUNT; ++i)
+	{
+		if (SafetySurfaces[i])
+		{
+			SDL_FreeSurface(SafetySurfaces[i]);
+			SafetySurfaces[i] = 0;
+		}
+
+		CoupFourres[i] = Safeties[i] = false;
+	}
+
+	OldLimitCard = LimitCard = OldTopCard = TopCard = CARD_NULL_NULL;
+
+	Dirty = true;
+
+	Mileage = 0;
 }
 
 /* Private */

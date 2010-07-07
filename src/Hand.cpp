@@ -192,6 +192,17 @@ bool	Hand::Pop		(Uint8 Index)
 	return true;
 }
 
+void	Hand::Reset		(void)
+{
+	for (int i = 0; i < HAND_SIZE; ++i)
+	{
+		ThisHand[i].Discard();
+		Popped[i] = false;
+	}
+
+	Dirty = true;
+}
+
 void	Hand::UnPop		(Uint8 Index)
 {
 	if (Index < HAND_SIZE)

@@ -279,6 +279,15 @@ void		Game::OnClick		(int X, int Y)
 		}
 	}
 
+	else if (Scene == SCENE_GAME_OVER)
+	{
+		//Start new game
+		Reset();
+		LastScene = Scene;
+		Scene = SCENE_GAME_PLAY;
+	}
+
+
 	else if (Scene == SCENE_LEARN)
 	{
 		// Return to main menu on click
@@ -487,14 +496,10 @@ bool		Game::OnInit		(void)
 
 void		Game::OnLoop		(void)
 {
-	static	bool GameOver = false;
-	
-	if (!GameOver)
+	if (Scene == SCENE_GAME_PLAY)
 	{
 		if (EndOfGame())
 		{
-			GameOver = true;
-
 			for (int i = 0; i < PLAYER_COUNT; ++i)
 				Scores[i] = GetScore(i);
 
@@ -660,6 +665,40 @@ void		Game::OnRender		(void)
 		printf("Flipped window.");
 		SDL_Flip(Window);
 	}
+}
+
+void			Game::Reset			(void)
+{
+	//Reset my stuff
+	if (SourceDeck)
+		SourceDeck->Shuffle();
+	else
+		SourceDeck = new Deck;
+
+	if (SourceDeck)
+		OldDeckCount = DeckCount = SourceDeck->CardsLeft();
+
+	for (int i = 0; i < PLAYER_COUNT; ++i)
+		Scores[i] = 0;
+
+	Dirty = true;
+	Extended = false;
+
+	Current = 0;
+
+	OldDiscardTop = DiscardTop = CARD_NULL_NULL;
+
+	//Reset down the chain
+	for (int i = 0; i < PLAYER_COUNT; ++i)
+	{
+		Players[i].Reset();
+		if (SourceDeck)
+			Players[i].SetSource(SourceDeck);
+	}
+
+	//Odds and ends
+	if (SourceDeck)
+		OldDeckCount = DeckCount = SourceDeck->CardsLeft();
 }
 
 

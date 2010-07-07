@@ -31,6 +31,7 @@ public:
 	void		OnInit			(void);
 	bool		OnRender		(SDL_Surface * Surface, Uint8 PlayerIndex, bool Force = false);
 	void		OnPlay			(Uint8 Value, bool CoupFourre, bool SpeedLimit);
+	void		Reset			(void);
 private:
 	/* Methods */
 	void		SetTopCard		(Uint8 Value);

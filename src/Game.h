@@ -23,6 +23,7 @@ public:
 	void		OnLoop			(void);
 	void		OnPlay			(Uint8 Value);
 	void		OnRender		(void);
+	void		Reset			(void);
 
 private:
 	/* Methods */
