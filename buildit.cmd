@@ -15,7 +15,7 @@ set SRC=Card.cpp Deck.cpp Player.cpp Main.cpp Game.cpp Hand.cpp Surface.cpp Tabl
 set LIBS=-lSDL -lSDL_ttf -lSDL_image
 
 @rem Name your output executable
-set OUTFILE=..\SDLMille.elf
+set OUTFILE=..\pkg\SDLMille.elf
 
 if %PRE% equ 0 if %PIXI% equ 0 goto :END
 
