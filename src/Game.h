@@ -5,7 +5,11 @@
 
 #include "Player.h"
 
-const Uint8 PLAYER_COUNT = 2;
+const Uint8 PLAYER_COUNT = 2,
+			SCORE_CATEGORY_COUNT = 9,
+			SCORE_COLUMN_COUNT = 3;
+
+const char	SCORE_CAT_NAMES[SCORE_CATEGORY_COUNT][20] = {"Mileage", "Safeties", "All 4", "Coup Fourres", "Completed Trip", "Delayed Action", "Safe Trip", "Extension", "Shutout"};
 
 namespace _SDLMille
 {
@@ -31,18 +35,20 @@ private:
 	bool		Discard			(void);
 	bool		EndOfGame		(void);
 	Uint8		FindPopped		(void);
-	int			GetScore		(Uint8 PlayerIndex);
+	void		GetScores		(void);
 	bool		Pop				(Uint8 Index);
 
 	/* Properties */
 	SDL_Surface	*Window, *Background,
 				*DiscardSurface,
 				*DrawCardSurface, *DrawTextSurface,
-				*OutcomeSurface, *ScoresSurface;
+				*OutcomeSurface, *ScoresSurface,
+				*ScoreSurfaces[SCORE_CATEGORY_COUNT + 2][SCORE_COLUMN_COUNT];
 	Player		Players[PLAYER_COUNT];
 	Deck *		SourceDeck;
 	int			DeckCount, OldDeckCount,
-				Scores[PLAYER_COUNT];
+				Scores[PLAYER_COUNT],
+				ScoreBreakdown[PLAYER_COUNT][SCORE_CATEGORY_COUNT];
 	bool		Dirty,
 				Extended,
 				Running;

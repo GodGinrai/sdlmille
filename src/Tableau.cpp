@@ -298,7 +298,7 @@ bool	Tableau::OnRender		(SDL_Surface * Surface, Uint8 PlayerIndex, bool Force)
 			if (PlayerIndex == 0)
 				Y += 175;
 
-			SDL_Rect	PlayerRect = {1, (Y - 1), 320, 174}; // Tableau background
+			SDL_Rect	PlayerRect = {0, (Y - 1), 320, 174}; // Tableau background
 
 			// Color coding
 			if (IsRolling())

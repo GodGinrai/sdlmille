@@ -63,10 +63,21 @@ namespace _SDLMille
 
 		// And initialize their scores to zero
 		Scores[i] = 0;
+
+		for (int j = 0; j < SCORE_CATEGORY_COUNT; ++j)
+			ScoreBreakdown[i][j] = 0;
+	}
+
+	for (int i = 0; i < (SCORE_CATEGORY_COUNT + 2); ++i)
+	{
+		for (int j = 0; j < SCORE_COLUMN_COUNT; ++j)
+		{
+			ScoreSurfaces[i][j] = 0;
+		}
 	}
 
 	DrawFont = TTF_OpenFont("LiberationMono-Regular.ttf", 16);
-	GameOverFont = TTF_OpenFont("LiberationMono-Regular.ttf", 24);
+	GameOverFont = TTF_OpenFont("LiberationMono-Regular.ttf", 18);
 }
 
 			Game::~Game			(void)
@@ -407,6 +418,18 @@ bool		Game::OnInit		(void)
 		SDL_FreeSurface(ScoresSurface);
 		ScoresSurface = 0;
 	}
+
+	for (int i = 0; i < (SCORE_CATEGORY_COUNT + 2); ++i)
+	{
+		for (int j = 0; j < SCORE_COLUMN_COUNT; ++j)
+		{
+			if (ScoreSurfaces[i][j])
+			{
+				SDL_FreeSurface(ScoreSurfaces[i][j]);
+				ScoreSurfaces[i][j] = 0;
+			}
+		}
+	}
 	
 	printf("Surfaces freed.\n");
 
@@ -470,8 +493,71 @@ bool		Game::OnInit		(void)
 	{
 		printf("Loading scene GAME OVER.\n");
 		
+		for (int j = 0; j < PLAYER_COUNT; ++j)
+		{
+			for (int i = 0; i < SCORE_CATEGORY_COUNT; ++i)
+			{
+				printf("Player %u, category %u, score %u\n", j, i, ScoreBreakdown[j][i]);
+			}
+		}
+
 		Background = Surface::Load("gfx/scenes/game_over.png");
 
+		if (GameOverFont)
+		{
+			char TempText[21];
+
+			for (int i = 0; i < (SCORE_CATEGORY_COUNT + 2); ++i)
+			{
+				for (int j = 0; j < SCORE_COLUMN_COUNT; ++j)
+				{
+					if (i == 0)
+					{
+						switch (j)
+						{
+						case 0:
+							TempText[0] = '\0';
+							break;
+						case 1:
+							strcpy(TempText, "Human");
+							break;
+						case 2:
+						default:
+							strcpy(TempText, "CPU");
+						}
+					}
+					else if (i < (SCORE_CATEGORY_COUNT + 1))
+					{
+						if (j == 0)
+							strcpy(TempText, SCORE_CAT_NAMES[i - 1]);
+						else
+						{
+							int Score = ScoreBreakdown[j - 1][i - 1];
+							if (Score == 0)
+								strcpy(TempText, "-");
+							else
+								sprintf(TempText, "%u", ScoreBreakdown[j - 1][i - 1]);
+						}
+					}
+					else
+					{
+						switch (j)
+						{
+						case 0:
+							strcpy(TempText, "Total");
+							break;
+						case 1:
+						case 2:
+						default:
+							sprintf(TempText, "%u", Scores[j - 1]);
+						}
+					}
+					ScoreSurfaces[i][j] = Surface::RenderText(TempText, GameOverFont);
+				}
+			}
+		}
+
+		/*
 		if (GameOverFont)
 		{
 			char ScoresText[13];
@@ -485,6 +571,7 @@ bool		Game::OnInit		(void)
 				ScoresSurface = Surface::RenderText(ScoresText, GameOverFont);
 			}
 		}
+		*/
 
 		return true;
 	}
@@ -500,8 +587,7 @@ void		Game::OnLoop		(void)
 	{
 		if (EndOfGame())
 		{
-			for (int i = 0; i < PLAYER_COUNT; ++i)
-				Scores[i] = GetScore(i);
+			GetScores();
 
 			LastScene = Scene;
 			Scene = SCENE_GAME_OVER;
@@ -645,10 +731,20 @@ void		Game::OnRender		(void)
 
 		else if (Scene == SCENE_GAME_OVER)
 		{
-			if (OutcomeSurface)
-				Surface::Draw(Window, OutcomeSurface, 160 - (OutcomeSurface->w / 2), 10);
-			if (ScoresSurface)
-				Surface::Draw(Window, ScoresSurface, 160 - (ScoresSurface->w / 2), 390);
+			int X = 0, Y = 0;
+
+			for (int i = 0; i < (SCORE_CATEGORY_COUNT + 2); ++i)
+			{
+				for (int j = 0; j < SCORE_COLUMN_COUNT; ++j)
+				{
+					if (ScoreSurfaces[i][j])
+					{
+						X = 12 + ((j > 0) ? 175 : 0) + ((j > 1) ? 75 : 0);
+						Y = 50 + (i * 26) + ((i > 0) ? 20 : 0) + ((i > SCORE_CATEGORY_COUNT) ? 20 : 0);
+						Surface::Draw(Window, ScoreSurfaces[i][j], X, Y);
+					}
+				}
+			}
 		}
 	}
 
@@ -679,7 +775,12 @@ void			Game::Reset			(void)
 		OldDeckCount = DeckCount = SourceDeck->CardsLeft();
 
 	for (int i = 0; i < PLAYER_COUNT; ++i)
+	{
 		Scores[i] = 0;
+		
+		for (int j = 0; j < SCORE_CATEGORY_COUNT; ++j)
+			ScoreBreakdown[i][j] = 0;
+	}
 
 	Dirty = true;
 	Extended = false;
@@ -738,67 +839,107 @@ bool			Game::Discard		(void)
 	return Success;
 }
 
-int			Game::GetScore			(Uint8 PlayerIndex)
+void			Game::GetScores			(void)
 {
-	int Score = 0,
-		PlayerSafetyCount = 0, PlayerCoupFourreCount = 0,
-		TripLength = (Extended) ? 1000 : 700;
-
-	/* Points scored by everyone */
-
-	// Distance (1pt per mile travelled)
-	Score += Players[PlayerIndex].GetMileage();
-	
-	for (int i = 0; i < SAFETY_COUNT; ++i) // Get info about safeties and Coup Fourres
+	if (EndOfGame())
 	{
-		if (Players[PlayerIndex].HasSafety(i + SAFETY_OFFSET))
+		for (int i = 0; i < PLAYER_COUNT; ++i)
 		{
-			++PlayerSafetyCount;
-			if (Players[PlayerIndex].HasCoupFourre(i + SAFETY_OFFSET))
-				++PlayerCoupFourreCount;
-		}
-	}
+			int Score = 0,
+				PlayerSafetyCount = 0, PlayerCoupFourreCount = 0,
+				CategoryIndex = 0,
+				TripLength = (Extended) ? 1000 : 700;
 
-	// 100pt for each safety, no matter how played
-	if (PlayerSafetyCount)
-		Score += (PlayerSafetyCount * 100);
+			/* Points scored by everyone */
 
-	// 300pt bonus for all four safeties
-	if (PlayerSafetyCount == 4)
-		Score += 300;
+			// Distance (1pt per mile travelled)
+			Score += Players[i].GetMileage();
+			ScoreBreakdown[i][CategoryIndex] = Score;
+			++CategoryIndex;
+			
+			for (int j = 0; j < SAFETY_COUNT; ++j) // Get info about safeties and Coup Fourres
+			{
+				if (Players[i].HasSafety(j + SAFETY_OFFSET))
+				{
+					++PlayerSafetyCount;
+					if (Players[i].HasCoupFourre(j + SAFETY_OFFSET))
+						++PlayerCoupFourreCount;
+				}
+			}
 
-	// 300pt bonus for each Coup Fourre
-	if (PlayerCoupFourreCount)
-		Score += (PlayerCoupFourreCount * 300);
+			// 100pt for each safety, no matter how played
+			if (PlayerSafetyCount)
+			{
+				int SafetyScore = PlayerSafetyCount * 100;
+				Score += SafetyScore;
+				ScoreBreakdown[i][CategoryIndex] = SafetyScore;
+			}
+			++CategoryIndex;
 
-	/* Points scored only by the player which completed the trip */
-
-	if (Players[PlayerIndex].GetMileage() == TripLength)
-	{
-		// 400pt for completing trip
-		Score += 400;
-
-		// 300pt bonus for delayed action (draw pile exhausted before trip completion)
-		if (SourceDeck)
-		{
-			if (SourceDeck->Empty())
+			// 300pt bonus for all four safeties
+			if (PlayerSafetyCount == 4)
+			{
 				Score += 300;
+				ScoreBreakdown[i][CategoryIndex] = 300;
+			}
+			++CategoryIndex;
+
+			// 300pt bonus for each Coup Fourre
+			if (PlayerCoupFourreCount)
+			{
+				int CoupFourreScore = PlayerCoupFourreCount * 300;
+				Score += CoupFourreScore;
+				ScoreBreakdown[i][CategoryIndex] += CoupFourreScore;
+			}
+			++CategoryIndex;
+
+			/* Points scored only by the player which completed the trip */
+
+			if (Players[i].GetMileage() == TripLength)
+			{
+				// 400pt for completing trip
+				Score += 400;
+				ScoreBreakdown[i][CategoryIndex] = 400;
+				++CategoryIndex;
+
+				// 300pt bonus for delayed action (draw pile exhausted before trip completion)
+				if (SourceDeck)
+				{
+					if (SourceDeck->Empty())
+					{
+						Score += 300;
+						ScoreBreakdown[i][CategoryIndex] = 300;
+					}
+				}
+				++CategoryIndex;
+
+				// 300pt bonus for safe trip (no 200-mile cards)
+				if (Players[i].Get200Count() == 0)
+				{
+					Score += 300;
+					ScoreBreakdown[i][CategoryIndex] = 300;
+				}
+				++CategoryIndex;
+
+				// 200pt bonus for completing an extended trip
+				if (Extended)
+				{
+					Score += 200;
+					ScoreBreakdown[i][CategoryIndex] = 200;
+				}
+				++CategoryIndex;
+
+				// 500pt shutout bonus (opponent did not play any mileage cards during the hand)
+				if (Players[1 - i].GetMileage() == 0)
+				{
+					Score += 500;
+					ScoreBreakdown[i][CategoryIndex] = 500;
+				}
+			}
+
+			Scores[i] = Score;
 		}
-
-		// 300pt bonus for safe trip (no 200-mile cards)
-		if (Players[PlayerIndex].Get200Count() == 0)
-			Score += 300;
-
-		// 200pt bonus for completing an extended trip
-		if (Extended)
-			Score += 200;
-
-		// 500pt shutout bonus (opponent did not play any mileage cards during the hand)
-		if (Players[1 - PlayerIndex].GetMileage() == 0)
-			Score += 500;
 	}
-
-	return Score;
 }
 
 bool	Game::EndOfGame		(void)
