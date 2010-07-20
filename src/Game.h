@@ -4,10 +4,10 @@
 #include "Player.h"
 
 const Uint8 PLAYER_COUNT = 2,
-			SCORE_CATEGORY_COUNT = 9,
+			SCORE_CATEGORY_COUNT = 12,
 			SCORE_COLUMN_COUNT = 3;
 
-const char	SCORE_CAT_NAMES[SCORE_CATEGORY_COUNT][20] = {"Mileage", "Safeties", "All 4", "Coup Fourres", "Completed Trip", "Delayed Action", "Safe Trip", "Extension", "Shutout"};
+const char	SCORE_CAT_NAMES[SCORE_CATEGORY_COUNT][20] = {"Mileage", "Safeties", "All 4", "Coup Fourres", "Completed Trip", "Delayed Action", "Safe Trip", "Extension", "Shutout", "Subtotal", "Previous", "Total"};
 
 namespace _SDLMille
 {
@@ -41,14 +41,17 @@ private:
 				*DiscardSurface,
 				*DrawCardSurface, *DrawTextSurface,
 				*OutcomeSurface, *ScoresSurface,
-				*ScoreSurfaces[SCORE_CATEGORY_COUNT + 2][SCORE_COLUMN_COUNT];
+				*ScoreSurfaces[SCORE_CATEGORY_COUNT + 1][SCORE_COLUMN_COUNT];
 	Player		Players[PLAYER_COUNT];
 	Deck *		SourceDeck;
 	int			DeckCount, OldDeckCount,
 				Scores[PLAYER_COUNT],
+				RunningScores[PLAYER_COUNT],
 				ScoreBreakdown[PLAYER_COUNT][SCORE_CATEGORY_COUNT];
+	Uint32		FrozenAt;
 	bool		Dirty,
 				Extended,
+				Frozen,
 				Running;
 	Uint8		Current,				// Index of current player
 				Scene, LastScene,

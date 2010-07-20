@@ -44,9 +44,12 @@ namespace _SDLMille
 
 	Dirty = true;
 	Extended = false;
+	Frozen = false;
 	Running = true;
 
 	OldDiscardTop = DiscardTop = CARD_NULL_NULL;
+
+	FrozenAt = 0;
 
 	if (SourceDeck)
 		OldDeckCount = DeckCount = SourceDeck->CardsLeft();
@@ -63,12 +66,13 @@ namespace _SDLMille
 
 		// And initialize their scores to zero
 		Scores[i] = 0;
+		RunningScores[i] = 0;
 
 		for (int j = 0; j < SCORE_CATEGORY_COUNT; ++j)
 			ScoreBreakdown[i][j] = 0;
 	}
 
-	for (int i = 0; i < (SCORE_CATEGORY_COUNT + 2); ++i)
+	for (int i = 0; i < (SCORE_CATEGORY_COUNT + 1); ++i)
 	{
 		for (int j = 0; j < SCORE_COLUMN_COUNT; ++j)
 		{
@@ -231,6 +235,17 @@ bool		Game::IsValidPlay	(Uint8 Index)
 
 void		Game::OnClick		(int X, int Y)
 {
+	if (Frozen)
+	{
+		if (abs(SDL_GetTicks() - FrozenAt) > 1000)
+		{
+			Frozen = false;
+			FrozenAt = 0;
+		}
+		else
+			return;
+	}
+
 	if (Scene == SCENE_MAIN)
 	{
 		if ((X >= 45) && (X <= 275))
@@ -436,7 +451,7 @@ bool		Game::OnInit		(void)
 		ScoresSurface = 0;
 	}
 
-	for (int i = 0; i < (SCORE_CATEGORY_COUNT + 2); ++i)
+	for (int i = 0; i < (SCORE_CATEGORY_COUNT + 1); ++i)
 	{
 		for (int j = 0; j < SCORE_COLUMN_COUNT; ++j)
 		{
@@ -524,7 +539,7 @@ bool		Game::OnInit		(void)
 		{
 			char TempText[21];
 
-			for (int i = 0; i < (SCORE_CATEGORY_COUNT + 2); ++i)
+			for (int i = 0; i < (SCORE_CATEGORY_COUNT + 1); ++i)
 			{
 				for (int j = 0; j < SCORE_COLUMN_COUNT; ++j)
 				{
@@ -543,30 +558,17 @@ bool		Game::OnInit		(void)
 							strcpy(TempText, "CPU");
 						}
 					}
-					else if (i < (SCORE_CATEGORY_COUNT + 1))
+					else
 					{
 						if (j == 0)
 							strcpy(TempText, SCORE_CAT_NAMES[i - 1]);
 						else
 						{
 							int Score = ScoreBreakdown[j - 1][i - 1];
-							if (Score == 0)
+							if ((Score == 0) && (i < SCORE_CATEGORY_COUNT))
 								strcpy(TempText, "-");
 							else
 								sprintf(TempText, "%u", ScoreBreakdown[j - 1][i - 1]);
-						}
-					}
-					else
-					{
-						switch (j)
-						{
-						case 0:
-							strcpy(TempText, "Total");
-							break;
-						case 1:
-						case 2:
-						default:
-							sprintf(TempText, "%u", Scores[j - 1]);
 						}
 					}
 					ScoreSurfaces[i][j] = Surface::RenderText(TempText, GameOverFont);
@@ -604,6 +606,9 @@ void		Game::OnLoop		(void)
 	{
 		if (EndOfGame())
 		{
+			Frozen = true;
+			FrozenAt = SDL_GetTicks();
+
 			GetScores();
 
 			LastScene = Scene;
@@ -759,14 +764,14 @@ void		Game::OnRender		(void)
 		{
 			int X = 0, Y = 0;
 
-			for (int i = 0; i < (SCORE_CATEGORY_COUNT + 2); ++i)
+			for (int i = 0; i < (SCORE_CATEGORY_COUNT + 1); ++i)
 			{
 				for (int j = 0; j < SCORE_COLUMN_COUNT; ++j)
 				{
 					if (ScoreSurfaces[i][j])
 					{
 						X = 12 + ((j > 0) ? 175 : 0) + ((j > 1) ? 75 : 0);
-						Y = 50 + (i * 26) + ((i > 0) ? 20 : 0) + ((i > SCORE_CATEGORY_COUNT) ? 20 : 0);
+						Y = 20 + (i * 26) + ((i > 0) ? 20 : 0) + ((i > (SCORE_CATEGORY_COUNT - 3)) ? 20 : 0) + ((i > (SCORE_CATEGORY_COUNT - 1)) ? 20 : 0);
 						Surface::Draw(Window, ScoreSurfaces[i][j], X, Y);
 					}
 				}
@@ -802,10 +807,23 @@ void			Game::Reset			(void)
 
 	for (int i = 0; i < PLAYER_COUNT; ++i)
 	{
+		RunningScores[i] += Scores[i]; //Roll up score
 		Scores[i] = 0;
 		
 		for (int j = 0; j < SCORE_CATEGORY_COUNT; ++j)
 			ScoreBreakdown[i][j] = 0;
+	}
+
+	//Reset running scores if the round is over
+	for (int i = 0; i < PLAYER_COUNT; ++i)
+	{
+		if (RunningScores[i] >= 5000)
+		{
+			for (int j = 0; j < PLAYER_COUNT; ++j)
+				RunningScores[j] = 0;
+
+			break;
+		}
 	}
 
 	Dirty = true;
@@ -962,8 +980,21 @@ void			Game::GetScores			(void)
 					ScoreBreakdown[i][CategoryIndex] = 500;
 				}
 			}
+			else
+				CategoryIndex += 4;
+
+			++CategoryIndex;
 
 			Scores[i] = Score;
+			ScoreBreakdown[i][CategoryIndex] = Score;
+
+			++CategoryIndex;
+
+			ScoreBreakdown[i][CategoryIndex] = RunningScores[i];
+
+			++CategoryIndex;
+
+			ScoreBreakdown[i][CategoryIndex] = RunningScores[i] + Score;
 		}
 	}
 }
