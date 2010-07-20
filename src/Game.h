@@ -1,5 +1,3 @@
-//#define WEBOS_DEVICE //Unfortunately, this flag is necessary, because of the way webOS handles SDL_SetVideoMode().
-
 #ifndef _SDLMILLE_GAME_H
 #define	_SDLMILLE_GAME_H
 

@@ -1,4 +1,5 @@
-#define	ANDROID_DEVICE
+#define	WEBOS_DEVICE
+//#define	ANDROID_DEVICE
 
 #ifndef _SDLMILLE_SURFACE_H
 #define _SDLMILLE_SURFACE_H

@@ -22,9 +22,25 @@ Website:	http://webosnerd.com/
 
 **********
 
-To build for Palm Pre using PDK on Windows, run buildit.cmd in the top directory. This will create an executable, "SDLMille.elf".
+BUILDING SDL MILLE:
 
-To build for Windows using Visual Studio 2008 or newer, open "SDLMille.vcproj" in the top directory. Make sure to comment out the first line of Game.h (#define WEBOS_DEVICE) before building.
+Palm Pre Target
+---------------
+To build for Palm Pre using PDK on Windows, run buildit.cmd in the top directory. This will create an executable, "SDLMille.elf", in the "pkg" directory. Package with command "pdk-package pkg". Make sure WEBOS_DEVICE is defined in Surface.h, and that ANDROID_DEVICE is /not/ defined.
+
+Windows Target
+--------------
+To build for Windows using Visual Studio 2008 or newer, open "SDLMille.sln" in the top directory. Make sure that neither WEBOS_DEVICE nor ANDROID_DEVICE is defined in Surface.h.
+
+Android Target
+--------------
+In a separate directory, clone the git repository at " http://github.com/pelya/commandergenius.git ". This is a separate project created by pelya. Check out commit 80aa565a222f3ed15dc8b0d2f23a745d4f2fb9f7 (this is the only commit that I have verified works with SDL Mille). Follow the instructions in "alienblaster/readme.txt" to make sure you can build the Alien Blaster game.
+
+/Only after successfully building and testing Alien Blaster/, replace "alienblaster/AppSettings.cfg" with my copy. Replace "alienblaster/project/jni/application/src" directory with "src" directory from SDL Mille. Run "alienblaster/ChangeAppSettings.sh" and just hit enter until the script is done. This takes the settings from AppSettings.cfg and injects them into the proper files.
+
+Run "alienblaster/build.sh" and hope for the best. sdl_android is very tricky and very buggy, so I will not be able to help you with any issues arising while building for Android.
+
+**********
 
 SDL Mille uses the Liberation Mono font, which can be found in the pkg directory. Although the Liberation Fonts are not 100% GPL-compatible, they do meet Debian Free Software Guidlines. Liberation Fonts can also be downloaded from the project homepage at https://fedorahosted.org/liberation-fonts/
 
@@ -34,13 +50,14 @@ The "src" directory contains the C++ source. The source files (*.xcf) for the in
 
 What I haven't provided that you may need:
 
-++	These packages should be available from your package manager on Linux and UNIX systems.
-	(e.g. aptitude install libsdl-dev). Make sure you get the development versions. ++
+++	Most of these packages should be available from your package manager on Linux and UNIX
+	systems. (e.g. aptitude install libsdl-dev). Install the development versions. ++
 	
 SDL ( http://www.libsdl.org/ )
 SDL_image ( http://www.libsdl.org/projects/SDL_image )
 SDL_ttf ( http://www.libsdl.org/projects/SDL_ttf )
 GIMP ( http://www.gimp.org/ )
+sdl_android ( http://github.com/pelya/commandergenius ) *Only needed to build for Android
 
 **********
 

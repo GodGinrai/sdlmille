@@ -699,6 +699,10 @@ void		Game::OnRender		(void)
 	bool	RefreshedSomething =	false, // We only flip the display if something changed
 			SceneChanged =			false; // Control variable. Do we need to call OnInit()?
 
+	#ifdef	ANDROID_DEVICE
+	static	SDL_Rect	SceneRect = {0, 40, 480, 720};
+	#endif
+
 	// If the scene, discard pile, or deck count have changed, we need to do a refresh
 	if (Scene != LastScene)
 	{
@@ -729,6 +733,11 @@ void		Game::OnRender		(void)
 		OnInit(); //Refresh our surfaces
 		RefreshedSomething = true;
 
+		// TODO: Remove the following hack, necessitated by transparency present in the enlarged graphics
+		#ifdef	ANDROID_DEVICE
+		SDL_FillRect(Window, &SceneRect, SDL_MapRGB(Window->format, 120, 192, 86));
+		#endif
+		
 		// Render the appropriate surfaces
 		if (Background)
 		{
