@@ -41,7 +41,11 @@ namespace _SDLMille
 	if (V <= CARD_NULL_NULL)
 		Set(V);
 	else
-		throw CARD_VALUE_INVALID;
+		#ifndef ANDROID_DEVICE
+			throw CARD_VALUE_INVALID;
+		#else
+			exit(-1);
+		#endif
 }
 
 const Card &	Card::Copy				(const Card & Source)
@@ -205,7 +209,11 @@ void			Card::Set				(Uint8 V)
 		Type = GetTypeFromValue(Value);
 	}
 	else
-		throw CARD_VALUE_INVALID;
+		#ifndef ANDROID_DEVICE
+			throw CARD_VALUE_INVALID;
+		#else
+			exit(-1);
+		#endif
 }
 
 }

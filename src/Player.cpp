@@ -228,7 +228,11 @@ void	Player::SetSource		(Deck * ArgSource)
 
 		// If we didn't get a full hand, something went wrong.
 		if (CardCount < 7)
-			throw PLAYER_NOT_ENOUGH_CARDS;
+			#ifndef	ANDROID_DEVICE
+				throw PLAYER_NOT_ENOUGH_CARDS;
+			#else
+				exit(-1);
+			#endif
 	}
 }
 

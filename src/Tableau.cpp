@@ -224,7 +224,11 @@ void	Tableau::OnPlay			(Uint8 Value, bool CoupFourre, bool SpeedLimit)
 				Mileage += Card::GetMileValue(Value);
 			}
 			else
-				throw TABLEAU_TOO_MANY_CARDS;
+				#ifndef	ANDROID_DEVICE
+					throw TABLEAU_TOO_MANY_CARDS;
+				#else
+					exit(-1);
+				#endif
 		}
 		break;
 
@@ -293,12 +297,22 @@ bool	Tableau::OnRender		(SDL_Surface * Surface, Uint8 PlayerIndex, bool Force)
 			Dirty = false;
 
 			int	R = 0, G = 0, B = 0,
-				Y = 1;
+				Y = 1, RectY = 0, W = 320, H = 174;;
 
 			if (PlayerIndex == 0)
+			{
 				Y += 175;
+				RectY += 175;
+			}
 
-			SDL_Rect	PlayerRect = {0, (Y - 1), 320, 174}; // Tableau background
+			#ifdef	ANDROID_DEVICE
+				RectY *= 1.5;
+				RectY += 40;
+				W = 480;
+				H = 261;
+			#endif
+
+			SDL_Rect	PlayerRect = {0, RectY, W, H}; // Tableau background
 
 			// Color coding
 			if (IsRolling())

@@ -309,13 +309,28 @@ void		Game::OnClick		(int X, int Y)
 
 void		Game::OnEvent		(SDL_Event * Event)
 {
+	int	X = 0, Y = 0;
 	if (Event)
 	{
 		if (Event->type == SDL_QUIT)
 			Running = false;
 
 		else if (Event->type == SDL_MOUSEBUTTONUP)
-			OnClick(Event->button.x, Event->button.y);
+		{
+			X = Event->button.x;
+			Y = Event->button.y;
+			#ifdef	ANDROID_DEVICE
+			if ((Y < 40) || (Y > 760))
+				return;
+			else
+			{
+				X = (X / 1.5);
+				Y = ((Y - 40) / 1.5);
+			}
+			printf("Click converted to coords: %u, %u \n", X, Y);
+			#endif
+			OnClick(X, Y);
+		}
 	}
 }
 
@@ -366,10 +381,12 @@ bool		Game::OnInit		(void)
 			return false;
 		}
 
-		#ifdef WEBOS_DEVICE
-		if(!(Window = SDL_SetVideoMode(0, 0, 0, SDL_SWSURFACE)))
+		#if defined WEBOS_DEVICE
+			if(!(Window = SDL_SetVideoMode(0, 0, 0, SDL_SWSURFACE)))
+		#elif defined ANDROID_DEVICE
+			if(!(Window = SDL_SetVideoMode(480, 800, 16, SDL_SWSURFACE)))
 		#else
-		if(!(Window = SDL_SetVideoMode(320, 480, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)))
+			if(!(Window = SDL_SetVideoMode(320, 480, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)))
 		#endif
 		{
 			printf("Could not set video mode.");

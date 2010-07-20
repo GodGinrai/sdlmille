@@ -27,6 +27,12 @@ bool			Surface::Draw	(SDL_Surface * Destination, SDL_Surface * Source, int X, in
 	if (!Destination || !Source)
 		return false;
 
+	#ifdef	ANDROID_DEVICE
+		X *= 1.5;
+		Y *= 1.5;
+		Y += 40;
+	#endif
+
 	SDL_Rect	DestRect;
 
 	DestRect.x = X;
@@ -49,8 +55,21 @@ SDL_Surface *	Surface::Load	(const char * File)
 					*Formatted = 0;
 
 		printf("-Pointers created.\n");
-		
+	
+		#ifdef	ANDROID_DEVICE
+		char	*NewFile = 0;
+		NewFile = new	char[strlen(File) + 5];
+		if (NewFile)
+		{
+			strcpy(NewFile, "hd/");
+			strcat(NewFile, File);
+			Loaded = IMG_Load(NewFile);
+			delete	[]	NewFile;
+			NewFile = 0;
+		}
+		#else
 		Loaded = IMG_Load(File);
+		#endif
 
 		if (!Loaded)
 		{

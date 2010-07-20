@@ -77,7 +77,11 @@ void		Deck::Shuffle	(void)
 			if (Order[RandIndex] == DECK_SIZE)
 				Order[RandIndex] = i;
 			else if (Order[RandIndex] > DECK_SIZE)
-				throw DECK_ERROR;
+				#ifndef	ANDROID_DEVICE
+					throw DECK_ERROR;
+				#else
+					exit(-1);
+				#endif
 			else
 				Assigned = false;
 		} while (Assigned == false);
