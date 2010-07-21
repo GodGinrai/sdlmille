@@ -39,11 +39,13 @@ namespace _SDLMille
 	ScoresSurface = OutcomeSurface = 0;
 	GameOverFont = DrawFont = 0;
 
+	Modal = MODAL_NONE;
 	Scene = SCENE_MAIN;
 	LastScene = SCENE_INVALID;
 
 	Dirty = true;
 	Extended = false;
+	ExtensionDeclined = false;
 	Frozen = false;
 	Running = true;
 
@@ -246,6 +248,31 @@ void		Game::OnClick		(int X, int Y)
 			return;
 	}
 
+	if (Modal < MODAL_NONE)
+	{
+		if (Modal == MODAL_EXTENSION)
+		{
+			if ((Y >= 251) && (Y <= 276))
+			{
+				if ((X >= 81) && (X < 151))
+				{
+					Extended = true;
+					Modal = MODAL_NONE;
+					Dirty = true;
+				}
+				else if ((X > 169) && (X <= 239))
+				{
+					Extended = false;
+					ExtensionDeclined = true;
+					Modal = MODAL_NONE;
+					Dirty = true;
+				}
+			}
+		}
+
+		return;
+	}
+
 	if (Scene == SCENE_MAIN)
 	{
 		if ((X >= 45) && (X <= 275))
@@ -345,6 +372,11 @@ void		Game::OnEvent		(SDL_Event * Event)
 			printf("Click converted to coords: %u, %u \n", X, Y);
 			#endif
 			OnClick(X, Y);
+		}
+
+		else if (Event->type == SDL_KEYUP)
+		{
+			ShowModal(MODAL_EXTENSION);
 		}
 	}
 }
@@ -606,6 +638,24 @@ void		Game::OnLoop		(void)
 	{
 		if (EndOfGame())
 		{
+			if (!Extended && !ExtensionDeclined)
+			{
+				if (Players[0].GetMileage() == 700)
+				{
+					if (Modal != MODAL_EXTENSION)
+						ShowModal(MODAL_EXTENSION);
+				}
+				else
+				{
+					srand(time(0));
+					Extended = (((rand() % 2) > 0) ? true : false);
+					if (!Extended)
+						ExtensionDeclined = true;
+				}
+
+				return;
+			}
+
 			Frozen = true;
 			FrozenAt = SDL_GetTicks();
 
@@ -828,6 +878,7 @@ void			Game::Reset			(void)
 
 	Dirty = true;
 	Extended = false;
+	ExtensionDeclined = false;
 
 	Current = 0;
 
@@ -845,6 +896,28 @@ void			Game::Reset			(void)
 	if (SourceDeck)
 		OldDeckCount = DeckCount = SourceDeck->CardsLeft();
 }
+
+bool		Game::ShowModal		(Uint8 ModalName)
+{
+	if (ModalName < MODAL_NONE)
+	{
+		Modal = ModalName;
+
+		Surface::Draw(Window, Surface::Load("gfx/modals/shadow.png"), 0, 0);
+
+		if (Modal == MODAL_EXTENSION)
+		{
+			Surface::Draw(Window, Surface::Load("gfx/modals/extension.png"), 74, 193);
+		}
+
+		SDL_Flip(Window);
+
+		return true;
+	}
+
+	return false;
+}
+
 
 
 

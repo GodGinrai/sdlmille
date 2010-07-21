@@ -26,6 +26,7 @@ public:
 	void		OnPlay			(Uint8 Value);
 	void		OnRender		(void);
 	void		Reset			(void);
+	bool		ShowModal		(Uint8 ModalName);
 
 private:
 	/* Methods */
@@ -50,16 +51,18 @@ private:
 				ScoreBreakdown[PLAYER_COUNT][SCORE_CATEGORY_COUNT];
 	Uint32		FrozenAt;
 	bool		Dirty,
-				Extended,
+				Extended, ExtensionDeclined,
 				Frozen,
 				Running;
 	Uint8		Current,				// Index of current player
+				Modal,
 				Scene, LastScene,
 				DiscardTop, OldDiscardTop;
 	TTF_Font	*DrawFont, *GameOverFont;
 
 
 	enum { SCENE_MAIN = 0, SCENE_GAME_PLAY, SCENE_GAME_MENU, SCENE_GAME_OVER, SCENE_LEARN, SCENE_INVALID };
+	enum { MODAL_EXTENSION = 0, MODAL_NONE };
 };
 
 }
