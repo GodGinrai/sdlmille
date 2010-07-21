@@ -376,7 +376,7 @@ void		Game::OnEvent		(SDL_Event * Event)
 
 		else if (Event->type == SDL_KEYUP)
 		{
-			ShowModal(MODAL_EXTENSION);
+			//ShowModal(MODAL_EXTENSION);
 		}
 	}
 }
