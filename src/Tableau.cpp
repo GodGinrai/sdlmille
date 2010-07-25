@@ -289,6 +289,8 @@ void	Tableau::OnPlay			(Uint8 Value, bool CoupFourre, bool SpeedLimit)
 
 bool	Tableau::OnRender		(SDL_Surface * Surface, Uint8 PlayerIndex, bool Force)
 {
+	bool	WasDirty = Dirty;
+
 	if (Surface)
 	{
 		if (Dirty || Force)
@@ -366,12 +368,10 @@ bool	Tableau::OnRender		(SDL_Surface * Surface, Uint8 PlayerIndex, bool Force)
 
 			if (MileageTextSurface)
 				Surface::Draw(Surface, MileageTextSurface, 10, Y + 150);
-
-			return true;
 		}
 	}
 
-	return false;
+	return WasDirty;
 }
 
 void	Tableau::Reset			(void)

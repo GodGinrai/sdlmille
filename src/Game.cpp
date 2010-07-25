@@ -37,6 +37,7 @@ namespace _SDLMille
 	DrawCardSurface = 0;
 	DrawTextSurface = 0;
 	ScoresSurface = OutcomeSurface = 0;
+	MessageSurface = 0;
 	GameOverFont = DrawFont = 0;
 
 	Modal = MODAL_NONE;
@@ -52,6 +53,7 @@ namespace _SDLMille
 	OldDiscardTop = DiscardTop = CARD_NULL_NULL;
 
 	FrozenAt = 0;
+	MessagedAt = 0;
 
 	if (SourceDeck)
 		OldDeckCount = DeckCount = SourceDeck->CardsLeft();
@@ -82,6 +84,8 @@ namespace _SDLMille
 		}
 	}
 
+	Message[0] = '\0';
+
 	DrawFont = TTF_OpenFont("LiberationMono-Regular.ttf", 16);
 	GameOverFont = TTF_OpenFont("LiberationMono-Regular.ttf", 18);
 }
@@ -105,10 +109,23 @@ namespace _SDLMille
 		SDL_FreeSurface(OutcomeSurface);
 	if (ScoresSurface)
 		SDL_FreeSurface(ScoresSurface);
+	if (MessageSurface)
+		SDL_FreeSurface(MessageSurface);
 	if (DrawFont)
 		TTF_CloseFont(DrawFont);
 	if (GameOverFont)
 		TTF_CloseFont(GameOverFont);
+
+	for (int i = 0; i < (SCORE_CATEGORY_COUNT + 1); ++i)
+	{
+		for (int j = 0; j < SCORE_COLUMN_COUNT; ++j)
+		{
+			if (ScoreSurfaces[i][j])
+			{
+				SDL_FreeSurface(ScoreSurfaces[i][j]);
+			}
+		}
+	}
 
 	// SDL_ttf cleanup
 	if (TTF_WasInit())
@@ -185,7 +202,7 @@ bool		Game::IsValidPlay	(Uint8 Index)
 		if (Value == CARD_REMEDY_ROLL)
 		{
 			if ((TopCardType != CARD_REMEDY) && (TopCard != CARD_HAZARD_STOP) && (TopCard != CARD_NULL_NULL) && !Players[Current].HasSafety(Card::GetMatchingSafety(TopCard)))
-				/* Are we:	1. Playing on top of a rememdy
+				/* Are we:	1. Playing on top of a remedy
 							2. Playing on top of a "stop" card
 							3. Playing on an empty battle pile
 							4. Playing on a hazard to which we have the matching safety */
@@ -215,11 +232,11 @@ bool		Game::IsValidPlay	(Uint8 Index)
 			else
 			{
 				if (TopCardType != CARD_HAZARD)
-					// Other rememdies can only be played on top of hazards
+					// Other remedies can only be played on top of hazards
 					return false;
 
 				if (TopCard != (Value - 5))
-					// The rememedy does not match the hazard
+					// The remedy does not match the hazard
 					return false;
 			}
 		}
@@ -369,14 +386,13 @@ void		Game::OnEvent		(SDL_Event * Event)
 				X = (X / 1.5);
 				Y = ((Y - 40) / 1.5);
 			}
-			printf("Click converted to coords: %u, %u \n", X, Y);
 			#endif
 			OnClick(X, Y);
 		}
 
 		else if (Event->type == SDL_KEYUP)
 		{
-			//ShowModal(MODAL_EXTENSION);
+			//ShowMessage("Computer extends trip");
 		}
 	}
 }
@@ -384,20 +400,15 @@ void		Game::OnEvent		(SDL_Event * Event)
 bool		Game::OnExecute		(void)
 {
 	if (!OnInit())
-	{
-		printf("Init error.\n");
 		return false;
-	}
 
 	SDL_Event	Event;
 
 	// Main loop
 	while (Running)
 	{
-		//printf("Entered main loop.\n");
 		while (SDL_PollEvent(&Event))
 		{
-			//printf("-Processed event.\n");
 			OnEvent(&Event);
 		}
 
@@ -409,8 +420,6 @@ bool		Game::OnExecute		(void)
 		OnRender();
 		SDL_Delay(25);
 	}
-
-	printf("Quitting.\n");
 	
 	return true;
 
@@ -420,25 +429,19 @@ bool		Game::OnInit		(void)
 {
 	if (!Window)
 	{
-		printf("Trying to init window.\n");
 		// Set up our display if we haven't already
 		if(SDL_Init(SDL_INIT_VIDEO) < 0)
-		{
-			printf("SDL_Init error.\n");
 			return false;
-		}
 
 		#if defined WEBOS_DEVICE
-			if(!(Window = SDL_SetVideoMode(0, 0, 0, SDL_SWSURFACE)))
+		if(!(Window = SDL_SetVideoMode(0, 0, 0, SDL_SWSURFACE)))
 		#elif defined ANDROID_DEVICE
-			if(!(Window = SDL_SetVideoMode(480, 800, 16, SDL_SWSURFACE)))
+		if(!(Window = SDL_SetVideoMode(480, 800, 16, SDL_SWSURFACE)))
 		#else
-			if(!(Window = SDL_SetVideoMode(320, 480, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)))
+		if(!(Window = SDL_SetVideoMode(320, 480, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)))
 		#endif
-		{
-			printf("Could not set video mode.");
+
 			return false;
-		}
 
 		SDL_WM_SetCaption("SDL Mille", "mille.ico");
 	}
@@ -483,6 +486,12 @@ bool		Game::OnInit		(void)
 		ScoresSurface = 0;
 	}
 
+	if (MessageSurface)
+	{
+		SDL_FreeSurface(MessageSurface);
+		MessageSurface = 0;
+	}
+
 	for (int i = 0; i < (SCORE_CATEGORY_COUNT + 1); ++i)
 	{
 		for (int j = 0; j < SCORE_COLUMN_COUNT; ++j)
@@ -495,29 +504,24 @@ bool		Game::OnInit		(void)
 		}
 	}
 	
-	printf("Surfaces freed.\n");
+	if (Message[0] != '\0')
+	{
+		if (GameOverFont)
+			MessageSurface = Surface::RenderText(Message, GameOverFont);
+	}
 
 	if (Scene == SCENE_MAIN)
 	{
-		printf("Loading scene MAIN.\n");
-		
 		Background = Surface::Load("gfx/scenes/main.png");
 
 		if (!Background)
-		{
-			printf("Could not load background");
 			return false;
-		}
 
-		printf("Background loaded.\n");
-		
 		return true;
 	}
 
 	else if (Scene == SCENE_GAME_PLAY)
 	{
-		printf("Loading scene GAME PLAY.\n");
-		
 		Background = Surface::Load("gfx/scenes/game-play.png");
 
 		DiscardSurface = Card::GetImageFromValue(DiscardTop);
@@ -543,8 +547,6 @@ bool		Game::OnInit		(void)
 
 	else if (Scene == SCENE_LEARN)
 	{
-		printf("Loading scene LEARN.\n");
-		
 		Background = Surface::Load("gfx/scenes/learn.png");
 
 		if (!Background)
@@ -555,16 +557,6 @@ bool		Game::OnInit		(void)
 
 	else if (Scene == SCENE_GAME_OVER)
 	{
-		printf("Loading scene GAME OVER.\n");
-		
-		for (int j = 0; j < PLAYER_COUNT; ++j)
-		{
-			for (int i = 0; i < SCORE_CATEGORY_COUNT; ++i)
-			{
-				printf("Player %u, category %u, score %u\n", j, i, ScoreBreakdown[j][i]);
-			}
-		}
-
 		Background = Surface::Load("gfx/scenes/game_over.png");
 
 		if (GameOverFont)
@@ -608,32 +600,24 @@ bool		Game::OnInit		(void)
 			}
 		}
 
-		/*
-		if (GameOverFont)
-		{
-			char ScoresText[13];
-
-			OutcomeSurface = Surface::RenderText((Scores[0] > Scores[1]) ? "You won!" : "The computer won :(", GameOverFont);
-
-			// Make sure we don't overflow our buffer with too many digits
-			if ((Scores[0] < 10000) && (Scores[1] < 10000))
-			{
-				sprintf(ScoresText, "%u to %u", Scores[0], Scores[1]);
-				ScoresSurface = Surface::RenderText(ScoresText, GameOverFont);
-			}
-		}
-		*/
-
 		return true;
 	}
-
-	printf ("Default false from OnInit().\n");
 	
 	return false;
 }
 
 void		Game::OnLoop		(void)
 {
+	if (Message[0] != '\0')
+	{
+		if (abs(SDL_GetTicks() - MessagedAt) > 2500)
+		{
+			Message[0] = '\0';
+			MessagedAt = 0;
+			Dirty = true;
+		}
+	}
+
 	if (Scene == SCENE_GAME_PLAY)
 	{
 		if (EndOfGame())
@@ -648,8 +632,12 @@ void		Game::OnLoop		(void)
 				else
 				{
 					srand(time(0));
-					Extended = (((rand() % 2) > 0) ? true : false);
-					if (!Extended)
+					if (rand() % 2)
+					{
+						Extended = true;
+						ShowMessage("Computer extends trip");
+					}
+					else
 						ExtensionDeclined = true;
 				}
 
@@ -778,7 +766,6 @@ void		Game::OnRender		(void)
 	// Also if we're otherwise dirty
 	if (Dirty)
 	{
-		printf("We're dirty.\n");
 		SceneChanged = true;
 		Dirty = false;
 	}
@@ -795,10 +782,7 @@ void		Game::OnRender		(void)
 		
 		// Render the appropriate surfaces
 		if (Background)
-		{
-			printf("Drew background.\n");
 			Surface::Draw(Window, Background, 0, 0);
-		}
 
 		if (Scene == SCENE_GAME_PLAY)
 		{
@@ -829,19 +813,32 @@ void		Game::OnRender		(void)
 		}
 	}
 
+	bool HandRefreshed = false; //Control variable. We have to re-render the background
+		//if the hand has changed, since the image for CARD_NULL_NULL does not cover up
+		//what's underneath, giving the appearance that the empty slot is not empty.
+
 	// During play, we also need to render our players
 	if (Scene == SCENE_GAME_PLAY)
 	{
 		// SceneChanged will force the players to re-render if this function re-rendered
-		RefreshedSomething |= Players[0].OnRender(Window, 0, SceneChanged);
+		HandRefreshed = Players[0].OnRender(Window, 0, SceneChanged);
+		RefreshedSomething |= HandRefreshed;
 		RefreshedSomething |= Players[1].OnRender(Window, 1, SceneChanged);
 	}
 
-	if (RefreshedSomething)
+	//And render the message last.
+	if (MessageSurface)
+		Surface::Draw(Window, MessageSurface, ((320 - MessageSurface->w) / 2), 125);
+
+	if (HandRefreshed)
 	{
-		printf("Flipped window.");
-		SDL_Flip(Window);
+		Dirty = true;
+		OnRender(); //Recursive call since background must be drawn first
+		return;
 	}
+
+	if (RefreshedSomething)
+		SDL_Flip(Window);
 }
 
 void			Game::Reset			(void)
@@ -897,6 +894,16 @@ void			Game::Reset			(void)
 		OldDeckCount = DeckCount = SourceDeck->CardsLeft();
 }
 
+void		Game::ShowMessage	(const char * Msg)
+{
+	if (strlen(Msg) < MESSAGE_SIZE)
+	{
+		strcpy(Message, Msg);
+		MessagedAt = SDL_GetTicks();
+		Dirty = true;
+	}
+}
+
 bool		Game::ShowModal		(Uint8 ModalName)
 {
 	if (ModalName < MODAL_NONE)
@@ -936,6 +943,9 @@ bool			Game::Discard		(void)
 
 	Uint8	Value =	CARD_NULL_NULL,
 			Index =	FindPopped(); // Find out which card is popped
+
+	//TODO: This is a hack. This should be handled in the Hand or Player class.
+	//Dirty = true;
 
 	if (Index < HAND_SIZE)
 	{

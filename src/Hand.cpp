@@ -115,50 +115,53 @@ void	Hand::OnInit	(void)
 
 bool	Hand::OnRender	(SDL_Surface * Surface, bool Force)
 {
-	if (Dirty || Force)
+	bool	WasDirty = Dirty;
+
+	if (Surface)
 	{
-		OnInit();
-		Dirty = false;
-
-		for (int i = 0; i < HAND_SIZE; ++i)
+		if (Dirty || Force)
 		{
-			/*	The next line is a fancy (and more efficient) way of multiplying i times 65 and then
-				adding 81. 65 is the horizontal distance between two cards, and 81 is the left edge
-				of our render. Because this uses the bit shift operator to do multiplication, it will
-				only work on little-endian architectures. Reverse the shift operator for big-endian. */
-			int	X = ((i << 6) + i + 81),
-				Y =	0;
+			OnInit();
+			Dirty = false;
 
-			if (i < 3)
+			for (int i = 0; i < HAND_SIZE; ++i)
 			{
-				// The first three cards get a right-shift one space. Y is set for the top row.
-				X += 65;
-				Y = 358;
-			}
+				/*	The next line is a fancy (and more efficient) way of multiplying i times 65 and then
+					adding 81. 65 is the horizontal distance between two cards, and 81 is the left edge
+					of our render. Because this uses the bit shift operator to do multiplication, it will
+					only work on little-endian architectures. Reverse the shift operator for big-endian. */
+				int	X = ((i << 6) + i + 81),
+					Y =	0;
 
-			else
-			{
-				// The remaining cards get a left-shift three spaces (to account for the three cards
-				// above). Y is set for the second row.
-				X -= (65 * 3);
-				Y = 420;
-			}
+				if (i < 3)
+				{
+					// The first three cards get a right-shift one space. Y is set for the top row.
+					X += 65;
+					Y = 358;
+				}
 
-			if (CardSurfaces[i])
-			{
-				// Draw the cards
-				Surface::Draw(Surface, CardSurfaces[i], X, Y);
+				else
+				{
+					// The remaining cards get a left-shift three spaces (to account for the three cards
+					// above). Y is set for the second row.
+					X -= (65 * 3);
+					Y = 420;
+				}
 
-				if (Popped[i] && Overlay)
-					// If this card is popped, render the orb over it
-					Surface::Draw(Surface, Overlay, X, Y + 8);
+				if (CardSurfaces[i])
+				{
+					// Draw the cards
+					Surface::Draw(Surface, CardSurfaces[i], X, Y);
+
+					if (Popped[i] && Overlay)
+						// If this card is popped, render the orb over it
+						Surface::Draw(Surface, Overlay, X, Y + 8);
+				}
 			}
 		}
-
-		return true;
 	}
 
-	return false;
+	return WasDirty;
 }
 
 bool	Hand::Pop		(Uint8 Index)

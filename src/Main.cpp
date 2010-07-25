@@ -27,8 +27,6 @@ using namespace _SDLMille;
 
 int	main	(int argc, char* argv[])
 {
-	printf("Started.");
-	
 	#ifdef WEBOS_DEVICE
 	/*
 	char WorkingDir[101];
@@ -47,7 +45,6 @@ int	main	(int argc, char* argv[])
 		Game	TheGame;
 
 		// Return 0 if the game executed OK. Otherwise, return -1.
-		printf("Trying to execute game.");
 		return (TheGame.OnExecute()) ? 0 : -1;
 	#ifndef	ANDROID_DEVICE
 	}

@@ -5,7 +5,8 @@
 
 const Uint8 PLAYER_COUNT = 2,
 			SCORE_CATEGORY_COUNT = 12,
-			SCORE_COLUMN_COUNT = 3;
+			SCORE_COLUMN_COUNT = 3,
+			MESSAGE_SIZE = 31;
 
 const char	SCORE_CAT_NAMES[SCORE_CATEGORY_COUNT][20] = {"Mileage", "Safeties", "All 4", "Coup Fourres", "Completed Trip", "Delayed Action", "Safe Trip", "Extension", "Shutout", "Subtotal", "Previous", "Total"};
 
@@ -26,6 +27,7 @@ public:
 	void		OnPlay			(Uint8 Value);
 	void		OnRender		(void);
 	void		Reset			(void);
+	void		ShowMessage		(const char * Msg);
 	bool		ShowModal		(Uint8 ModalName);
 
 private:
@@ -42,14 +44,16 @@ private:
 				*DiscardSurface,
 				*DrawCardSurface, *DrawTextSurface,
 				*OutcomeSurface, *ScoresSurface,
-				*ScoreSurfaces[SCORE_CATEGORY_COUNT + 1][SCORE_COLUMN_COUNT];
+				*ScoreSurfaces[SCORE_CATEGORY_COUNT + 1][SCORE_COLUMN_COUNT],
+				*MessageSurface;
 	Player		Players[PLAYER_COUNT];
 	Deck *		SourceDeck;
 	int			DeckCount, OldDeckCount,
 				Scores[PLAYER_COUNT],
 				RunningScores[PLAYER_COUNT],
 				ScoreBreakdown[PLAYER_COUNT][SCORE_CATEGORY_COUNT];
-	Uint32		FrozenAt;
+	Uint32		FrozenAt,
+				MessagedAt;
 	bool		Dirty,
 				Extended, ExtensionDeclined,
 				Frozen,
@@ -58,6 +62,7 @@ private:
 				Modal,
 				Scene, LastScene,
 				DiscardTop, OldDiscardTop;
+	char		Message[MESSAGE_SIZE];
 	TTF_Font	*DrawFont, *GameOverFont;
 
 

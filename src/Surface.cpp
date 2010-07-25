@@ -45,16 +45,16 @@ bool			Surface::Draw	(SDL_Surface * Destination, SDL_Surface * Source, int X, in
 
 SDL_Surface *	Surface::Load	(const char * File)
 {
-	printf("Loading file.\n");
+	//printf("Loading file.\n");
 	
 	if (File)
 	{
-		printf("-File provided.\n");
+		//printf("-File provided.\n");
 		
 		SDL_Surface	*Loaded = 0,
 					*Formatted = 0;
 
-		printf("-Pointers created.\n");
+		//printf("-Pointers created.\n");
 	
 		#ifdef	ANDROID_DEVICE
 		char	*NewFile = 0;
@@ -73,28 +73,28 @@ SDL_Surface *	Surface::Load	(const char * File)
 
 		if (!Loaded)
 		{
-			printf("-Not loaded.\n");
+			//printf("-Not loaded.\n");
 			return 0;
 		}
 		
-		printf("-Loaded.\n");
+		//printf("-Loaded.\n");
 
 		Formatted = SDL_DisplayFormatAlpha(Loaded);
 		
-		printf("-Formatted.\n");
+		//printf("-Formatted.\n");
 		
 		SDL_FreeSurface(Loaded);
 		
-		printf("-Freed.\n");
+		//printf("-Freed.\n");
 
 		if (Formatted)
 		{
-			printf("-Returning formatted surface.\n");
+			//printf("-Returning formatted surface.\n");
 			return Formatted;
 		}
 		else
 		{
-			printf("-Unable to format. Returning 0.\n");
+			//printf("-Unable to format. Returning 0.\n");
 			return 0;
 		}
 	}
