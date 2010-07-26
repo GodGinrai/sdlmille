@@ -25,7 +25,7 @@ public:
 	bool		OnInit			(void);
 	void		OnLoop			(void);
 	void		OnPlay			(Uint8 Value);
-	void		OnRender		(void);
+	void		OnRender		(bool Force = false);
 	void		Reset			(void);
 	void		ShowMessage		(const char * Msg);
 	bool		ShowModal		(Uint8 ModalName);

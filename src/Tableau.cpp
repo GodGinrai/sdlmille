@@ -295,8 +295,11 @@ bool	Tableau::OnRender		(SDL_Surface * Surface, Uint8 PlayerIndex, bool Force)
 	{
 		if (Dirty || Force)
 		{
-			OnInit();
-			Dirty = false;
+			if (Dirty)
+			{
+				OnInit();
+				Dirty = false;
+			}
 
 			int	R = 0, G = 0, B = 0,
 				Y = 1, RectY = 0, W = 320, H = 174;;

@@ -737,7 +737,7 @@ void		Game::OnPlay		(Uint8 Index)
 	}
 }
 
-void		Game::OnRender		(void)
+void		Game::OnRender		(bool Force)
 {
 	bool	RefreshedSomething =	false, // We only flip the display if something changed
 			SceneChanged =			false; // Control variable. Do we need to call OnInit()?
@@ -770,9 +770,12 @@ void		Game::OnRender		(void)
 		Dirty = false;
 	}
 
-	if (SceneChanged)
+	if (SceneChanged || Force)
 	{
-		OnInit(); //Refresh our surfaces
+		if (SceneChanged)
+			OnInit(); //Refresh our surfaces
+
+		SceneChanged = true;
 		RefreshedSomething = true;
 
 		// TODO: Remove the following hack, necessitated by transparency present in the enlarged graphics
@@ -832,8 +835,7 @@ void		Game::OnRender		(void)
 
 	if (HandRefreshed)
 	{
-		Dirty = true;
-		OnRender(); //Recursive call since background must be drawn first
+		OnRender(true); //Recursive call since background must be drawn first
 		return;
 	}
 

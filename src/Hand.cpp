@@ -121,8 +121,11 @@ bool	Hand::OnRender	(SDL_Surface * Surface, bool Force)
 	{
 		if (Dirty || Force)
 		{
-			OnInit();
-			Dirty = false;
+			if (Dirty)
+			{
+				OnInit();
+				Dirty = false;
+			}
 
 			for (int i = 0; i < HAND_SIZE; ++i)
 			{
