@@ -620,6 +620,9 @@ void		Game::OnLoop		(void)
 
 	if (Scene == SCENE_GAME_PLAY)
 	{
+		if (SourceDeck)
+			DeckCount = SourceDeck->CardsLeft();
+
 		if (EndOfGame())
 		{
 			if (!Extended && !ExtensionDeclined)
@@ -757,6 +760,7 @@ void		Game::OnRender		(bool Force)
 		SceneChanged = true;
 		OldDiscardTop = DiscardTop;
 	}
+
 	if (OldDeckCount != DeckCount)
 	{
 		SceneChanged = true;
@@ -775,7 +779,6 @@ void		Game::OnRender		(bool Force)
 		if (SceneChanged)
 			OnInit(); //Refresh our surfaces
 
-		SceneChanged = true;
 		RefreshedSomething = true;
 
 		// TODO: Remove the following hack, necessitated by transparency present in the enlarged graphics
@@ -820,7 +823,7 @@ void		Game::OnRender		(bool Force)
 	if (Scene == SCENE_GAME_PLAY)
 	{
 		// SceneChanged will force the players to re-render if this function re-rendered
-		RefreshedSomething = Players[0].OnRender(Window, 0, SceneChanged);
+		RefreshedSomething |= Players[0].OnRender(Window, 0, SceneChanged);
 		RefreshedSomething |= Players[1].OnRender(Window, 1, SceneChanged);
 	}
 
