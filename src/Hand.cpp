@@ -116,6 +116,13 @@ void	Hand::OnInit	(void)
 bool	Hand::OnRender	(SDL_Surface * Surface, bool Force)
 {
 	bool	WasDirty = Dirty;
+	
+	SDL_Rect	BackdropRect =
+		#ifdef ANDROID_DEVICE
+			{100, 570, 380, 190};
+		#else
+			{80, 350, 240, 130};
+		#endif
 
 	if (Surface)
 	{
@@ -125,6 +132,7 @@ bool	Hand::OnRender	(SDL_Surface * Surface, bool Force)
 			{
 				OnInit();
 				Dirty = false;
+				SDL_FillRect(Surface, &BackdropRect, SDL_MapRGB(Surface->format, 120, 192, 86));
 			}
 
 			for (int i = 0; i < HAND_SIZE; ++i)

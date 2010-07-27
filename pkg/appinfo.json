@@ -1,6 +1,6 @@
 {
 	"id": "com.webosnerd.sdl-mille",
-	"version": "0.1.6",
+	"version": "0.1.7",
 	"vendor": "webOSnerd.com",
 	"type": "game",
 	"main": "SDLMille.elf",

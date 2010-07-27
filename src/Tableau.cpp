@@ -47,7 +47,7 @@ namespace _SDLMille
 	}
 
 	// Vars
-	Dirty = false;
+	Dirty = true;
 	Mileage = 0;
 	OldTopCard = TopCard = CARD_NULL_NULL;
 	OldLimitCard = LimitCard = CARD_NULL_NULL;

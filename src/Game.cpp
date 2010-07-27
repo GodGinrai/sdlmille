@@ -816,28 +816,17 @@ void		Game::OnRender		(bool Force)
 		}
 	}
 
-	bool HandRefreshed = false; //Control variable. We have to re-render the background
-		//if the hand has changed, since the image for CARD_NULL_NULL does not cover up
-		//what's underneath, giving the appearance that the empty slot is not empty.
-
 	// During play, we also need to render our players
 	if (Scene == SCENE_GAME_PLAY)
 	{
 		// SceneChanged will force the players to re-render if this function re-rendered
-		HandRefreshed = Players[0].OnRender(Window, 0, SceneChanged);
-		RefreshedSomething |= HandRefreshed;
+		RefreshedSomething = Players[0].OnRender(Window, 0, SceneChanged);
 		RefreshedSomething |= Players[1].OnRender(Window, 1, SceneChanged);
 	}
 
 	//And render the message last.
 	if (MessageSurface)
 		Surface::Draw(Window, MessageSurface, ((320 - MessageSurface->w) / 2), 125);
-
-	if (HandRefreshed)
-	{
-		OnRender(true); //Recursive call since background must be drawn first
-		return;
-	}
 
 	if (RefreshedSomething)
 		SDL_Flip(Window);
