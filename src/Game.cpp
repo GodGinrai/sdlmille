@@ -32,12 +32,6 @@ namespace _SDLMille
 
 	// Initialize remaining pointers to zero
 	Window = 0;
-	Background = 0;
-	DiscardSurface = 0;
-	DrawCardSurface = 0;
-	DrawTextSurface = 0;
-	ScoresSurface = OutcomeSurface = 0;
-	MessageSurface = 0;
 	GameOverFont = DrawFont = 0;
 
 	Modal = MODAL_NONE;
@@ -76,14 +70,6 @@ namespace _SDLMille
 			ScoreBreakdown[i][j] = 0;
 	}
 
-	for (int i = 0; i < (SCORE_CATEGORY_COUNT + 1); ++i)
-	{
-		for (int j = 0; j < SCORE_COLUMN_COUNT; ++j)
-		{
-			ScoreSurfaces[i][j] = 0;
-		}
-	}
-
 	Message[0] = '\0';
 
 	DrawFont = TTF_OpenFont("LiberationMono-Regular.ttf", 16);
@@ -95,37 +81,12 @@ namespace _SDLMille
 	// Clean up all of our pointers
 	if (SourceDeck)
 		delete SourceDeck;
-	if (Background)
-		SDL_FreeSurface(Background);
 	if (Window)
 		SDL_FreeSurface(Window);
-	if (DiscardSurface)
-		SDL_FreeSurface(DiscardSurface);
-	if (DrawCardSurface)
-		SDL_FreeSurface(DrawCardSurface);
-	if (DrawTextSurface)
-		SDL_FreeSurface(DrawTextSurface);
-	if (OutcomeSurface)
-		SDL_FreeSurface(OutcomeSurface);
-	if (ScoresSurface)
-		SDL_FreeSurface(ScoresSurface);
-	if (MessageSurface)
-		SDL_FreeSurface(MessageSurface);
 	if (DrawFont)
 		TTF_CloseFont(DrawFont);
 	if (GameOverFont)
 		TTF_CloseFont(GameOverFont);
-
-	for (int i = 0; i < (SCORE_CATEGORY_COUNT + 1); ++i)
-	{
-		for (int j = 0; j < SCORE_COLUMN_COUNT; ++j)
-		{
-			if (ScoreSurfaces[i][j])
-			{
-				SDL_FreeSurface(ScoreSurfaces[i][j]);
-			}
-		}
-	}
 
 	// SDL_ttf cleanup
 	if (TTF_WasInit())
@@ -446,73 +407,15 @@ bool		Game::OnInit		(void)
 		SDL_WM_SetCaption("SDL Mille", "mille.ico");
 	}
 
-	// Free all of our pointers
-
-	// TODO: Global function to check and free pointers
-
-	if (Background)
-	{
-		SDL_FreeSurface(Background);
-		Background = 0;
-	}
-
-	if (DiscardSurface)
-	{
-		SDL_FreeSurface(DiscardSurface);
-		DiscardSurface = 0;
-	}
-
-	if (DrawCardSurface)
-	{
-		SDL_FreeSurface(DrawCardSurface);
-		DrawCardSurface = 0;
-	}
-
-	if (DrawTextSurface)
-	{
-		SDL_FreeSurface(DrawTextSurface);
-		DrawTextSurface = 0;
-	}
-
-	if (OutcomeSurface)
-	{
-		SDL_FreeSurface(OutcomeSurface);
-		OutcomeSurface = 0;
-	}
-
-	if (ScoresSurface)
-	{
-		SDL_FreeSurface(ScoresSurface);
-		ScoresSurface = 0;
-	}
-
-	if (MessageSurface)
-	{
-		SDL_FreeSurface(MessageSurface);
-		MessageSurface = 0;
-	}
-
-	for (int i = 0; i < (SCORE_CATEGORY_COUNT + 1); ++i)
-	{
-		for (int j = 0; j < SCORE_COLUMN_COUNT; ++j)
-		{
-			if (ScoreSurfaces[i][j])
-			{
-				SDL_FreeSurface(ScoreSurfaces[i][j]);
-				ScoreSurfaces[i][j] = 0;
-			}
-		}
-	}
-	
 	if (Message[0] != '\0')
 	{
 		if (GameOverFont)
-			MessageSurface = Surface::RenderText(Message, GameOverFont);
+			MessageSurface.SetText(Message, GameOverFont);
 	}
 
 	if (Scene == SCENE_MAIN)
 	{
-		Background = Surface::Load("gfx/scenes/main.png");
+		Background.SetImage("gfx/scenes/main.png");
 
 		if (!Background)
 			return false;
@@ -522,11 +425,11 @@ bool		Game::OnInit		(void)
 
 	else if (Scene == SCENE_GAME_PLAY)
 	{
-		Background = Surface::Load("gfx/scenes/game-play.png");
+		Background.SetImage("gfx/scenes/game-play.png");
 
-		DiscardSurface = Card::GetImageFromValue(DiscardTop);
+		DiscardSurface.SetImage(Card::GetFileFromValue(DiscardTop));
 
-		DrawCardSurface = Card::GetImageFromValue(CARD_NULL_NULL);
+		DrawCardSurface.SetImage(Card::GetFileFromValue(CARD_NULL_NULL));
 
 		if (DrawFont)
 		{
@@ -538,7 +441,7 @@ bool		Game::OnInit		(void)
 			if ((DeckCount <= DECK_SIZE) && (DeckCount < 1000))
 			{
 				sprintf(DeckCountText, "%u", DeckCount);
-				DrawTextSurface = Surface::RenderText(DeckCountText, DrawFont);
+				DrawTextSurface.SetText(DeckCountText, DrawFont);
 			}
 		}
 
@@ -547,7 +450,7 @@ bool		Game::OnInit		(void)
 
 	else if (Scene == SCENE_LEARN)
 	{
-		Background = Surface::Load("gfx/scenes/learn.png");
+		Background.SetImage("gfx/scenes/learn.png");
 
 		if (!Background)
 			return false;
@@ -557,7 +460,7 @@ bool		Game::OnInit		(void)
 
 	else if (Scene == SCENE_GAME_OVER)
 	{
-		Background = Surface::Load("gfx/scenes/game_over.png");
+		Background.SetImage("gfx/scenes/game_over.png");
 
 		if (GameOverFont)
 		{
@@ -595,7 +498,7 @@ bool		Game::OnInit		(void)
 								sprintf(TempText, "%u", ScoreBreakdown[j - 1][i - 1]);
 						}
 					}
-					ScoreSurfaces[i][j] = Surface::RenderText(TempText, GameOverFont);
+					ScoreSurfaces[i][j].SetText(TempText, GameOverFont);
 				}
 			}
 		}
@@ -788,16 +691,16 @@ void		Game::OnRender		(bool Force)
 		
 		// Render the appropriate surfaces
 		if (Background)
-			Surface::Draw(Window, Background, 0, 0);
+			Background.Render(0, 0, Window);
 
 		if (Scene == SCENE_GAME_PLAY)
 		{
 			if (DiscardSurface)
-				Surface::Draw(Window, DiscardSurface, 3, 358);
+				DiscardSurface.Render(3, 358, Window);
 			if (DrawCardSurface)
-				Surface::Draw(Window, DrawCardSurface, 3, 420);
+				DrawCardSurface.Render(3, 420, Window);
 			if (DrawTextSurface)
-				Surface::Draw(Window, DrawTextSurface, 23 - (DrawTextSurface->w / 2), 440);
+				DrawTextSurface.Render(23 - (DrawTextSurface.GetWidth() / 2), 440, Window);
 		}
 
 		else if (Scene == SCENE_GAME_OVER)
@@ -812,7 +715,7 @@ void		Game::OnRender		(bool Force)
 					{
 						X = 12 + ((j > 0) ? 175 : 0) + ((j > 1) ? 75 : 0);
 						Y = 20 + (i * 26) + ((i > 0) ? 20 : 0) + ((i > (SCORE_CATEGORY_COUNT - 3)) ? 20 : 0) + ((i > (SCORE_CATEGORY_COUNT - 1)) ? 20 : 0);
-						Surface::Draw(Window, ScoreSurfaces[i][j], X, Y);
+						ScoreSurfaces[i][j].Render(X, Y, Window);
 					}
 				}
 			}
@@ -829,7 +732,7 @@ void		Game::OnRender		(bool Force)
 
 	//And render the message last.
 	if (MessageSurface)
-		Surface::Draw(Window, MessageSurface, ((320 - MessageSurface->w) / 2), 125);
+		MessageSurface.Render(((320 - MessageSurface.GetWidth()) / 2), 125, Window);
 
 	if (RefreshedSomething)
 		SDL_Flip(Window);

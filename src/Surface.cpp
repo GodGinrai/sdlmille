@@ -22,6 +22,93 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 namespace _SDLMille
 {
 
+				Surface::Surface	(void)
+{
+	MySurface = 0;
+	Cached = 0;
+	Length = 0;
+}
+
+				Surface::~Surface	(void)
+{
+	if (MySurface)
+		SDL_FreeSurface(MySurface);
+
+	if (Cached)
+		delete [] Cached;
+}
+
+void	Surface::Clear	(void)
+{
+	if (MySurface != 0)
+	{
+		SDL_FreeSurface(MySurface);
+		MySurface = 0;
+	}
+
+	if (Cached != 0)
+	{
+		delete [] Cached;
+		Cached = 0;
+		Length = 0;
+	}
+}
+
+int		Surface::GetHeight	(void)
+{
+	if (MySurface != 0)
+		return MySurface->h;
+
+	return 0;
+}
+
+int		Surface::GetWidth	(void)
+{
+	if (MySurface != 0)
+		return MySurface->w;
+
+	return 0;
+}
+
+void	Surface::Render	(int X, int Y, SDL_Surface * Destination)
+{
+	if (*this)
+		Draw(Destination, MySurface, X, Y);
+}
+
+void	Surface::SetImage	(const char * File)
+{
+	if (CheckCache(File))
+	{
+		if (MySurface)
+		{
+			SDL_FreeSurface(MySurface);
+			MySurface = 0;
+		}
+
+		MySurface = Load(File);
+	}
+}
+
+void	Surface::SetText	(const char * Text, TTF_Font * Font)
+{
+	if (CheckCache(Text))
+	{
+		if (MySurface)
+		{
+			SDL_FreeSurface(MySurface);
+			MySurface = 0;
+		}
+
+		MySurface = RenderText(Text, Font);
+	}
+}
+
+Surface::operator bool	(void)
+{
+	return (MySurface != 0);
+}
+
 bool			Surface::Draw	(SDL_Surface * Destination, SDL_Surface * Source, int X, int Y)
 {
 	if (!Destination || !Source)
@@ -121,6 +208,39 @@ SDL_Surface *	Surface::RenderText	(const char *Text, TTF_Font *Font)
 	}
 
 	return 0;
+}
+
+
+
+
+bool		Surface::CheckCache		(const char * Text)
+{
+	bool	RetVal = false;
+
+	if (Cached)
+	{
+		if (strcmp(Cached, Text))
+		{
+			RetVal = true;
+			delete [] Cached;
+			Cached = 0;
+			Length = 0;
+		}
+	}
+	else
+		RetVal = true;
+
+	if (RetVal)
+	{
+		Length = strlen(Text);
+		Cached = new char[Length + 1];
+		strcpy(Cached, Text);
+		printf("Cache was dirty.\n");
+	}
+	else
+		printf("Cache was up-to-date.\n");
+
+	return RetVal;
 }
 
 }

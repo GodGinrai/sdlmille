@@ -37,11 +37,11 @@ private:
 	void		SetTopCard		(Uint8 Value);
 
 	/* Properties */
-	SDL_Surface	*PileSurfaces[MILEAGE_PILES][MAX_PILE_SIZE],
-				*BattleSurface,
-				*LimitSurface,
-				*MileageTextSurface,
-				*SafetySurfaces[SAFETY_COUNT];
+	Surface		BattleSurface,
+				LimitSurface,
+				MileageTextSurface,
+				PileSurfaces[MILEAGE_PILES][MAX_PILE_SIZE],
+				SafetySurfaces[SAFETY_COUNT];
 	Uint8		CardCount[MILEAGE_PILES],
 				TopCard, OldTopCard,
 				LimitCard, OldLimitCard;

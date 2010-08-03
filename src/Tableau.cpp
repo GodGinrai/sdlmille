@@ -25,23 +25,15 @@ namespace _SDLMille
 		Tableau::Tableau		(void)
 {
 	// Pointers
-	BattleSurface = 0;
-	LimitSurface = 0;
-	MileageTextSurface = 0;
 	MyFont = 0;
 
 	for (int i = 0; i < MILEAGE_PILES; ++i)
 	{
 		CardCount[i] = 0;
-		for (int j = 0; j < MAX_PILE_SIZE; ++j)
-		{
-			PileSurfaces[i][j] = 0;
-		}
 	}
 
 	for (int i = 0; i < SAFETY_COUNT; ++i)
 	{
-		SafetySurfaces[i] = 0;
 		Safeties[i] = false;
 		CoupFourres[i] = false;
 	}
@@ -66,31 +58,6 @@ namespace _SDLMille
 		// I think SDL_ttf handles this gracefully, but it does cause an access violation
 		// when run on Visual Studio in debug mode
 		TTF_CloseFont(MyFont);
-
-
-	if (BattleSurface)
-		SDL_FreeSurface(BattleSurface);
-	if (LimitSurface)
-		SDL_FreeSurface(LimitSurface);
-	if (MileageTextSurface)
-		SDL_FreeSurface(MileageTextSurface);
-
-	for (int i = 0; i < MILEAGE_PILES; ++i)
-	{
-		for (int j = 0; j < MAX_PILE_SIZE; ++j)
-		{
-			if(PileSurfaces[i][j])
-				SDL_FreeSurface(PileSurfaces[i][j]);
-		}
-	}
-
-
-	for (int i = 0; i < SAFETY_COUNT; ++i)
-	{
-		if (SafetySurfaces[i])
-			SDL_FreeSurface(SafetySurfaces[i]);
-	}
-
 }
 
 Uint8	Tableau::Get200Count	(void)
@@ -148,24 +115,9 @@ bool	Tableau::IsRolling		(void)
 
 void	Tableau::OnInit			(void)
 {
-	// Free our surfaces
-
-	if (BattleSurface)
-	{
-		SDL_FreeSurface(BattleSurface);
-		BattleSurface = 0;
-	}
-
-	if (LimitSurface)
-	{
-		SDL_FreeSurface(LimitSurface);
-		LimitSurface = 0;
-	}
-
 	// Refresh our surfaces
-
-	BattleSurface = Card::GetImageFromValue(TopCard);
-	LimitSurface = Card::GetImageFromValue(LimitCard);
+	BattleSurface.SetImage(Card::GetFileFromValue(TopCard));
+	LimitSurface.SetImage(Card::GetFileFromValue(LimitCard));
 
 	for (int i = 0; i < MILEAGE_PILES; ++i)
 	{
@@ -174,7 +126,7 @@ void	Tableau::OnInit			(void)
 			for (int j = 0; j < CardCount[i]; ++j)
 			{
 				if (!PileSurfaces[i][j])
-					PileSurfaces[i][j] = Card::GetImageFromValue(i + MILEAGE_OFFSET);
+					PileSurfaces[i][j].SetImage(Card::GetFileFromValue(i + MILEAGE_OFFSET));
 			}
 		}
 	}
@@ -184,23 +136,17 @@ void	Tableau::OnInit			(void)
 		if (Safeties[i])
 		{
 			if (!SafetySurfaces[i])
-				SafetySurfaces[i] = Card::GetImageFromValue(i + 10, CoupFourres[i]);
+				SafetySurfaces[i].SetImage(Card::GetFileFromValue(i + 10, CoupFourres[i]));
 		}
-	}
-
-	if (MileageTextSurface)
-	{
-		SDL_FreeSurface(MileageTextSurface);
-		MileageTextSurface = 0;
 	}
 
 	char	MileageText[5];
 
 	if ((Mileage <= 1000) && MyFont)
 	{
-		// We have a font, and the mileage is not going to over-run our buffer
+		// We have a font, and the mileage is sane
 		sprintf(MileageText, "%4u", Mileage);
-		MileageTextSurface = Surface::RenderText(MileageText, MyFont);
+		MileageTextSurface.SetText(MileageText, MyFont);
 	}
 
 }
@@ -340,17 +286,15 @@ bool	Tableau::OnRender		(SDL_Surface * Surface, Uint8 PlayerIndex, bool Force)
 				for (int j = 0; j < MAX_PILE_SIZE; ++ j)
 				{
 					if (PileSurfaces[i][j])
-					{
-						Surface::Draw(Surface, PileSurfaces[i][j], (i * 42) + 2, Y + (j * 8));
-					}
+						PileSurfaces[i][j].Render((i * 42) + 2, Y + (j * 8), Surface);
 				}
 			}
 
 			if (BattleSurface)
-				Surface::Draw(Surface, BattleSurface, 220, Y);
+				BattleSurface.Render(220, Y, Surface);
 
 			if (LimitSurface)
-				Surface::Draw(Surface, LimitSurface, 263, Y);
+				LimitSurface.Render(263, Y, Surface);
 
 			for (int i = 0; i < SAFETY_COUNT; ++i)
 			{
@@ -365,12 +309,12 @@ bool	Tableau::OnRender		(SDL_Surface * Surface, Uint8 PlayerIndex, bool Force)
 						X -= 8;
 					}
 
-					Surface::Draw(Surface, SafetySurfaces[i], X, Y + YOffset);
+					SafetySurfaces[i].Render(X, Y + YOffset, Surface);
 				}
 			}
 
 			if (MileageTextSurface)
-				Surface::Draw(Surface, MileageTextSurface, 10, Y + 150);
+				MileageTextSurface.Render(10, Y + 150, Surface);
 		}
 	}
 
@@ -384,10 +328,7 @@ void	Tableau::Reset			(void)
 		for (int j = 0; j < MAX_PILE_SIZE; ++j)
 		{
 			if (PileSurfaces[i][j])
-			{
-				SDL_FreeSurface(PileSurfaces[i][j]);
-				PileSurfaces[i][j] = 0;
-			}
+				PileSurfaces[i][j].Clear();
 		}
 
 		CardCount[i] = 0;
@@ -396,10 +337,7 @@ void	Tableau::Reset			(void)
 	for (int i = 0; i < SAFETY_COUNT; ++i)
 	{
 		if (SafetySurfaces[i])
-		{
-			SDL_FreeSurface(SafetySurfaces[i]);
-			SafetySurfaces[i] = 0;
-		}
+			SafetySurfaces[i].Clear();
 
 		CoupFourres[i] = Safeties[i] = false;
 	}

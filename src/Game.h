@@ -40,12 +40,13 @@ private:
 	bool		Pop				(Uint8 Index);
 
 	/* Properties */
-	SDL_Surface	*Window, *Background,
-				*DiscardSurface,
-				*DrawCardSurface, *DrawTextSurface,
-				*OutcomeSurface, *ScoresSurface,
-				*ScoreSurfaces[SCORE_CATEGORY_COUNT + 1][SCORE_COLUMN_COUNT],
-				*MessageSurface;
+	SDL_Surface	*Window;
+	Surface		Background,
+				DiscardSurface,
+				DrawCardSurface, DrawTextSurface,
+				MessageSurface,
+				ResultTextSurface,
+				ScoreSurfaces[SCORE_CATEGORY_COUNT + 1][SCORE_COLUMN_COUNT];
 	Player		Players[PLAYER_COUNT];
 	Deck *		SourceDeck;
 	int			DeckCount, OldDeckCount,

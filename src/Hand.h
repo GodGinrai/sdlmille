@@ -27,8 +27,8 @@ private:
 	Card		ThisHand[HAND_SIZE];
 	bool		Popped[HAND_SIZE],
 				Dirty;
-	SDL_Surface	*CardSurfaces[HAND_SIZE],
-				*Overlay;
+	Surface		CardSurfaces[HAND_SIZE],
+				Overlay;
 };
 
 }

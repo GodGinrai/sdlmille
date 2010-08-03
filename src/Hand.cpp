@@ -28,24 +28,12 @@ namespace _SDLMille
 
 	for (int i = 0; i < HAND_SIZE; ++i)
 	{
-		CardSurfaces[i] = 0;
 		Popped[i] = false;
 	}
-
-	Overlay = 0;
 }
 
 		Hand::~Hand(void)
 {
-	if (Overlay)
-		SDL_FreeSurface(Overlay);
-
-	for (int i = 0; i < HAND_SIZE; ++i)
-	{
-		if (CardSurfaces[i])
-			SDL_FreeSurface(CardSurfaces[i]);
-	}
-
 }
 
 bool	Hand::Discard	(Uint8 Index)
@@ -100,16 +88,11 @@ bool	Hand::IsPopped	(Uint8 Index)
 void	Hand::OnInit	(void)
 {
 	if (!Overlay)
-		Overlay = Surface::Load("gfx/orb.png");
+		Overlay.SetImage("gfx/orb.png");
 
 	for (int i = 0; i < HAND_SIZE; ++i)
 	{
-		if (CardSurfaces[i])
-		{
-			SDL_FreeSurface(CardSurfaces[i]);
-			CardSurfaces[i] = 0;
-		}
-		CardSurfaces[i] = Card::GetImageFromValue(ThisHand[i].GetValue());
+		CardSurfaces[i].SetImage(Card::GetFileFromValue(ThisHand[i].GetValue()));
 	}
 }
 
@@ -132,6 +115,9 @@ bool	Hand::OnRender	(SDL_Surface * Surface, bool Force)
 			{
 				OnInit();
 				Dirty = false;
+
+				//TODO: Fix the following hack by adding an IsDirty() method which will be checked
+				//by the Game class
 				SDL_FillRect(Surface, &BackdropRect, SDL_MapRGB(Surface->format, 120, 192, 86));
 			}
 
@@ -162,11 +148,11 @@ bool	Hand::OnRender	(SDL_Surface * Surface, bool Force)
 				if (CardSurfaces[i])
 				{
 					// Draw the cards
-					Surface::Draw(Surface, CardSurfaces[i], X, Y);
+					CardSurfaces[i].Render(X, Y, Surface);
 
 					if (Popped[i] && Overlay)
 						// If this card is popped, render the orb over it
-						Surface::Draw(Surface, Overlay, X, Y + 8);
+						Overlay.Render(X, Y + 8, Surface);
 				}
 			}
 		}
