@@ -24,6 +24,7 @@ public:
 	Uint8		GetValue		(Uint8 Index);
 	bool		HasCoupFourre	(Uint8 Value);
 	bool		HasSafety		(Uint8 Value);
+	bool		IsDirty			(void);
 	bool		IsLimited		(void);
 	bool		IsOutOfCards	(void);
 	bool		IsPopped		(Uint8 Index);
@@ -50,6 +51,11 @@ inline	Uint8	Player::GetTopCard	(bool SpeedPile)
 inline	int		Player::GetMileage	(void)
 {
 	return MyTableau.GetMileage();
+}
+
+inline	bool	Player::IsDirty		(void)
+{
+	return PlayerHand.IsDirty();
 }
 
 }

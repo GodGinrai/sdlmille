@@ -17,6 +17,7 @@ public:
 	bool		Draw		(Deck * Source, Uint8 Index);
 	Uint8		GetType		(Uint8 Index);
 	Uint8		GetValue	(Uint8 Index);
+	bool		IsDirty		(void);
 	bool		IsPopped	(Uint8 Index);
 	void		OnInit		(void);
 	bool		OnRender	(SDL_Surface * Surface, bool Force = false);
@@ -30,6 +31,11 @@ private:
 	Surface		CardSurfaces[HAND_SIZE],
 				Overlay;
 };
+
+inline	bool	Hand::IsDirty	(void)
+{
+	return Dirty;
+}
 
 }
 

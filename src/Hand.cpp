@@ -115,10 +115,6 @@ bool	Hand::OnRender	(SDL_Surface * Surface, bool Force)
 			{
 				OnInit();
 				Dirty = false;
-
-				//TODO: Fix the following hack by adding an IsDirty() method which will be checked
-				//by the Game class
-				SDL_FillRect(Surface, &BackdropRect, SDL_MapRGB(Surface->format, 120, 192, 86));
 			}
 
 			for (int i = 0; i < HAND_SIZE; ++i)

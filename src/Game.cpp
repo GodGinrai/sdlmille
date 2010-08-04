@@ -122,11 +122,7 @@ bool		Game::IsValidPlay	(Uint8 Index)
 			return false;
 
 		//Cannot go past trip end, 1000 miles if the trip was extended, otherwise 700
-
-		// TODO: Make MaxMileage a class property, to reduce redundancy
-		int MaxMileage = (Extended) ? 1000 : 700;
-
-		if ((MileageValue + Players[Current].GetMileage()) > MaxMileage)
+		if ((MileageValue + Players[Current].GetMileage()) > ((Extended) ? 1000 : 700))
 			// Cannot go past end of trip
 			return false;
 		
@@ -217,7 +213,7 @@ void		Game::OnClick		(int X, int Y)
 {
 	if (Frozen)
 	{
-		if (abs(SDL_GetTicks() - FrozenAt) > 1000)
+		if (abs(static_cast<int>(SDL_GetTicks() - FrozenAt)) > 1000)
 		{
 			Frozen = false;
 			FrozenAt = 0;
@@ -242,6 +238,17 @@ void		Game::OnClick		(int X, int Y)
 				{
 					Extended = false;
 					ExtensionDeclined = true;
+					Modal = MODAL_NONE;
+					Dirty = true;
+				}
+			}
+		}
+		else if (Modal == MODAL_GAME_MENU)
+		{
+			if ((X >= 251) && (X <= 277))
+			{
+				if ((Y >= 83) && (Y <= 109))
+				{
 					Modal = MODAL_NONE;
 					Dirty = true;
 				}
@@ -272,10 +279,20 @@ void		Game::OnClick		(int X, int Y)
 	{
 		if (Current == 0) // Don't respond to clicks unless it's the human's turn
 		{
-			// TODO: Give user a way to return to main menu
+			if (Y < 175)
+			{
+				if ((Y < 20) && (X < 45))
+					ShowModal(MODAL_GAME_MENU);
+				else
+				{
+					if (Players[Current].GetType(FindPopped()) == CARD_HAZARD)
+						Pop(FindPopped());
+				}
+			}
 
-			if ((Y > 175) && (Y < 350))
-				; // TODO: Play popped card by clicking human's tableau
+			else if ((Y > 175) && (Y < 350))
+				Pop(FindPopped());
+
 			else if ((Y >= 358) && (Y <= 476))
 			{
 				Uint8	Add = 0,
@@ -353,7 +370,7 @@ void		Game::OnEvent		(SDL_Event * Event)
 
 		else if (Event->type == SDL_KEYUP)
 		{
-			//ShowMessage("Computer extends trip");
+			Players[1].ReceiveHazard(rand() % 5);
 		}
 	}
 }
@@ -432,18 +449,7 @@ bool		Game::OnInit		(void)
 		DrawCardSurface.SetImage(Card::GetFileFromValue(CARD_NULL_NULL));
 
 		if (DrawFont)
-		{
-			char	DeckCountText[4];
-
-			// Sanity check on DeckCount and make sure it won't overflow our buffer
-
-			// TODO: use abs() here and in SCENE_GAME_OVER for additional safety
-			if ((DeckCount <= DECK_SIZE) && (DeckCount < 1000))
-			{
-				sprintf(DeckCountText, "%u", DeckCount);
-				DrawTextSurface.SetText(DeckCountText, DrawFont);
-			}
-		}
+			DrawTextSurface.SetInteger(DeckCount, DrawFont);
 
 		return true;
 	}
@@ -464,41 +470,17 @@ bool		Game::OnInit		(void)
 
 		if (GameOverFont)
 		{
-			char TempText[21];
+			ScoreSurfaces[0][1].SetText("Human", GameOverFont);
+			ScoreSurfaces[0][2].SetText("CPU", GameOverFont);
 
-			for (int i = 0; i < (SCORE_CATEGORY_COUNT + 1); ++i)
+			for (int i = 1; i < (SCORE_CATEGORY_COUNT + 1); ++i)
 			{
 				for (int j = 0; j < SCORE_COLUMN_COUNT; ++j)
 				{
-					if (i == 0)
-					{
-						switch (j)
-						{
-						case 0:
-							TempText[0] = '\0';
-							break;
-						case 1:
-							strcpy(TempText, "Human");
-							break;
-						case 2:
-						default:
-							strcpy(TempText, "CPU");
-						}
-					}
+					if (j == 0)
+						ScoreSurfaces[i][j].SetText(SCORE_CAT_NAMES[i - 1], GameOverFont);
 					else
-					{
-						if (j == 0)
-							strcpy(TempText, SCORE_CAT_NAMES[i - 1]);
-						else
-						{
-							int Score = ScoreBreakdown[j - 1][i - 1];
-							if ((Score == 0) && (i < SCORE_CATEGORY_COUNT))
-								strcpy(TempText, "-");
-							else
-								sprintf(TempText, "%u", ScoreBreakdown[j - 1][i - 1]);
-						}
-					}
-					ScoreSurfaces[i][j].SetText(TempText, GameOverFont);
+						ScoreSurfaces[i][j].SetInteger(ScoreBreakdown[j - 1][i - 1], GameOverFont, (i >= (SCORE_CATEGORY_COUNT - 2)));
 				}
 			}
 		}
@@ -513,10 +495,11 @@ void		Game::OnLoop		(void)
 {
 	if (Message[0] != '\0')
 	{
-		if (abs(SDL_GetTicks() - MessagedAt) > 2500)
+		if (abs(static_cast<int>(SDL_GetTicks() - MessagedAt)) > 2500)
 		{
 			Message[0] = '\0';
 			MessagedAt = 0;
+			MessageSurface.Clear();
 			Dirty = true;
 		}
 	}
@@ -677,11 +660,16 @@ void		Game::OnRender		(bool Force)
 		Dirty = false;
 	}
 
+	//Re-render the background if the hand has changed
+	if (Players[0].IsDirty())
+		Force = true;
+
 	if (SceneChanged || Force)
 	{
 		if (SceneChanged)
 			OnInit(); //Refresh our surfaces
 
+		Force = true;
 		RefreshedSomething = true;
 
 		// TODO: Remove the following hack, necessitated by transparency present in the enlarged graphics
@@ -725,9 +713,9 @@ void		Game::OnRender		(bool Force)
 	// During play, we also need to render our players
 	if (Scene == SCENE_GAME_PLAY)
 	{
-		// SceneChanged will force the players to re-render if this function re-rendered
-		RefreshedSomething |= Players[0].OnRender(Window, 0, SceneChanged);
-		RefreshedSomething |= Players[1].OnRender(Window, 1, SceneChanged);
+		//Force compels players to re-render if this function re-rendered
+		RefreshedSomething |= Players[0].OnRender(Window, 0, Force);
+		RefreshedSomething |= Players[1].OnRender(Window, 1, Force);
 	}
 
 	//And render the message last.
@@ -809,10 +797,15 @@ bool		Game::ShowModal		(Uint8 ModalName)
 
 		Surface::Draw(Window, Surface::Load("gfx/modals/shadow.png"), 0, 0);
 
-		if (Modal == MODAL_EXTENSION)
+		switch(Modal)
 		{
+		case MODAL_EXTENSION:
 			Surface::Draw(Window, Surface::Load("gfx/modals/extension.png"), 74, 193);
-		}
+			break;
+		case MODAL_GAME_MENU:
+			Surface::Draw(Window, Surface::Load("gfx/modals/menu_top.png"), 40, 80);
+			break;
+		}		
 
 		SDL_Flip(Window);
 
@@ -841,9 +834,6 @@ bool			Game::Discard		(void)
 	Uint8	Value =	CARD_NULL_NULL,
 			Index =	FindPopped(); // Find out which card is popped
 
-	//TODO: This is a hack. This should be handled in the Hand or Player class.
-	//Dirty = true;
-
 	if (Index < HAND_SIZE)
 	{
 		Value =		Players[Current].GetValue(Index);
@@ -871,8 +861,7 @@ void			Game::GetScores			(void)
 		{
 			int Score = 0,
 				PlayerSafetyCount = 0, PlayerCoupFourreCount = 0,
-				CategoryIndex = 0,
-				TripLength = (Extended) ? 1000 : 700;
+				CategoryIndex = 0;
 
 			/* Points scored by everyone */
 
@@ -919,7 +908,7 @@ void			Game::GetScores			(void)
 
 			/* Points scored only by the player which completed the trip */
 
-			if (Players[i].GetMileage() == TripLength)
+			if (Players[i].GetMileage() == ((Extended) ? 1000 : 700))
 			{
 				// 400pt for completing trip
 				Score += 400;
@@ -981,16 +970,12 @@ void			Game::GetScores			(void)
 
 bool	Game::EndOfGame		(void)
 {
-	int EndMileage = (Extended) ? 1000 : 700;
-
 	if (Players[0].IsOutOfCards() && Players[1].IsOutOfCards())
 		return true;
 
 	for (int i = 0; i < PLAYER_COUNT; ++i)
 	{
-		if (Players[i].GetMileage() >= EndMileage)
-			// Theoretically, the above would be ==, but I've made it >= for now.
-			// After more testing, perhaps I will change it to ==
+		if (Players[i].GetMileage() == ((Extended) ? 1000 : 700))
 			return true;
 	}
 

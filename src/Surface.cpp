@@ -26,6 +26,7 @@ namespace _SDLMille
 {
 	MySurface = 0;
 	Cached = 0;
+	Integer = 0;
 	Length = 0;
 }
 
@@ -87,6 +88,51 @@ void	Surface::SetImage	(const char * File)
 		}
 
 		MySurface = Load(File);
+	}
+}
+
+void	Surface::SetInteger	(int Value, TTF_Font * Font, bool ShowZero)
+{
+	if (Value < 0)
+		return;
+
+	if (CheckCache("INTEGER") || (Value != Integer))
+	{
+		Integer = Value;
+
+		if (MySurface)
+		{
+			SDL_FreeSurface(MySurface);
+			MySurface = 0;
+		}
+
+		if (Value == 0)
+		{
+			if (ShowZero)
+				MySurface = RenderText("0", Font);
+			else
+				MySurface = RenderText("-", Font);
+		}
+		else
+		{
+			int		NumDigits = 0,
+					TempNum = Value;
+			char *	MyText = 0;
+
+			while (TempNum > 0)
+			{
+				++NumDigits;
+				TempNum /= 10;
+			}
+
+			MyText = new char[NumDigits + 1];
+
+			if ((MyText != 0) && (Value <= pow((double)10, NumDigits))) //Sanity check
+			{
+				sprintf(MyText, "%u", Value);
+				MySurface = RenderText(MyText, Font);
+			}
+		}
 	}
 }
 

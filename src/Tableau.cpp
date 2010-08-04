@@ -140,13 +140,10 @@ void	Tableau::OnInit			(void)
 		}
 	}
 
-	char	MileageText[5];
-
 	if ((Mileage <= 1000) && MyFont)
 	{
 		// We have a font, and the mileage is sane
-		sprintf(MileageText, "%4u", Mileage);
-		MileageTextSurface.SetText(MileageText, MyFont);
+		MileageTextSurface.SetInteger(Mileage, MyFont);
 	}
 
 }
@@ -266,6 +263,7 @@ bool	Tableau::OnRender		(SDL_Surface * Surface, Uint8 PlayerIndex, bool Force)
 			SDL_Rect	PlayerRect = {0, RectY, W, H}; // Tableau background
 
 			// Color coding
+			//TODO: Pre-fill rectangles because FillRect is slow.
 			if (IsRolling())
 			{
 				if ((LimitCard == CARD_HAZARD_SPEED_LIMIT) && !HasSafety(CARD_SAFETY_RIGHT_OF_WAY))
@@ -314,7 +312,7 @@ bool	Tableau::OnRender		(SDL_Surface * Surface, Uint8 PlayerIndex, bool Force)
 			}
 
 			if (MileageTextSurface)
-				MileageTextSurface.Render(10, Y + 150, Surface);
+				MileageTextSurface.Render(65 - MileageTextSurface.GetWidth(), Y + 150, Surface);
 		}
 	}
 

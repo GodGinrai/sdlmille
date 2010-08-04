@@ -1,4 +1,4 @@
-//#define	WEBOS_DEVICE
+#define	WEBOS_DEVICE
 //#define	ANDROID_DEVICE
 
 #ifndef _SDLMILLE_SURFACE_H
@@ -8,6 +8,7 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
+#include <cmath>
 
 namespace _SDLMille
 {
@@ -22,6 +23,7 @@ public:
 			int				GetWidth	(void);
 			void			Render		(int X, int Y, SDL_Surface * Destination);
 			void			SetImage	(const char * File);
+			void			SetInteger	(int Value, TTF_Font * Font, bool ShowZero = true);
 			void			SetText		(const char * Text, TTF_Font * Font);
 							operator bool	(void);
 
@@ -30,10 +32,11 @@ public:
 	static	SDL_Surface *	RenderText	(const char * Text, TTF_Font *Font);
 
 private:
-	bool				CheckCache	(const char * Text);
-	SDL_Surface			*MySurface;
-	char				*Cached;
-	int					Length;
+	bool			CheckCache	(const char * Text);
+	SDL_Surface		*MySurface;
+	char			*Cached;
+	int				Integer,
+					Length;
 };
 
 }

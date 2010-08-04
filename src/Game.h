@@ -24,7 +24,7 @@ public:
 	bool		OnExecute		(void);
 	bool		OnInit			(void);
 	void		OnLoop			(void);
-	void		OnPlay			(Uint8 Value);
+	void		OnPlay			(Uint8 Index);
 	void		OnRender		(bool Force = false);
 	void		Reset			(void);
 	void		ShowMessage		(const char * Msg);
@@ -68,7 +68,7 @@ private:
 
 
 	enum { SCENE_MAIN = 0, SCENE_GAME_PLAY, SCENE_GAME_MENU, SCENE_GAME_OVER, SCENE_LEARN, SCENE_INVALID };
-	enum { MODAL_EXTENSION = 0, MODAL_NONE };
+	enum { MODAL_EXTENSION = 0, MODAL_GAME_MENU, MODAL_NONE };
 };
 
 }
