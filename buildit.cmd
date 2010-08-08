@@ -25,6 +25,8 @@ if %DEBUG% equ 1 (
    set DEVICEOPTS=
 )
 
+set DEVICEOPTS=%DEVICEOPTS% -fno-exceptions
+
 if %PRE% equ 1 (
    set DEVICEOPTS=%DEVICEOPTS% -mcpu=cortex-a8 -mfpu=neon -mfloat-abi=softfp
 )
