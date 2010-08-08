@@ -70,6 +70,12 @@ namespace _SDLMille
 			ScoreBreakdown[i][j] = 0;
 	}
 
+	//Staggered deal
+	for (int i = 0; i < 13; ++i)
+	{
+		Players[i % 2].Draw();
+	}
+
 	Message[0] = '\0';
 
 	DrawFont = TTF_OpenFont("LiberationMono-Regular.ttf", 16);
@@ -437,6 +443,8 @@ bool		Game::OnInit		(void)
 		if (!Background)
 			return false;
 
+		VersionSurface.SetText(VERSION_TEXT, DrawFont);
+
 		return true;
 	}
 
@@ -449,7 +457,19 @@ bool		Game::OnInit		(void)
 		DrawCardSurface.SetImage(Card::GetFileFromValue(CARD_NULL_NULL));
 
 		if (DrawFont)
+		{
 			DrawTextSurface.SetInteger(DeckCount, DrawFont);
+			if (FindPopped() < HAND_SIZE)
+			{
+				Uint8	Value = Players[Current].GetValue(FindPopped());
+				if (Value < CARD_MILEAGE_25)
+					CaptionSurface.SetText(CARD_CAPTIONS[Players[Current].GetValue(FindPopped())], DrawFont);
+				else
+					CaptionSurface.SetText("MILEAGE", DrawFont);
+			}
+			else
+				CaptionSurface.Clear();
+		}
 
 		return true;
 	}
@@ -550,7 +570,7 @@ void		Game::OnLoop		(void)
 		if (SourceDeck)
 		{
 			// "1 - Current" gives us the opponent
-			Players[1 - Current].Draw();
+			//Players[1 - Current].Draw();
 			DeckCount = SourceDeck->CardsLeft();
 		}
 
@@ -608,7 +628,6 @@ void		Game::OnPlay		(Uint8 Index)
 
 		if (Type != CARD_SAFETY)
 			ChangePlayer();
-
 		else
 		{
 			if (DiscardedCard != CARD_NULL_NULL)
@@ -628,102 +647,116 @@ void		Game::OnPlay		(Uint8 Index)
 
 void		Game::OnRender		(bool Force)
 {
-	bool	RefreshedSomething =	false, // We only flip the display if something changed
-			SceneChanged =			false; // Control variable. Do we need to call OnInit()?
-
-	#ifdef	ANDROID_DEVICE
-	static	SDL_Rect	SceneRect = {0, 40, 480, 720};
-	#endif
-
-	// If the scene, discard pile, or deck count have changed, we need to do a refresh
-	if (Scene != LastScene)
+	if (Modal == MODAL_NONE)
 	{
-		SceneChanged = true;
-		LastScene = Scene;
-	}
-	if (OldDiscardTop != DiscardTop)
-	{
-		SceneChanged = true;
-		OldDiscardTop = DiscardTop;
-	}
+		bool	RefreshedSomething =	false, // We only flip the display if something changed
+				SceneChanged =			false; // Control variable. Do we need to call OnInit()?
 
-	if (OldDeckCount != DeckCount)
-	{
-		SceneChanged = true;
-		OldDeckCount = DeckCount;
-	}
-
-	// Also if we're otherwise dirty
-	if (Dirty)
-	{
-		SceneChanged = true;
-		Dirty = false;
-	}
-
-	//Re-render the background if the hand has changed
-	if (Players[0].IsDirty())
-		Force = true;
-
-	if (SceneChanged || Force)
-	{
-		if (SceneChanged)
-			OnInit(); //Refresh our surfaces
-
-		Force = true;
-		RefreshedSomething = true;
-
-		// TODO: Remove the following hack, necessitated by transparency present in the enlarged graphics
 		#ifdef	ANDROID_DEVICE
-		SDL_FillRect(Window, &SceneRect, SDL_MapRGB(Window->format, 120, 192, 86));
+		static	SDL_Rect	SceneRect = {0, 40, 480, 720};
 		#endif
-		
-		// Render the appropriate surfaces
-		if (Background)
-			Background.Render(0, 0, Window);
 
-		if (Scene == SCENE_GAME_PLAY)
+		// If the scene, discard pile, or deck count have changed, we need to do a refresh
+		if (Scene != LastScene)
 		{
-			if (DiscardSurface)
-				DiscardSurface.Render(3, 358, Window);
-			if (DrawCardSurface)
-				DrawCardSurface.Render(3, 420, Window);
-			if (DrawTextSurface)
-				DrawTextSurface.Render(23 - (DrawTextSurface.GetWidth() / 2), 440, Window);
+			SceneChanged = true;
+			LastScene = Scene;
+		}
+		if (OldDiscardTop != DiscardTop)
+		{
+			SceneChanged = true;
+			OldDiscardTop = DiscardTop;
 		}
 
-		else if (Scene == SCENE_GAME_OVER)
+		if (OldDeckCount != DeckCount)
 		{
-			int X = 0, Y = 0;
+			SceneChanged = true;
+			OldDeckCount = DeckCount;
+		}
 
-			for (int i = 0; i < (SCORE_CATEGORY_COUNT + 1); ++i)
+		// Also if we're otherwise dirty
+		if (Dirty)
+		{
+			SceneChanged = true;
+			Dirty = false;
+		}
+
+		//Re-render the background if the hand has changed
+		if ((Scene == SCENE_GAME_PLAY) && Players[0].IsDirty())
+		{
+			//If captions disabled
+				//Force = true;
+			//else
+			SceneChanged = true;
+		}
+
+		if (SceneChanged || Force)
+		{
+			if (SceneChanged)
+				OnInit(); //Refresh our surfaces
+
+			Force = true;
+			RefreshedSomething = true;
+
+			// TODO: Remove the following hack, necessitated by transparency present in the enlarged graphics
+			#ifdef	ANDROID_DEVICE
+			SDL_FillRect(Window, &SceneRect, SDL_MapRGB(Window->format, 120, 192, 86));
+			#endif
+			
+			// Render the appropriate surfaces
+			if (Background)
+				Background.Render(0, 0, Window);
+
+			if (Scene == SCENE_MAIN)
+				VersionSurface.Render((320 - VersionSurface.GetWidth()) / 2, (480 - VersionSurface.GetHeight()) - 10, Window);
+
+			if (Scene == SCENE_GAME_PLAY)
 			{
-				for (int j = 0; j < SCORE_COLUMN_COUNT; ++j)
+				if (DiscardSurface)
+					DiscardSurface.Render(3, 358, Window);
+				if (DrawCardSurface)
+					DrawCardSurface.Render(3, 420, Window);
+				if (DrawTextSurface)
+					DrawTextSurface.Render(23 - (DrawTextSurface.GetWidth() / 2), 440, Window);
+			}
+
+			else if (Scene == SCENE_GAME_OVER)
+			{
+				int X = 0, Y = 0;
+
+				for (int i = 0; i < (SCORE_CATEGORY_COUNT + 1); ++i)
 				{
-					if (ScoreSurfaces[i][j])
+					for (int j = 0; j < SCORE_COLUMN_COUNT; ++j)
 					{
-						X = 12 + ((j > 0) ? 175 : 0) + ((j > 1) ? 75 : 0);
-						Y = 20 + (i * 26) + ((i > 0) ? 20 : 0) + ((i > (SCORE_CATEGORY_COUNT - 3)) ? 20 : 0) + ((i > (SCORE_CATEGORY_COUNT - 1)) ? 20 : 0);
-						ScoreSurfaces[i][j].Render(X, Y, Window);
+						if (ScoreSurfaces[i][j])
+						{
+							X = 12 + ((j > 0) ? 175 : 0) + ((j > 1) ? 75 : 0);
+							Y = 20 + (i * 26) + ((i > 0) ? 20 : 0) + ((i > (SCORE_CATEGORY_COUNT - 3)) ? 20 : 0) + ((i > (SCORE_CATEGORY_COUNT - 1)) ? 20 : 0);
+							ScoreSurfaces[i][j].Render(X, Y, Window);
+						}
 					}
 				}
 			}
 		}
+
+		// During play, we also need to render our players
+		if (Scene == SCENE_GAME_PLAY)
+		{
+			//Force compels players to re-render if this function re-rendered
+			RefreshedSomething |= Players[0].OnRender(Window, 0, Force);
+			RefreshedSomething |= Players[1].OnRender(Window, 1, Force);
+
+			//Render caption over hand
+			CaptionSurface.Render((320 - CaptionSurface.GetWidth()) / 2, (350 - CaptionSurface.GetHeight()) - 10, Window);
+		}
+
+		//And render the message last.
+		if (MessageSurface)
+			MessageSurface.Render(((320 - MessageSurface.GetWidth()) / 2), 125, Window);
+
+		if (RefreshedSomething)
+			SDL_Flip(Window);
 	}
-
-	// During play, we also need to render our players
-	if (Scene == SCENE_GAME_PLAY)
-	{
-		//Force compels players to re-render if this function re-rendered
-		RefreshedSomething |= Players[0].OnRender(Window, 0, Force);
-		RefreshedSomething |= Players[1].OnRender(Window, 1, Force);
-	}
-
-	//And render the message last.
-	if (MessageSurface)
-		MessageSurface.Render(((320 - MessageSurface.GetWidth()) / 2), 125, Window);
-
-	if (RefreshedSomething)
-		SDL_Flip(Window);
 }
 
 void			Game::Reset			(void)
@@ -772,6 +805,12 @@ void			Game::Reset			(void)
 		Players[i].Reset();
 		if (SourceDeck)
 			Players[i].SetSource(SourceDeck);
+	}
+
+	//Staggered deal
+	for (int i = 0; i < 13; ++i)
+	{
+		Players[i % 2].Draw();
 	}
 
 	//Odds and ends
@@ -824,7 +863,11 @@ bool		Game::ShowModal		(Uint8 ModalName)
 
 inline void		Game::ChangePlayer	(void)
 {
-	Current = 1 - Current;
+	if (!EndOfGame())
+	{
+		Current = 1 - Current;
+		Players[Current].Draw();
+	}
 }
 
 bool			Game::Discard		(void)

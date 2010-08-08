@@ -156,27 +156,9 @@ void	Player::Reset			(void)
 
 void	Player::SetSource		(Deck * ArgSource)
 {
-	// TODO: Move initial drawing of cards to Game so we can stagger between players
-
-	int CardCount = 0;
-
 	// if SourceDeck is not already set, and ArgSource is not 0
-
 	if (!SourceDeck && ArgSource)
-	{
 		SourceDeck = ArgSource;
-
-		// Fill our hand up
-		for (int i = 0; i < HAND_SIZE; ++i)
-		{
-			if(Draw(i))
-				++CardCount;
-		}
-
-		// If we didn't get a full hand, something went wrong.
-		if (CardCount < 7)
-			exit(PLAYER_NOT_ENOUGH_CARDS);
-	}
 }
 
 }

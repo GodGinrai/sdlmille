@@ -3,15 +3,21 @@
 
 #include "Player.h"
 
+namespace _SDLMille
+{
+
 const Uint8 PLAYER_COUNT = 2,
 			SCORE_CATEGORY_COUNT = 12,
 			SCORE_COLUMN_COUNT = 3,
 			MESSAGE_SIZE = 31;
 
-const char	SCORE_CAT_NAMES[SCORE_CATEGORY_COUNT][20] = {"Mileage", "Safeties", "All 4", "Coup Fourres", "Completed Trip", "Delayed Action", "Safe Trip", "Extension", "Shutout", "Subtotal", "Previous", "Total"};
-
-namespace _SDLMille
-{
+const	char	CARD_CAPTIONS[CARD_SAFETY_RIGHT_OF_WAY + 1][20] = {
+					"Crash HAZARD", "Fuel HAZARD", "Tire HAZARD", "Speed HAZARD", "Stop HAZARD",
+					"Crash REMEDY", "Fuel REMEDY", "Tire REMEDY", "Speed REMEDY", "Roll REMEDY",
+					"Crash SAFETY", "Fuel SAFETY", "Tire SAFETY", "Right-of-way SAFETY"
+					};
+const	char	SCORE_CAT_NAMES[SCORE_CATEGORY_COUNT][20] = {"Mileage", "Safeties", "All 4", "Coup Fourres", "Completed Trip", "Delayed Action", "Safe Trip", "Extension", "Shutout", "Subtotal", "Previous", "Total"};
+const	char	VERSION_TEXT[] = "0.4.99-3 (Pre-beta1 test3)";
 
 class Game
 {
@@ -42,11 +48,13 @@ private:
 	/* Properties */
 	SDL_Surface	*Window;
 	Surface		Background,
+				CaptionSurface,
 				DiscardSurface,
 				DrawCardSurface, DrawTextSurface,
 				MessageSurface,
 				ResultTextSurface,
-				ScoreSurfaces[SCORE_CATEGORY_COUNT + 1][SCORE_COLUMN_COUNT];
+				ScoreSurfaces[SCORE_CATEGORY_COUNT + 1][SCORE_COLUMN_COUNT],
+				VersionSurface;
 	Player		Players[PLAYER_COUNT];
 	Deck *		SourceDeck;
 	int			DeckCount, OldDeckCount,
