@@ -61,7 +61,7 @@ bool	Hand::Draw		(Deck * Source, Uint8 Index)
 	return false;
 }
 
-Uint8	Hand::GetType	(Uint8 Index)
+Uint8	Hand::GetType	(Uint8 Index)		const
 {
 	if (Index < HAND_SIZE)
 		return ThisHand[Index].GetType();
@@ -69,7 +69,7 @@ Uint8	Hand::GetType	(Uint8 Index)
 	return CARD_NULL;
 }
 
-Uint8	Hand::GetValue	(Uint8 Index)
+Uint8	Hand::GetValue	(Uint8 Index)		const
 {
 	if (Index < HAND_SIZE)
 		return ThisHand[Index].GetValue();
@@ -77,7 +77,7 @@ Uint8	Hand::GetValue	(Uint8 Index)
 	return CARD_NULL_NULL;
 }
 
-bool	Hand::IsPopped	(Uint8 Index)
+bool	Hand::IsPopped	(Uint8 Index)		const
 {
 	if (Index < HAND_SIZE)
 		return Popped[Index];
@@ -157,7 +157,7 @@ bool	Hand::OnRender	(SDL_Surface * Surface, bool Force)
 	return WasDirty;
 }
 
-bool	Hand::Pop		(Uint8 Index)
+void	Hand::Pop		(Uint8 Index)
 {
 	if (Index < HAND_SIZE)
 	{
@@ -181,11 +181,6 @@ bool	Hand::Pop		(Uint8 Index)
 			}
 		}
 	}
-
-	// TODO: We are always returning true, and we really don't need to return anything.
-	// Unfortunately, it's bools all the way up the call chain, so I'm going to wait until
-	// after the audit to change these all to voids.
-	return true;
 }
 
 void	Hand::Reset		(void)

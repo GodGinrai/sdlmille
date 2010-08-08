@@ -27,7 +27,7 @@ namespace _SDLMille
 	Shuffle();
 }
 
-int		Deck::CardsLeft	(void)
+int		Deck::CardsLeft	(void)	const
 {
 	return (DECK_SIZE - Marker);
 }
@@ -45,7 +45,7 @@ Uint8	Deck::Draw		(void)
 	return RetVal;
 }
 
-bool	Deck::Empty		(void)
+bool	Deck::Empty		(void)	const
 {
 	return !(Marker < DECK_SIZE);
 }
@@ -77,11 +77,7 @@ void		Deck::Shuffle	(void)
 			if (Order[RandIndex] == DECK_SIZE)
 				Order[RandIndex] = i;
 			else if (Order[RandIndex] > DECK_SIZE)
-				#ifndef	ANDROID_DEVICE
-					throw DECK_ERROR;
-				#else
-					exit(-1);
-				#endif
+				exit(DECK_ERROR);
 			else
 				Assigned = false;
 		} while (Assigned == false);

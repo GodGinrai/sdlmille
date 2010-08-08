@@ -66,39 +66,9 @@ bool	Player::Draw			(Uint8 Index)
 	return false;
 }
 
-// TODO: Make the following one-line methods inline
 
-Uint8	Player::Get200Count		(void)
-{
-	return MyTableau.Get200Count();
-}
 
-Uint8	Player::GetType			(Uint8 Index)
-{
-	return PlayerHand.GetType(Index);
-}
-
-Uint8	Player::GetValue		(Uint8 Index)
-{
-	return PlayerHand.GetValue(Index);
-}
-
-bool	Player::HasCoupFourre	(Uint8 Value)
-{
-	return MyTableau.HasCoupFourre(Value);
-}
-
-bool	Player::HasSafety		(Uint8 Value)
-{
-	return MyTableau.HasSafety(Value);
-}
-
-bool	Player::IsLimited		(void)
-{
-	return MyTableau.HasSpeedLimit();
-}
-
-bool	Player::IsOutOfCards	(void)
+bool	Player::IsOutOfCards	(void)										const
 {
 	// If we find a populated card slot, immediately return false.
 	for (int i = 0; i < HAND_SIZE; ++i)
@@ -109,18 +79,6 @@ bool	Player::IsOutOfCards	(void)
 
 	// We only get here if we didn't find a populated slot
 	return true;
-}
-
-//TODO: Inline next 2 methods
-
-bool	Player::IsPopped		(Uint8 Index)
-{
-	return PlayerHand.IsPopped(Index);
-}
-
-bool	Player::IsRolling		(void)
-{
-	return MyTableau.IsRolling();
 }
 
 Uint8	Player::OnPlay			(Uint8 Index)
@@ -169,17 +127,6 @@ bool	Player::OnRender		(SDL_Surface * Surface, Uint8 PlayerIndex, bool Force)
 	return DidSomething;
 }
 
-bool	Player::Pop				(Uint8 Index)
-{
-	// Don't pop an empty slot
-	if (PlayerHand.GetValue(Index) == CARD_NULL_NULL)
-		return false;
-
-	if (PlayerHand.Pop(Index))
-		return true;
-
-	return false;
-}
 
 bool	Player::ReceiveHazard	(Uint8 Value)
 {
@@ -228,19 +175,8 @@ void	Player::SetSource		(Deck * ArgSource)
 
 		// If we didn't get a full hand, something went wrong.
 		if (CardCount < 7)
-			#ifndef	ANDROID_DEVICE
-				throw PLAYER_NOT_ENOUGH_CARDS;
-			#else
-				exit(-1);
-			#endif
+			exit(PLAYER_NOT_ENOUGH_CARDS);
 	}
-}
-
-// TODO: Inline
-
-void	Player::UnPop			(Uint8 Index)
-{
-	PlayerHand.UnPop(Index);
 }
 
 }

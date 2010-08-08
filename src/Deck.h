@@ -52,9 +52,9 @@ class Deck
 {
 public:
 			Deck		(void);
-	int		CardsLeft	(void);
+	int		CardsLeft	(void)	const;
 	Uint8	Draw		(void);
-	bool	Empty		(void);
+	bool	Empty		(void)	const;
 	void	Shuffle		(void);
 private:
 	Uint8	Marker;

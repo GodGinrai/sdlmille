@@ -18,7 +18,7 @@ class Game
 public:
 				Game			(void);
 				~Game			(void);
-	bool		IsValidPlay		(Uint8 Index);
+	bool		IsValidPlay		(Uint8 Index)			const;
 	void		OnClick			(int X, int Y);
 	void		OnEvent			(SDL_Event * Event);
 	bool		OnExecute		(void);
@@ -34,10 +34,10 @@ private:
 	/* Methods */
 	void		ChangePlayer	(void);
 	bool		Discard			(void);
-	bool		EndOfGame		(void);
-	Uint8		FindPopped		(void);
+	bool		EndOfGame		(void)					const;
+	Uint8		FindPopped		(void)					const;
 	void		GetScores		(void);
-	bool		Pop				(Uint8 Index);
+	void		Pop				(Uint8 Index);
 
 	/* Properties */
 	SDL_Surface	*Window;

@@ -19,13 +19,13 @@ public:
 							Surface		(void);
 							~Surface	(void);
 			void			Clear		(void);
-			int				GetHeight	(void);
-			int				GetWidth	(void);
-			void			Render		(int X, int Y, SDL_Surface * Destination);
+			int				GetHeight	(void)															const;
+			int				GetWidth	(void)															const;
+			void			Render		(int X, int Y, SDL_Surface * Destination)						const;
 			void			SetImage	(const char * File);
 			void			SetInteger	(int Value, TTF_Font * Font, bool ShowZero = true);
 			void			SetText		(const char * Text, TTF_Font * Font);
-							operator bool	(void);
+							operator bool	(void)														const;
 
 	static	bool			Draw		(SDL_Surface * Destination, SDL_Surface * Source, int X, int Y);
 	static	SDL_Surface *	Load		(const char * File);

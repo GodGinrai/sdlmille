@@ -15,13 +15,13 @@ public:
 				~Hand		(void);
 	bool		Discard		(Uint8 Index);
 	bool		Draw		(Deck * Source, Uint8 Index);
-	Uint8		GetType		(Uint8 Index);
-	Uint8		GetValue	(Uint8 Index);
-	bool		IsDirty		(void);
-	bool		IsPopped	(Uint8 Index);
+	Uint8		GetType		(Uint8 Index)								const;
+	Uint8		GetValue	(Uint8 Index)								const;
+	bool		IsDirty		(void)										const;
+	bool		IsPopped	(Uint8 Index)								const;
 	void		OnInit		(void);
 	bool		OnRender	(SDL_Surface * Surface, bool Force = false);
-	bool		Pop			(Uint8 Index);
+	void		Pop			(Uint8 Index);
 	void		Reset		(void);
 	void		UnPop		(Uint8 Index);
 private:
@@ -32,7 +32,7 @@ private:
 				Overlay;
 };
 
-inline	bool	Hand::IsDirty	(void)
+inline	bool	Hand::IsDirty	(void)	const
 {
 	return Dirty;
 }

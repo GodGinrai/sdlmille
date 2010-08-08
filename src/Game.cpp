@@ -93,7 +93,7 @@ namespace _SDLMille
 		TTF_Quit();
 }
 
-bool		Game::IsValidPlay	(Uint8 Index)
+bool		Game::IsValidPlay	(Uint8 Index)									const
 {
 	Uint8	Type =	Players[Current].GetType(Index),
 			Value =	Players[Current].GetValue(Index);
@@ -370,7 +370,7 @@ void		Game::OnEvent		(SDL_Event * Event)
 
 		else if (Event->type == SDL_KEYUP)
 		{
-			Players[1].ReceiveHazard(rand() % 5);
+			//Players[1].ReceiveHazard(rand() % 5);
 		}
 	}
 }
@@ -968,7 +968,7 @@ void			Game::GetScores			(void)
 	}
 }
 
-bool	Game::EndOfGame		(void)
+bool	Game::EndOfGame		(void)										const
 {
 	if (Players[0].IsOutOfCards() && Players[1].IsOutOfCards())
 		return true;
@@ -982,7 +982,7 @@ bool	Game::EndOfGame		(void)
 	return false;
 }
 
-Uint8	Game::FindPopped	(void)	// Find which card in the hand is "popped"
+Uint8	Game::FindPopped	(void)	/* Find which card in the hand is "popped" */	const
 {
 	for (int i = 0; i < HAND_SIZE; ++i)
 	{
@@ -993,24 +993,17 @@ Uint8	Game::FindPopped	(void)	// Find which card in the hand is "popped"
 	return 0xFF;
 }
 
-bool	Game::Pop	(Uint8 Index)
+void	Game::Pop	(Uint8 Index)
 {
-
-	bool Success = false;
-
 	if (Players[Current].IsPopped(Index) && IsValidPlay(Index))
 	{
 		// If the card is already popped, then play it (if it's a valid play)
 		Players[Current].UnPop(Index);
 		OnPlay(Index);
-		Success = true;
 	}
-
 	else
 		// If it's not already popped, pop it
-		Success = Players[Current].Pop(Index);
-
-	return Success;
+		Players[Current].Pop(Index);
 }
 
 }

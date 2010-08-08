@@ -38,21 +38,8 @@ int	main	(int argc, char* argv[])
 	chdir("/media/cryptofs/apps/usr/palm/applications/com.webosnerd.sdl-mille/");
 	#endif
 
-	#ifndef	ANDROID_DEVICE	
-	try
-	{
-	#endif
-		Game	TheGame;
+	Game	TheGame;
 
-		// Return 0 if the game executed OK. Otherwise, return -1.
-		return (TheGame.OnExecute()) ? 0 : -1;
-	#ifndef	ANDROID_DEVICE
-	}
-	catch (int e)
-	{
-		printf("Error number %u caught.", e);
-	}
-	#endif
-
-	return 0;
+	// Return 0 if the game executed OK. Otherwise, return -1.
+	return (TheGame.OnExecute()) ? 0 : -1;
 }

@@ -55,7 +55,7 @@ void	Surface::Clear	(void)
 	}
 }
 
-int		Surface::GetHeight	(void)
+int		Surface::GetHeight	(void)															const
 {
 	if (MySurface != 0)
 		return MySurface->h;
@@ -63,7 +63,7 @@ int		Surface::GetHeight	(void)
 	return 0;
 }
 
-int		Surface::GetWidth	(void)
+int		Surface::GetWidth	(void)															const
 {
 	if (MySurface != 0)
 		return MySurface->w;
@@ -71,9 +71,9 @@ int		Surface::GetWidth	(void)
 	return 0;
 }
 
-void	Surface::Render	(int X, int Y, SDL_Surface * Destination)
+void	Surface::Render	(int X, int Y, SDL_Surface * Destination)							const
 {
-	if (*this)
+	if (MySurface != 0)
 		Draw(Destination, MySurface, X, Y);
 }
 
@@ -150,7 +150,7 @@ void	Surface::SetText	(const char * Text, TTF_Font * Font)
 	}
 }
 
-Surface::operator bool	(void)
+Surface::operator bool	(void)																const
 {
 	return (MySurface != 0);
 }

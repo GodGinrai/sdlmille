@@ -60,12 +60,12 @@ namespace _SDLMille
 		TTF_CloseFont(MyFont);
 }
 
-Uint8	Tableau::Get200Count	(void)
+Uint8	Tableau::Get200Count	(void)											const
 {
 	return CardCount[MILEAGE_PILES - 1];
 }
 
-Uint8	Tableau::GetTopCard		(bool SpeedPile)
+Uint8	Tableau::GetTopCard		(bool SpeedPile)								const
 {
 	if (SpeedPile)
 		return LimitCard;
@@ -73,7 +73,7 @@ Uint8	Tableau::GetTopCard		(bool SpeedPile)
 		return TopCard;
 }
 
-bool	Tableau::HasCoupFourre	(Uint8 Value)
+bool	Tableau::HasCoupFourre	(Uint8 Value)									const
 {
 	int Index = -1;
 
@@ -86,7 +86,7 @@ bool	Tableau::HasCoupFourre	(Uint8 Value)
 	return false;
 }
 
-bool	Tableau::HasSafety		(Uint8 Value)
+bool	Tableau::HasSafety		(Uint8 Value)									const
 {
 	int Index = -1;
 
@@ -99,7 +99,7 @@ bool	Tableau::HasSafety		(Uint8 Value)
 	return false;
 }
 
-bool	Tableau::IsRolling		(void)
+bool	Tableau::IsRolling		(void)											const
 {
 	if (TopCard == CARD_REMEDY_ROLL)
 		return true;
@@ -167,11 +167,7 @@ void	Tableau::OnPlay			(Uint8 Value, bool CoupFourre, bool SpeedLimit)
 				Mileage += Card::GetMileValue(Value);
 			}
 			else
-				#ifndef	ANDROID_DEVICE
-					throw TABLEAU_TOO_MANY_CARDS;
-				#else
-					exit(-1);
-				#endif
+				exit(TABLEAU_TOO_MANY_CARDS);
 		}
 		break;
 

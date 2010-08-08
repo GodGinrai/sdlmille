@@ -21,13 +21,13 @@ class Tableau
 public:
 				Tableau			(void);
 				~Tableau		(void);
-	Uint8		Get200Count		(void);
-	int			GetMileage		(void);
-	Uint8		GetTopCard		(bool SpeedPile = false);
-	bool		HasCoupFourre	(Uint8 Value);
-	bool		HasSafety		(Uint8 Value);
-	bool		HasSpeedLimit	(void);
-	bool		IsRolling		(void);
+	Uint8		Get200Count		(void)															const;
+	int			GetMileage		(void)															const;
+	Uint8		GetTopCard		(bool SpeedPile = false)										const;
+	bool		HasCoupFourre	(Uint8 Value)													const;
+	bool		HasSafety		(Uint8 Value)													const;
+	bool		HasSpeedLimit	(void)															const;
+	bool		IsRolling		(void)															const;
 	void		OnInit			(void);
 	bool		OnRender		(SDL_Surface * Surface, Uint8 PlayerIndex, bool Force = false);
 	void		OnPlay			(Uint8 Value, bool CoupFourre, bool SpeedLimit);
@@ -52,14 +52,14 @@ private:
 	TTF_Font	*MyFont;
 };
 
-inline int	Tableau::GetMileage		(void)
+inline int	Tableau::GetMileage		(void)			const
 {
 	return Mileage;
 }
 
-inline bool	Tableau::HasSpeedLimit	(void)
+inline bool	Tableau::HasSpeedLimit	(void)			const
 {
-	if (Safeties[3])
+	if (Safeties[CARD_SAFETY_RIGHT_OF_WAY - SAFETY_OFFSET])
 		return false;
 
 	return (LimitCard == CARD_HAZARD_SPEED_LIMIT);

@@ -21,12 +21,11 @@ public:
 			bool			Discard				(void);
 			bool			Draw				(Deck * Source);
 	static	const char *	GetFileFromValue	(Uint8 ArgValue, bool CoupFourre = false);
-	static	SDL_Surface	*	GetImageFromValue	(Uint8 ArgValue, bool CoupFourre = false);
 	static	Uint8			GetMatchingSafety	(Uint8 HazardValue);
 	static	Uint8			GetMileValue		(Uint8 ArgValue);
-			Uint8			GetType				(void);
+			Uint8			GetType				(void)									const;
 	static	Uint8			GetTypeFromValue	(Uint8 ArgValue);
-			Uint8			GetValue			(void);
+			Uint8			GetValue			(void)									const;
 private:
 			void			Set					(Uint8 V);
 			Uint8			Value;

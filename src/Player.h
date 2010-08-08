@@ -17,21 +17,21 @@ public:
 	bool		Discard			(Uint8 Index);
 	void		Draw			(void);
 	bool		Draw			(Uint8 Index);
-	Uint8		Get200Count		(void);
-	int			GetMileage		(void);
-	Uint8		GetTopCard		(bool SpeedPile = false);
-	Uint8		GetType			(Uint8 Index);
-	Uint8		GetValue		(Uint8 Index);
-	bool		HasCoupFourre	(Uint8 Value);
-	bool		HasSafety		(Uint8 Value);
-	bool		IsDirty			(void);
-	bool		IsLimited		(void);
-	bool		IsOutOfCards	(void);
-	bool		IsPopped		(Uint8 Index);
-	bool		IsRolling		(void);
+	Uint8		Get200Count		(void)						const;
+	int			GetMileage		(void)						const;
+	Uint8		GetTopCard		(bool SpeedPile = false)	const;
+	Uint8		GetType			(Uint8 Index)				const;
+	Uint8		GetValue		(Uint8 Index)				const;
+	bool		HasCoupFourre	(Uint8 Value)				const;
+	bool		HasSafety		(Uint8 Value)				const;
+	bool		IsDirty			(void)						const;
+	bool		IsLimited		(void)						const;
+	bool		IsOutOfCards	(void)						const;
+	bool		IsPopped		(Uint8 Index)				const;
+	bool		IsRolling		(void)						const;
 	Uint8		OnPlay			(Uint8 Index);
 	bool		OnRender		(SDL_Surface * Surface, Uint8 PlayerIndex, bool Force = false);
-	bool		Pop				(Uint8 Index);
+	void		Pop				(Uint8 Index);
 	bool		ReceiveHazard	(Uint8 Value);
 	void		Reset			(void);
 	void		SetSource		(Deck * ArgSource);
@@ -43,19 +43,69 @@ private:
 	Deck *		SourceDeck;
 };
 
-inline	Uint8	Player::GetTopCard	(bool SpeedPile)
+inline	Uint8	Player::GetTopCard	(bool SpeedPile)	const
 {
 	return MyTableau.GetTopCard(SpeedPile);
 }
 
-inline	int		Player::GetMileage	(void)
+inline	int		Player::GetMileage	(void)				const
 {
 	return MyTableau.GetMileage();
 }
 
-inline	bool	Player::IsDirty		(void)
+inline	bool	Player::IsDirty		(void)				const
 {
 	return PlayerHand.IsDirty();
+}
+
+inline	Uint8	Player::Get200Count		(void)			const
+{
+	return MyTableau.Get200Count();
+}
+
+inline	Uint8	Player::GetType			(Uint8 Index)	const
+{
+	return PlayerHand.GetType(Index);
+}
+
+inline	Uint8	Player::GetValue		(Uint8 Index)	const
+{
+	return PlayerHand.GetValue(Index);
+}
+
+inline	bool	Player::HasCoupFourre	(Uint8 Value)	const
+{
+	return MyTableau.HasCoupFourre(Value);
+}
+
+inline	bool	Player::HasSafety		(Uint8 Value)	const
+{
+	return MyTableau.HasSafety(Value);
+}
+
+inline	bool	Player::IsLimited		(void)			const
+{
+	return MyTableau.HasSpeedLimit();
+}
+
+inline	bool	Player::IsPopped		(Uint8 Index)	const
+{
+	return PlayerHand.IsPopped(Index);
+}
+
+inline	bool	Player::IsRolling		(void)			const
+{
+	return MyTableau.IsRolling();
+}
+
+inline	void	Player::Pop				(Uint8 Index)
+{
+	PlayerHand.Pop(Index);
+}
+
+inline	void	Player::UnPop			(Uint8 Index)
+{
+	PlayerHand.UnPop(Index);
 }
 
 }

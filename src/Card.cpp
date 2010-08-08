@@ -41,11 +41,7 @@ namespace _SDLMille
 	if (V <= CARD_NULL_NULL)
 		Set(V);
 	else
-		#ifndef ANDROID_DEVICE
-			throw CARD_VALUE_INVALID;
-		#else
-			exit(-1);
-		#endif
+		exit(CARD_VALUE_INVALID);
 }
 
 const Card &	Card::Copy				(const Card & Source)
@@ -139,66 +135,6 @@ const char *	Card::GetFileFromValue		(Uint8 ArgValue, bool CoupFourre)
 	}
 }
 
-SDL_Surface *	Card::GetImageFromValue	(Uint8 ArgValue, bool CoupFourre)
-{
-	switch (ArgValue)
-	{
-	case CARD_HAZARD_ACCIDENT:
-		return Surface::Load("gfx/hazard_accident.png");
-	case CARD_HAZARD_GAS:
-		return Surface::Load("gfx/hazard_gas.png");
-	case CARD_HAZARD_FLAT:
-		return Surface::Load("gfx/hazard_flat.png");
-	case CARD_HAZARD_SPEED_LIMIT:
-		return Surface::Load("gfx/hazard_speed_limit.png");
-	case CARD_HAZARD_STOP:
-		return Surface::Load("gfx/hazard_stop.png");
-	case CARD_REMEDY_REPAIR:
-		return Surface::Load("gfx/remedy_repair.png");
-	case CARD_REMEDY_FUEL:
-		return Surface::Load("gfx/remedy_fuel.png");
-	case CARD_REMEDY_SPARE:
-		return Surface::Load("gfx/remedy_spare.png");
-	case CARD_REMEDY_END_LIMIT:
-		return Surface::Load("gfx/remedy_end_limit.png");
-	case CARD_REMEDY_ROLL:
-		return Surface::Load("gfx/remedy_roll.png");
-	case CARD_MILEAGE_25:
-		return Surface::Load("gfx/mileage_25.png");
-	case CARD_MILEAGE_50:
-		return Surface::Load("gfx/mileage_50.png");
-	case CARD_MILEAGE_75:
-		return Surface::Load("gfx/mileage_75.png");
-	case CARD_MILEAGE_100:
-		return Surface::Load("gfx/mileage_100.png");
-	case CARD_MILEAGE_200:
-		return Surface::Load("gfx/mileage_200.png");
-	case CARD_SAFETY_DRIVING_ACE:
-		if (CoupFourre)
-			return Surface::Load("gfx/safety_driving_ace_cf.png");
-		else
-			return Surface::Load("gfx/safety_driving_ace.png");
-	case CARD_SAFETY_EXTRA_TANK:
-		if (CoupFourre)
-			return Surface::Load("gfx/safety_extra_tank_cf.png");
-		else
-			return Surface::Load("gfx/safety_extra_tank.png");
-	case CARD_SAFETY_PUNCTURE_PROOF:
-		if (CoupFourre)
-			return Surface::Load("gfx/safety_puncture_proof_cf.png");
-		else
-			return Surface::Load("gfx/safety_puncture_proof.png");
-	case CARD_SAFETY_RIGHT_OF_WAY:
-		if (CoupFourre)
-			return Surface::Load("gfx/safety_right_of_way_cf.png");
-		else
-			return Surface::Load("gfx/safety_right_of_way.png");
-	case CARD_NULL_NULL:
-	default:
-		return Surface::Load("gfx/null_null.png");
-	}
-}
-
 Uint8			Card::GetMatchingSafety	(Uint8 HazardValue)
 {
 	if (GetTypeFromValue(HazardValue) == CARD_HAZARD)
@@ -233,7 +169,7 @@ Uint8			Card::GetMileValue		(Uint8 ArgValue)
 	return 0;
 }
 
-Uint8			Card::GetType			(void)
+Uint8			Card::GetType			(void)									const
 {
 	return Type;
 }
@@ -252,7 +188,7 @@ Uint8			Card::GetTypeFromValue	(Uint8 V)
 		return CARD_NULL;
 }
 
-Uint8			Card::GetValue			(void)
+Uint8			Card::GetValue			(void)									const
 {
 	return Value;
 }
@@ -269,11 +205,7 @@ void			Card::Set				(Uint8 V)
 		Type = GetTypeFromValue(Value);
 	}
 	else
-		#ifndef ANDROID_DEVICE
-			throw CARD_VALUE_INVALID;
-		#else
-			exit(-1);
-		#endif
+		exit(CARD_VALUE_INVALID);
 }
 
 }
