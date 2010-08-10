@@ -76,6 +76,8 @@ namespace _SDLMille
 		Players[i % 2].Draw();
 	}
 
+	GameOptions.ReadOpts();
+
 	Message[0] = '\0';
 
 	DrawFont = TTF_OpenFont("LiberationMono-Regular.ttf", 16);
@@ -84,6 +86,8 @@ namespace _SDLMille
 
 			Game::~Game			(void)
 {
+	GameOptions.SaveOpts();
+
 	// Clean up all of our pointers
 	if (SourceDeck)
 		delete SourceDeck;
@@ -251,10 +255,27 @@ void		Game::OnClick		(int X, int Y)
 		}
 		else if (Modal == MODAL_GAME_MENU)
 		{
+			if ((X >= 50) && (X <= 270))
+			{
+				if ((Y >= 120) && (Y <= 400))
+				{
+					int Index = (Y - 120) / 25;
+
+					printf("Clicked Index %u.\n", Index);
+
+					if (Index < OPTION_COUNT)
+					{
+						GameOptions.SwitchOpt(Index);
+						ShowModal(Modal);
+						return;
+					}
+				}
+			}						
 			if ((X >= 251) && (X <= 277))
 			{
 				if ((Y >= 83) && (Y <= 109))
 				{
+					GameOptions.SaveOpts();
 					Modal = MODAL_NONE;
 					Dirty = true;
 				}
@@ -287,7 +308,7 @@ void		Game::OnClick		(int X, int Y)
 		{
 			if (Y < 175)
 			{
-				if ((Y < 20) && (X < 45))
+				if ((Y < 35) && (X < 75))
 					ShowModal(MODAL_GAME_MENU);
 				else
 				{
@@ -471,6 +492,8 @@ bool		Game::OnInit		(void)
 				CaptionSurface.Clear();
 		}
 
+		MenuSurface.SetImage("gfx/menu.png");
+
 		return true;
 	}
 
@@ -577,7 +600,7 @@ void		Game::OnLoop		(void)
 		if (Current == 1)
 		{
 			// Delay for a moment, then the computer makes a move
-			SDL_Delay(500);
+			SDL_Delay((GameOptions.GetOpt(OPTION_FAST_GAME)) ? 200 : 500);
 
 			bool Played = false;
 
@@ -645,9 +668,9 @@ void		Game::OnPlay		(Uint8 Index)
 	}
 }
 
-void		Game::OnRender		(bool Force)
+void		Game::OnRender		(bool Force, bool Flip)
 {
-	if (Modal == MODAL_NONE)
+	if ((Modal == MODAL_NONE) || Force)
 	{
 		bool	RefreshedSomething =	false, // We only flip the display if something changed
 				SceneChanged =			false; // Control variable. Do we need to call OnInit()?
@@ -684,10 +707,10 @@ void		Game::OnRender		(bool Force)
 		//Re-render the background if the hand has changed
 		if ((Scene == SCENE_GAME_PLAY) && Players[0].IsDirty())
 		{
-			//If captions disabled
-				//Force = true;
-			//else
-			SceneChanged = true;
+			if (GameOptions.GetOpt(OPTION_CARD_CAPTIONS))
+				SceneChanged = true;
+			else
+				Force = true;
 		}
 
 		if (SceneChanged || Force)
@@ -747,14 +770,17 @@ void		Game::OnRender		(bool Force)
 			RefreshedSomething |= Players[1].OnRender(Window, 1, Force);
 
 			//Render caption over hand
-			CaptionSurface.Render((320 - CaptionSurface.GetWidth()) / 2, (350 - CaptionSurface.GetHeight()) - 10, Window);
+			if (GameOptions.GetOpt(OPTION_CARD_CAPTIONS))
+				CaptionSurface.Render((320 - CaptionSurface.GetWidth()) / 2, (350 - CaptionSurface.GetHeight()) - 10, Window);
+			if (MenuSurface)
+				MenuSurface.Render(0, 0, Window);
 		}
 
 		//And render the message last.
 		if (MessageSurface)
 			MessageSurface.Render(((320 - MessageSurface.GetWidth()) / 2), 125, Window);
 
-		if (RefreshedSomething)
+		if (RefreshedSomething && Flip)
 			SDL_Flip(Window);
 	}
 }
@@ -832,6 +858,11 @@ bool		Game::ShowModal		(Uint8 ModalName)
 {
 	if (ModalName < MODAL_NONE)
 	{
+		OnRender(true, false); //Re-render the background, but don't flip it.
+
+		int R, G, B;
+		R = G = B = 255;
+
 		Modal = ModalName;
 
 		Surface::Draw(Window, Surface::Load("gfx/modals/shadow.png"), 0, 0);
@@ -843,6 +874,13 @@ bool		Game::ShowModal		(Uint8 ModalName)
 			break;
 		case MODAL_GAME_MENU:
 			Surface::Draw(Window, Surface::Load("gfx/modals/menu_top.png"), 40, 80);
+			for (int i = 0; i < OPTION_COUNT; ++i)
+			{
+				OptionSurfaces[i][0].SetText(OPTION_NAMES[i], GameOverFont, R, G, B);
+				OptionSurfaces[i][1].SetText((GameOptions.GetOpt(i)) ? "ON" : "OFF", GameOverFont, R, G, B);
+				OptionSurfaces[i][0].Render(50, 120 + (i * 25), Window);
+				OptionSurfaces[i][1].Render(240, 120 + (i * 25), Window);
+			}
 			break;
 		}		
 

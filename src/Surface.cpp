@@ -109,9 +109,9 @@ void	Surface::SetInteger	(int Value, TTF_Font * Font, bool ShowZero)
 		if (Value == 0)
 		{
 			if (ShowZero)
-				MySurface = RenderText("0", Font);
+				MySurface = RenderText("0", Font, 0, 0, 0);
 			else
-				MySurface = RenderText("-", Font);
+				MySurface = RenderText("-", Font, 0, 0, 0);
 		}
 		else
 		{
@@ -130,13 +130,13 @@ void	Surface::SetInteger	(int Value, TTF_Font * Font, bool ShowZero)
 			if ((MyText != 0) && (Value <= pow((double)10, NumDigits))) //Sanity check
 			{
 				sprintf(MyText, "%u", Value);
-				MySurface = RenderText(MyText, Font);
+				MySurface = RenderText(MyText, Font, 0, 0, 0);
 			}
 		}
 	}
 }
 
-void	Surface::SetText	(const char * Text, TTF_Font * Font)
+void	Surface::SetText	(const char * Text, TTF_Font * Font, int R, int G, int B)
 {
 	if (CheckCache(Text))
 	{
@@ -146,7 +146,7 @@ void	Surface::SetText	(const char * Text, TTF_Font * Font)
 			MySurface = 0;
 		}
 
-		MySurface = RenderText(Text, Font);
+		MySurface = RenderText(Text, Font, R, G, B);
 	}
 }
 
@@ -235,9 +235,9 @@ SDL_Surface *	Surface::Load	(const char * File)
 		return 0;
 }
 
-SDL_Surface *	Surface::RenderText	(const char *Text, TTF_Font *Font)
+SDL_Surface *	Surface::RenderText	(const char *Text, TTF_Font *Font, int R, int G, int B)
 {
-	SDL_Color	TextColor = {0, 0, 0, 0};
+	SDL_Color	TextColor = {R, G, B, 0};
 	SDL_Surface	*Screen = 0,
 				*TextSurface = 0;
 	Screen = SDL_GetVideoSurface();

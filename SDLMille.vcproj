@@ -185,6 +185,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\Options.cpp"
+				>
+			</File>
+			<File
 				RelativePath="src\Player.cpp"
 				>
 			</File>
@@ -216,6 +220,10 @@
 			</File>
 			<File
 				RelativePath="src\Hand.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\Options.h"
 				>
 			</File>
 			<File

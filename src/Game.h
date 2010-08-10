@@ -2,6 +2,7 @@
 #define	_SDLMILLE_GAME_H
 
 #include "Player.h"
+#include "Options.h"
 
 namespace _SDLMille
 {
@@ -17,7 +18,7 @@ const	char	CARD_CAPTIONS[CARD_SAFETY_RIGHT_OF_WAY + 1][20] = {
 					"Crash SAFETY", "Fuel SAFETY", "Tire SAFETY", "Right-of-way SAFETY"
 					};
 const	char	SCORE_CAT_NAMES[SCORE_CATEGORY_COUNT][20] = {"Mileage", "Safeties", "All 4", "Coup Fourres", "Completed Trip", "Delayed Action", "Safe Trip", "Extension", "Shutout", "Subtotal", "Previous", "Total"};
-const	char	VERSION_TEXT[] = "0.4.99-3 (Pre-beta1 test3)";
+const	char	VERSION_TEXT[] = "0.4.99-4 (Pre-beta1 test4)";
 
 class Game
 {
@@ -31,7 +32,7 @@ public:
 	bool		OnInit			(void);
 	void		OnLoop			(void);
 	void		OnPlay			(Uint8 Index);
-	void		OnRender		(bool Force = false);
+	void		OnRender		(bool Force = false, bool Flip = true);
 	void		Reset			(void);
 	void		ShowMessage		(const char * Msg);
 	bool		ShowModal		(Uint8 ModalName);
@@ -51,11 +52,14 @@ private:
 				CaptionSurface,
 				DiscardSurface,
 				DrawCardSurface, DrawTextSurface,
+				MenuSurface,
 				MessageSurface,
+				OptionSurfaces[OPTION_COUNT][2],
 				ResultTextSurface,
 				ScoreSurfaces[SCORE_CATEGORY_COUNT + 1][SCORE_COLUMN_COUNT],
 				VersionSurface;
 	Player		Players[PLAYER_COUNT];
+	Options		GameOptions;
 	Deck *		SourceDeck;
 	int			DeckCount, OldDeckCount,
 				Scores[PLAYER_COUNT],
