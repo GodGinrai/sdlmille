@@ -9,7 +9,7 @@ set PIXI=0
 set DEBUG=0
 
 @rem List your source files here
-set SRC=Card.cpp Deck.cpp Player.cpp Main.cpp Game.cpp Hand.cpp Surface.cpp Tableau.cpp
+set SRC=Card.cpp Deck.cpp Player.cpp Main.cpp Game.cpp Hand.cpp Surface.cpp Tableau.cpp Options.cpp
 
 @rem List the libraries needed
 set LIBS=-lSDL -lSDL_ttf -lSDL_image
