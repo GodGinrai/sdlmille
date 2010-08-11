@@ -20,6 +20,7 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef	_SDLMILLE_OPTIONS
 #define	_SDLMILLE_OPTIONS
 
+#include <string.h>
 #include <sys/stat.h>
 #include <fstream>
 

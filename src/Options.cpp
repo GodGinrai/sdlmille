@@ -41,28 +41,33 @@ bool	Options::GetOpt	(int Option)
 
 bool	Options::ReadOpts	(void)
 {
+	using namespace std;
+
+	char	Filename[21];
 	struct	stat	Info;
 
 	if (stat("options.dat", &Info) == 0)
+		strcpy(Filename, "options.dat");
+	else if (stat("options.def", &Info) == 0)
+		strcpy(Filename, "options.def");
+	else
+		return false;
+
+	ifstream	OptsFile (Filename, ios::in | ios::binary);
+	
+	if (OptsFile.bad())
+		return false;
+
+	OptsFile.seekg(0);
+	if (OptsFile.read(&Opts, 1))
 	{
-		using namespace std;
-
-		ifstream	OptsFile ("options.dat", ios::in | ios::binary);
-		
-		if (OptsFile.bad())
-			return false;
-
-		OptsFile.seekg(0);
-		if (OptsFile.read(&Opts, 1))
-		{
-			OptsFile.close();
-			return true;
-		}
-		else
-		{
-			OptsFile.close();
-			return false;
-		}
+		OptsFile.close();
+		return true;
+	}
+	else
+	{
+		OptsFile.close();
+		return false;
 	}
 
 	return false;

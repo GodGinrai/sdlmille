@@ -12,13 +12,13 @@ const Uint8 PLAYER_COUNT = 2,
 			SCORE_COLUMN_COUNT = 3,
 			MESSAGE_SIZE = 31;
 
-const	char	CARD_CAPTIONS[CARD_SAFETY_RIGHT_OF_WAY + 1][20] = {
+const	char	CARD_CAPTIONS[CARD_SAFETY_RIGHT_OF_WAY + 1][21] = {
 					"Crash HAZARD", "Fuel HAZARD", "Tire HAZARD", "Speed HAZARD", "Stop HAZARD",
 					"Crash REMEDY", "Fuel REMEDY", "Tire REMEDY", "Speed REMEDY", "Roll REMEDY",
 					"Crash SAFETY", "Fuel SAFETY", "Tire SAFETY", "Right-of-way SAFETY"
 					};
-const	char	SCORE_CAT_NAMES[SCORE_CATEGORY_COUNT][20] = {"Mileage", "Safeties", "All 4", "Coup Fourres", "Completed Trip", "Delayed Action", "Safe Trip", "Extension", "Shutout", "Subtotal", "Previous", "Total"};
-const	char	VERSION_TEXT[] = "0.4.99-4 (Pre-beta1 test4)";
+const	char	SCORE_CAT_NAMES[SCORE_CATEGORY_COUNT][21] = {"Mileage", "Safeties", "All 4", "Coup Fourres", "Completed Trip", "Delayed Action", "Safe Trip", "Extension", "Shutout", "Subtotal", "Previous", "Total"};
+const	char	VERSION_TEXT[] = "0.4.99-5 (Pre-beta1 test5)";
 
 class Game
 {
@@ -52,6 +52,7 @@ private:
 				CaptionSurface,
 				DiscardSurface,
 				DrawCardSurface, DrawTextSurface,
+				LogoSurface,
 				MenuSurface,
 				MessageSurface,
 				OptionSurfaces[OPTION_COUNT][2],
@@ -79,7 +80,7 @@ private:
 	TTF_Font	*DrawFont, *GameOverFont;
 
 
-	enum { SCENE_MAIN = 0, SCENE_GAME_PLAY, SCENE_GAME_MENU, SCENE_GAME_OVER, SCENE_LEARN, SCENE_INVALID };
+	enum { SCENE_MAIN = 0, SCENE_GAME_PLAY, SCENE_GAME_MENU, SCENE_GAME_OVER, SCENE_LEARN, SCENE_LEGAL, SCENE_INVALID };
 	enum { MODAL_EXTENSION = 0, MODAL_GAME_MENU, MODAL_NONE };
 };
 

@@ -29,6 +29,7 @@ private:
 	bool		Popped[HAND_SIZE],
 				Dirty;
 	Surface		CardSurfaces[HAND_SIZE],
+				CancelSurface,
 				Overlay;
 };
 

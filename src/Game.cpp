@@ -300,6 +300,12 @@ void		Game::OnClick		(int X, int Y)
 				Scene =		SCENE_LEARN;
 			}
 		}
+		if ((X >= 192) && (Y >= 429))
+		{
+			LastScene = Scene;
+			Scene = SCENE_LEGAL;
+			return;
+		}
 	}
 
 	else if (Scene == SCENE_GAME_PLAY)
@@ -308,7 +314,7 @@ void		Game::OnClick		(int X, int Y)
 		{
 			if (Y < 175)
 			{
-				if ((Y < 35) && (X < 75))
+				if ((Y < 45) && (X < 80))
 					ShowModal(MODAL_GAME_MENU);
 				else
 				{
@@ -336,14 +342,20 @@ void		Game::OnClick		(int X, int Y)
 				if (X >= 86)
 				{
 					// This is a fancy way of figuring out which card the user clicked
-					if (((X - 86) % 65) <= 31)
+					if (((X - 84) % 65) <= 35)
 					{
-						Index = ((X - 86) / 65) + Add;
+						Index = ((X - 84) / 65) + Add;
 
-						// Index 0 is the empty space above the fourth card
+						// Index 0 is the "X" above the fourth card
 						if (Index > 0)
 							// Then we pop it
 							Pop(Index - 1);
+						else
+						{
+							//Cancel selection and cancel click
+							Players[0].UnPop(FindPopped());
+							return;
+						}
 					}
 				}
 
@@ -366,7 +378,13 @@ void		Game::OnClick		(int X, int Y)
 	else if (Scene == SCENE_LEARN)
 	{
 		// Return to main menu on click
-		LastScene = SCENE_LEARN;
+		LastScene = Scene;
+		Scene = SCENE_MAIN;
+	}
+
+	else if (Scene == SCENE_LEGAL)
+	{
+		LastScene = Scene;
 		Scene = SCENE_MAIN;
 	}
 }
@@ -460,11 +478,10 @@ bool		Game::OnInit		(void)
 	if (Scene == SCENE_MAIN)
 	{
 		Background.SetImage("gfx/scenes/main.png");
-
 		if (!Background)
 			return false;
 
-		VersionSurface.SetText(VERSION_TEXT, DrawFont);
+		LogoSurface.SetImage("gfx/gpl.png");
 
 		return true;
 	}
@@ -530,7 +547,18 @@ bool		Game::OnInit		(void)
 
 		return true;
 	}
-	
+
+	else if (Scene == SCENE_LEGAL)
+	{
+		Background.SetImage("gfx/scenes/legal.png");
+		if (!Background)
+			return false;
+
+		VersionSurface.SetText(VERSION_TEXT, DrawFont);
+
+		return true;
+	}
+
 	return false;
 }
 
@@ -561,7 +589,7 @@ void		Game::OnLoop		(void)
 					if (Modal != MODAL_EXTENSION)
 						ShowModal(MODAL_EXTENSION);
 				}
-				else
+				else if (Players[1].GetMileage() == 700)
 				{
 					srand(time(0));
 					if (rand() % 2)
@@ -572,6 +600,8 @@ void		Game::OnLoop		(void)
 					else
 						ExtensionDeclined = true;
 				}
+				else
+					ExtensionDeclined = true;
 
 				return;
 			}
@@ -731,9 +761,9 @@ void		Game::OnRender		(bool Force, bool Flip)
 				Background.Render(0, 0, Window);
 
 			if (Scene == SCENE_MAIN)
-				VersionSurface.Render((320 - VersionSurface.GetWidth()) / 2, (480 - VersionSurface.GetHeight()) - 10, Window);
+				LogoSurface.Render(193, 429, Window);
 
-			if (Scene == SCENE_GAME_PLAY)
+			else if (Scene == SCENE_GAME_PLAY)
 			{
 				if (DiscardSurface)
 					DiscardSurface.Render(3, 358, Window);
@@ -760,6 +790,9 @@ void		Game::OnRender		(bool Force, bool Flip)
 					}
 				}
 			}
+
+			else if (Scene == SCENE_LEGAL)
+				VersionSurface.Render(315 - VersionSurface.GetWidth(), 1, Window);
 		}
 
 		// During play, we also need to render our players
@@ -773,7 +806,7 @@ void		Game::OnRender		(bool Force, bool Flip)
 			if (GameOptions.GetOpt(OPTION_CARD_CAPTIONS))
 				CaptionSurface.Render((320 - CaptionSurface.GetWidth()) / 2, (350 - CaptionSurface.GetHeight()) - 10, Window);
 			if (MenuSurface)
-				MenuSurface.Render(0, 0, Window);
+				MenuSurface.Render(2, 5, Window);
 		}
 
 		//And render the message last.

@@ -89,6 +89,8 @@ void	Hand::OnInit	(void)
 {
 	if (!Overlay)
 		Overlay.SetImage("gfx/orb.png");
+	if (!CancelSurface)
+		CancelSurface.SetImage("gfx/cancel.png");
 
 	for (int i = 0; i < HAND_SIZE; ++i)
 	{
@@ -117,7 +119,7 @@ bool	Hand::OnRender	(SDL_Surface * Surface, bool Force)
 				Dirty = false;
 			}
 
-			for (int i = 0; i < HAND_SIZE; ++i)
+			for (int i = 0; i < (HAND_SIZE + 1); ++i)
 			{
 				/*	The next line is a fancy (and more efficient) way of multiplying i times 65 and then
 					adding 81. 65 is the horizontal distance between two cards, and 81 is the left edge
@@ -126,29 +128,35 @@ bool	Hand::OnRender	(SDL_Surface * Surface, bool Force)
 				int	X = ((i << 6) + i + 81),
 					Y =	0;
 
-				if (i < 3)
+				if (i < 4)
 				{
 					// The first three cards get a right-shift one space. Y is set for the top row.
-					X += 65;
+					//X += 65;
 					Y = 358;
 				}
 
 				else
 				{
-					// The remaining cards get a left-shift three spaces (to account for the three cards
+					// The remaining cards get a left-shift four spaces (to account for the four spaces
 					// above). Y is set for the second row.
-					X -= (65 * 3);
+					X -= (65 << 2);
 					Y = 420;
 				}
 
-				if (CardSurfaces[i])
+				if (i == 0)
+					CancelSurface.Render(X, Y, Surface);
+				else
 				{
-					// Draw the cards
-					CardSurfaces[i].Render(X, Y, Surface);
+					int	Index = i - 1;
+					if (CardSurfaces[Index])
+					{
+						// Draw the cards
+						CardSurfaces[Index].Render(X, Y, Surface);
 
-					if (Popped[i] && Overlay)
-						// If this card is popped, render the orb over it
-						Overlay.Render(X, Y + 8, Surface);
+						if (Popped[Index] && Overlay)
+							// If this card is popped, render the orb over it
+							Overlay.Render(X, Y + 8, Surface);
+					}
 				}
 			}
 		}
