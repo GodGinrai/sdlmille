@@ -243,6 +243,7 @@ void		Game::OnClick		(int X, int Y)
 					Extended = true;
 					Modal = MODAL_NONE;
 					Dirty = true;
+					ChangePlayer();
 				}
 				else if ((X > 169) && (X <= 239))
 				{
@@ -554,7 +555,7 @@ bool		Game::OnInit		(void)
 		if (!Background)
 			return false;
 
-		VersionSurface.SetText(VERSION_TEXT, DrawFont);
+		VersionSurface.SetText(VERSION_TEXT, DrawFont, 230, 0, 11);
 
 		return true;
 	}
@@ -596,6 +597,7 @@ void		Game::OnLoop		(void)
 					{
 						Extended = true;
 						ShowMessage("Computer extends trip");
+						ChangePlayer();
 					}
 					else
 						ExtensionDeclined = true;

@@ -18,7 +18,7 @@ const	char	CARD_CAPTIONS[CARD_SAFETY_RIGHT_OF_WAY + 1][21] = {
 					"Crash SAFETY", "Fuel SAFETY", "Tire SAFETY", "Right-of-way SAFETY"
 					};
 const	char	SCORE_CAT_NAMES[SCORE_CATEGORY_COUNT][21] = {"Mileage", "Safeties", "All 4", "Coup Fourres", "Completed Trip", "Delayed Action", "Safe Trip", "Extension", "Shutout", "Subtotal", "Previous", "Total"};
-const	char	VERSION_TEXT[] = "0.4.99-5 (Pre-beta1 test5)";
+const	char	VERSION_TEXT[] = "0.4.99-6 (beta1 test6)";
 
 class Game
 {
