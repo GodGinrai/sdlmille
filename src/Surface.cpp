@@ -281,10 +281,7 @@ bool		Surface::CheckCache		(const char * Text)
 		Length = strlen(Text);
 		Cached = new char[Length + 1];
 		strcpy(Cached, Text);
-		printf("Cache was dirty.\n");
 	}
-	else
-		printf("Cache was up-to-date.\n");
 
 	return RetVal;
 }

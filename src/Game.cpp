@@ -262,8 +262,6 @@ void		Game::OnClick		(int X, int Y)
 				{
 					int Index = (Y - 120) / 25;
 
-					printf("Clicked Index %u.\n", Index);
-
 					if (Index < OPTION_COUNT)
 					{
 						GameOptions.SwitchOpt(Index);
@@ -301,7 +299,7 @@ void		Game::OnClick		(int X, int Y)
 				Scene =		SCENE_LEARN;
 			}
 		}
-		if ((X >= 192) && (Y >= 429))
+		if ((X >= 232) && (Y >= 449))
 		{
 			LastScene = Scene;
 			Scene = SCENE_LEGAL;
@@ -763,7 +761,7 @@ void		Game::OnRender		(bool Force, bool Flip)
 				Background.Render(0, 0, Window);
 
 			if (Scene == SCENE_MAIN)
-				LogoSurface.Render(193, 429, Window);
+				LogoSurface.Render(232, 449, Window);
 
 			else if (Scene == SCENE_GAME_PLAY)
 			{

@@ -24,7 +24,7 @@ namespace _SDLMille
 
 Options::Options	(void)
 {
-	Opts = 0;
+	Opts = 1;
 }
 
 Options::~Options	(void)
@@ -43,31 +43,21 @@ bool	Options::ReadOpts	(void)
 {
 	using namespace std;
 
-	char	Filename[21];
+	bool Success = false;
 	struct	stat	Info;
 
 	if (stat("options.dat", &Info) == 0)
-		strcpy(Filename, "options.dat");
-	else if (stat("options.def", &Info) == 0)
-		strcpy(Filename, "options.def");
-	else
-		return false;
-
-	ifstream	OptsFile (Filename, ios::in | ios::binary);
-	
-	if (OptsFile.bad())
-		return false;
-
-	OptsFile.seekg(0);
-	if (OptsFile.read(&Opts, 1))
 	{
+		ifstream	OptsFile ("options.dat", ios::in | ios::binary);
+		
+		if (OptsFile.bad())
+			return false;
+
+		OptsFile.seekg(0);
+		Success = OptsFile.read(&Opts, 1);
 		OptsFile.close();
-		return true;
-	}
-	else
-	{
-		OptsFile.close();
-		return false;
+
+		return Success;
 	}
 
 	return false;
@@ -77,21 +67,17 @@ bool	Options::SaveOpts	(void)
 {
 	using namespace std;
 
+	bool Success = false;
 	ofstream OptsFile ("options.dat", ios::out | ios::binary);
 
 	if (OptsFile.bad())
 		return false;
 
 	OptsFile.seekp(0);
-	if (OptsFile.write(&Opts, 1))
-	{
-		OptsFile.close();
-		return true;
-	}
-	else
-		OptsFile.close();
+	Success = OptsFile.write(&Opts, 1);
+	OptsFile.close();
 
-	return false;
+	return Success;	
 }
 
 bool	Options::SetOpt		(int Option, bool Switch)
@@ -103,7 +89,6 @@ bool	Options::SetOpt		(int Option, bool Switch)
 		else
 			Opts = Opts & ~(1 << Option);
 
-		printf("Set Option.\n");
 		return true;
 	}
 
