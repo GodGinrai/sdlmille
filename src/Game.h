@@ -7,7 +7,8 @@
 namespace _SDLMille
 {
 
-const Uint8 PLAYER_COUNT = 2,
+const Uint8 MENU_ITEM_COUNT = 2,
+			PLAYER_COUNT = 2,
 			SCORE_CATEGORY_COUNT = 12,
 			SCORE_COLUMN_COUNT = 3,
 			MESSAGE_SIZE = 31;
@@ -17,8 +18,9 @@ const	char	CARD_CAPTIONS[CARD_SAFETY_RIGHT_OF_WAY + 1][21] = {
 					"Crash REMEDY", "Fuel REMEDY", "Tire REMEDY", "Speed REMEDY", "Roll REMEDY",
 					"Crash SAFETY", "Fuel SAFETY", "Tire SAFETY", "Right-of-way SAFETY"
 					};
+const	char	MENU_ITEM_NAMES[MENU_ITEM_COUNT][21] = {"New game", "Main menu"};
 const	char	SCORE_CAT_NAMES[SCORE_CATEGORY_COUNT][21] = {"Mileage", "Safeties", "All 4", "Coup Fourres", "Completed Trip", "Delayed Action", "Safe Trip", "Extension", "Shutout", "Subtotal", "Previous", "Total"};
-const	char	VERSION_TEXT[] = "0.4.99-6 (beta1 test6)";
+const	char	VERSION_TEXT[] = "0.4.99-7 (beta1 test7)";
 
 class Game
 {
@@ -55,7 +57,7 @@ private:
 				LogoSurface,
 				MenuSurface,
 				MessageSurface,
-				OptionSurfaces[OPTION_COUNT][2],
+				MenuSurfaces[OPTION_COUNT + MENU_ITEM_COUNT][2],
 				ResultTextSurface,
 				ScoreSurfaces[SCORE_CATEGORY_COUNT + 1][SCORE_COLUMN_COUNT],
 				VersionSurface;
@@ -80,8 +82,8 @@ private:
 	TTF_Font	*DrawFont, *GameOverFont;
 
 
-	enum { SCENE_MAIN = 0, SCENE_GAME_PLAY, SCENE_GAME_MENU, SCENE_GAME_OVER, SCENE_LEARN, SCENE_LEGAL, SCENE_INVALID };
-	enum { MODAL_EXTENSION = 0, MODAL_GAME_MENU, MODAL_NONE };
+	enum { SCENE_MAIN = 0, SCENE_GAME_PLAY, SCENE_GAME_MENU, SCENE_GAME_OVER, SCENE_LEARN_1, SCENE_LEGAL, SCENE_INVALID };
+	enum { MODAL_EXTENSION = 0, MODAL_GAME_MENU, MODAL_NEW_GAME, MODAL_MAIN_MENU, MODAL_NONE };
 };
 
 }

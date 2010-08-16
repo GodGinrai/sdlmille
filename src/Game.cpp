@@ -268,6 +268,18 @@ void		Game::OnClick		(int X, int Y)
 						ShowModal(Modal);
 						return;
 					}
+					else if (Index < (OPTION_COUNT + MENU_ITEM_COUNT))
+					{
+						switch (Index - OPTION_COUNT)
+						{
+						case 0:
+							ShowModal(MODAL_NEW_GAME);
+							break;
+						case 1:
+							ShowModal(MODAL_MAIN_MENU);
+							break;
+						}
+					}
 				}
 			}						
 			if ((X >= 251) && (X <= 277))
@@ -280,6 +292,25 @@ void		Game::OnClick		(int X, int Y)
 				}
 			}
 		}
+		else if ((Modal == MODAL_NEW_GAME) || (Modal == MODAL_MAIN_MENU))
+		{
+			if ((X >= 65) && (X <= 255) && (Y >= 220) && (Y <= 265))
+				ShowModal(MODAL_GAME_MENU);
+			else if ((X >= 130) && (X <= 190) && (Y >= 281) && (Y <= 311))
+			{
+				Reset();
+				for (int i = 0; i < PLAYER_COUNT; ++i)
+					RunningScores[i] = 0;
+
+				if (Modal == MODAL_MAIN_MENU)
+				{
+					LastScene = Scene;
+					Scene = SCENE_MAIN;
+				}
+
+				Modal = MODAL_NONE;
+			}
+		}	
 
 		return;
 	}
@@ -296,7 +327,7 @@ void		Game::OnClick		(int X, int Y)
 			if ((Y >= 370) && (Y <= 415))
 			{
 				LastScene = SCENE_MAIN;
-				Scene =		SCENE_LEARN;
+				Scene =		SCENE_LEARN_1;
 			}
 		}
 		if ((X >= 232) && (Y >= 449))
@@ -374,7 +405,7 @@ void		Game::OnClick		(int X, int Y)
 	}
 
 
-	else if (Scene == SCENE_LEARN)
+	else if (Scene == SCENE_LEARN_1)
 	{
 		// Return to main menu on click
 		LastScene = Scene;
@@ -513,9 +544,9 @@ bool		Game::OnInit		(void)
 		return true;
 	}
 
-	else if (Scene == SCENE_LEARN)
+	else if (Scene == SCENE_LEARN_1)
 	{
-		Background.SetImage("gfx/scenes/learn.png");
+		Background.SetImage("gfx/scenes/the-cards.png");
 
 		if (!Background)
 			return false;
@@ -791,6 +822,13 @@ void		Game::OnRender		(bool Force, bool Flip)
 				}
 			}
 
+			else if (Scene == SCENE_LEARN_1)
+			{
+				printf("Drew cards\n");
+				for (int i = 0; i < CARD_MILEAGE_25; ++i)
+					Surface::Draw(Window, Surface::Load(Card::GetFileFromValue(i)), 135 + ((i / 5) * 64), 97 + ((i % 5) * 64) + ((i == CARD_SAFETY_RIGHT_OF_WAY) ? 32 : 0));
+			}
+
 			else if (Scene == SCENE_LEGAL)
 				VersionSurface.Render(315 - VersionSurface.GetWidth(), 1, Window);
 		}
@@ -891,8 +929,6 @@ bool		Game::ShowModal		(Uint8 ModalName)
 {
 	if (ModalName < MODAL_NONE)
 	{
-		OnRender(true, false); //Re-render the background, but don't flip it.
-
 		int R, G, B;
 		R = G = B = 255;
 
@@ -906,14 +942,28 @@ bool		Game::ShowModal		(Uint8 ModalName)
 			Surface::Draw(Window, Surface::Load("gfx/modals/extension.png"), 74, 193);
 			break;
 		case MODAL_GAME_MENU:
+			OnRender(true, false); //Re-render the background, but don't flip it.
+
 			Surface::Draw(Window, Surface::Load("gfx/modals/menu_top.png"), 40, 80);
-			for (int i = 0; i < OPTION_COUNT; ++i)
+			for (int i = 0; i < (OPTION_COUNT + MENU_ITEM_COUNT); ++i)
 			{
-				OptionSurfaces[i][0].SetText(OPTION_NAMES[i], GameOverFont, R, G, B);
-				OptionSurfaces[i][1].SetText((GameOptions.GetOpt(i)) ? "ON" : "OFF", GameOverFont, R, G, B);
-				OptionSurfaces[i][0].Render(50, 120 + (i * 25), Window);
-				OptionSurfaces[i][1].Render(240, 120 + (i * 25), Window);
+				if (i < OPTION_COUNT)
+				{
+					MenuSurfaces[i][0].SetText(OPTION_NAMES[i], GameOverFont, R, G, B);
+					MenuSurfaces[i][1].SetText((GameOptions.GetOpt(i)) ? "ON" : "OFF", GameOverFont, R, G, B);
+					MenuSurfaces[i][1].Render(240, 120 + (i * 25), Window);
+				}
+				else
+				{
+					MenuSurfaces[i][0].SetText(MENU_ITEM_NAMES[i - OPTION_COUNT], GameOverFont, R, G, B);
+				}
+
+				MenuSurfaces[i][0].Render(50, 120 + (i * 25), Window);
 			}
+			break;
+		case MODAL_NEW_GAME:
+		case MODAL_MAIN_MENU:
+			Surface::Draw(Window, Surface::Load("gfx/modals/quit.png"), 60, 165);
 			break;
 		}		
 
