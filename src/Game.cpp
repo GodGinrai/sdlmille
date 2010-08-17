@@ -49,9 +49,6 @@ namespace _SDLMille
 	FrozenAt = 0;
 	MessagedAt = 0;
 
-	if (SourceDeck)
-		OldDeckCount = DeckCount = SourceDeck->CardsLeft();
-
 	// Initialize SDL_ttf
 	if (!TTF_WasInit())
 		TTF_Init();
@@ -75,6 +72,9 @@ namespace _SDLMille
 	{
 		Players[i % 2].Draw();
 	}
+
+	if (SourceDeck)
+		OldDeckCount = DeckCount = SourceDeck->CardsLeft();
 
 	GameOptions.ReadOpts();
 
@@ -404,10 +404,15 @@ void		Game::OnClick		(int X, int Y)
 		Scene = SCENE_GAME_PLAY;
 	}
 
-
 	else if (Scene == SCENE_LEARN_1)
 	{
-		// Return to main menu on click
+		//Advance to next scene.
+		LastScene = Scene;
+		++Scene;
+	}
+
+	else if (Scene == SCENE_LEARN_2)
+	{
 		LastScene = Scene;
 		Scene = SCENE_MAIN;
 	}
@@ -516,7 +521,7 @@ bool		Game::OnInit		(void)
 		return true;
 	}
 
-	else if (Scene == SCENE_GAME_PLAY)
+	else if ((Scene == SCENE_GAME_PLAY) || (Scene == SCENE_LEARN_2))
 	{
 		Background.SetImage("gfx/scenes/game-play.png");
 
@@ -539,7 +544,8 @@ bool		Game::OnInit		(void)
 				CaptionSurface.Clear();
 		}
 
-		MenuSurface.SetImage("gfx/menu.png");
+		if (Scene == SCENE_GAME_PLAY)
+			MenuSurface.SetImage("gfx/menu.png");
 
 		return true;
 	}
@@ -794,7 +800,7 @@ void		Game::OnRender		(bool Force, bool Flip)
 			if (Scene == SCENE_MAIN)
 				LogoSurface.Render(232, 449, Window);
 
-			else if (Scene == SCENE_GAME_PLAY)
+			else if ((Scene == SCENE_GAME_PLAY) || (Scene == SCENE_LEARN_2))
 			{
 				if (DiscardSurface)
 					DiscardSurface.Render(3, 358, Window);
@@ -834,7 +840,7 @@ void		Game::OnRender		(bool Force, bool Flip)
 		}
 
 		// During play, we also need to render our players
-		if (Scene == SCENE_GAME_PLAY)
+		if ((Scene == SCENE_GAME_PLAY) || (Scene == SCENE_LEARN_2))
 		{
 			//Force compels players to re-render if this function re-rendered
 			RefreshedSomething |= Players[0].OnRender(Window, 0, Force);
@@ -843,7 +849,7 @@ void		Game::OnRender		(bool Force, bool Flip)
 			//Render caption over hand
 			if (GameOptions.GetOpt(OPTION_CARD_CAPTIONS))
 				CaptionSurface.Render((320 - CaptionSurface.GetWidth()) / 2, (350 - CaptionSurface.GetHeight()) - 10, Window);
-			if (MenuSurface)
+			if (MenuSurface && (Scene == SCENE_GAME_PLAY))
 				MenuSurface.Render(2, 5, Window);
 		}
 
