@@ -123,8 +123,7 @@ bool	Hand::OnRender	(SDL_Surface * Surface, bool Force)
 			{
 				/*	The next line is a fancy (and more efficient) way of multiplying i times 65 and then
 					adding 81. 65 is the horizontal distance between two cards, and 81 is the left edge
-					of our render. Because this uses the bit shift operator to do multiplication, it will
-					only work on little-endian architectures. Reverse the shift operator for big-endian. */
+					of our render. */
 				int	X = ((i << 6) + i + 81),
 					Y =	0;
 

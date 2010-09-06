@@ -103,6 +103,14 @@ namespace _SDLMille
 		TTF_Quit();
 }
 
+void		Game::ClearMessage	(void)
+{
+	Message[0] = '\0';
+	MessagedAt = 0;
+	MessageSurface.Clear();
+	Dirty = true;
+}
+
 bool		Game::IsValidPlay	(Uint8 Index)									const
 {
 	Uint8	Type =	Players[Current].GetType(Index),
@@ -321,6 +329,7 @@ void		Game::OnClick		(int X, int Y)
 		{
 			if ((Y >= 300) && (Y <= 355))
 			{
+				Reset();
 				LastScene = SCENE_MAIN;
 				Scene =		SCENE_GAME_PLAY;
 			}
@@ -404,15 +413,16 @@ void		Game::OnClick		(int X, int Y)
 		Scene = SCENE_GAME_PLAY;
 	}
 
-	else if (Scene == SCENE_LEARN_1)
+	else if ((Scene >= SCENE_LEARN_1) && (Scene < SCENE_LEARN_7))
 	{
 		//Advance to next scene.
 		LastScene = Scene;
 		++Scene;
 	}
 
-	else if (Scene == SCENE_LEARN_2)
+	else if (Scene == SCENE_LEARN_7)
 	{
+		ClearMessage();
 		LastScene = Scene;
 		Scene = SCENE_MAIN;
 	}
@@ -504,6 +514,25 @@ bool		Game::OnInit		(void)
 		SDL_WM_SetCaption("SDL Mille", "mille.ico");
 	}
 
+	if (IN_TUTORIAL)
+	{
+		ShowMessage(TUTORIAL_TEXT[Scene - SCENE_LEARN_2]);
+		/*
+		switch(Scene)
+		{
+		case SCENE_LEARN_2:
+			ShowMessage("These are the play areas.", false);
+			break;
+		case SCENE_LEARN_3:
+			ShowMessage("This area is the computer's.", false);
+			break;
+		case SCENE_LEARN_4:
+			ShowMessage("And this is your area.", false);
+			break;
+		}
+		*/
+	}
+
 	if (Message[0] != '\0')
 	{
 		if (GameOverFont)
@@ -546,6 +575,8 @@ bool		Game::OnInit		(void)
 
 		if (Scene == SCENE_GAME_PLAY)
 			MenuSurface.SetImage("gfx/menu.png");
+		else if (Scene == SCENE_LEARN_2)// range check
+			OrbSurface.SetImage("gfx/orb.png");
 
 		return true;
 	}
@@ -602,12 +633,9 @@ void		Game::OnLoop		(void)
 {
 	if (Message[0] != '\0')
 	{
-		if (abs(static_cast<int>(SDL_GetTicks() - MessagedAt)) > 2500)
+		if ((abs(static_cast<int>(SDL_GetTicks() - MessagedAt)) > 2500) && (Scene != SCENE_LEARN_2))
 		{
-			Message[0] = '\0';
-			MessagedAt = 0;
-			MessageSurface.Clear();
-			Dirty = true;
+			ClearMessage();
 		}
 	}
 
@@ -800,7 +828,7 @@ void		Game::OnRender		(bool Force, bool Flip)
 			if (Scene == SCENE_MAIN)
 				LogoSurface.Render(232, 449, Window);
 
-			else if ((Scene == SCENE_GAME_PLAY) || (Scene == SCENE_LEARN_2))
+			else if ((Scene == SCENE_GAME_PLAY) || IN_TUTORIAL)
 			{
 				if (DiscardSurface)
 					DiscardSurface.Render(3, 358, Window);
@@ -832,7 +860,7 @@ void		Game::OnRender		(bool Force, bool Flip)
 			{
 				printf("Drew cards\n");
 				for (int i = 0; i < CARD_MILEAGE_25; ++i)
-					Surface::Draw(Window, Surface::Load(Card::GetFileFromValue(i)), 135 + ((i / 5) * 64), 97 + ((i % 5) * 64) + ((i == CARD_SAFETY_RIGHT_OF_WAY) ? 32 : 0));
+					Surface::Draw(Window, Surface::Load(Card::GetFileFromValue(i)), 135 + ((i / 5) * 64), 97 + ((i % 5) * 64) + ((i == CARD_SAFETY_RIGHT_OF_WAY) ? 32 : 0), true);
 			}
 
 			else if (Scene == SCENE_LEGAL)
@@ -840,7 +868,7 @@ void		Game::OnRender		(bool Force, bool Flip)
 		}
 
 		// During play, we also need to render our players
-		if ((Scene == SCENE_GAME_PLAY) || (Scene == SCENE_LEARN_2))
+		if ((Scene == SCENE_GAME_PLAY) || IN_TUTORIAL)
 		{
 			//Force compels players to re-render if this function re-rendered
 			RefreshedSomething |= Players[0].OnRender(Window, 0, Force);
@@ -851,6 +879,33 @@ void		Game::OnRender		(bool Force, bool Flip)
 				CaptionSurface.Render((320 - CaptionSurface.GetWidth()) / 2, (350 - CaptionSurface.GetHeight()) - 10, Window);
 			if (MenuSurface && (Scene == SCENE_GAME_PLAY))
 				MenuSurface.Render(2, 5, Window);
+		}
+
+		if (IN_TUTORIAL)
+		{
+			if (Scene == SCENE_LEARN_2)
+			{
+				OrbSurface.Render(ORB_COORDS[0][0], ORB_COORDS[0][1], Window);
+				OrbSurface.Render(ORB_COORDS[1][0], ORB_COORDS[1][1], Window);
+			}
+			else
+			{
+				Uint8 Index = Scene - SCENE_LEARN_3;
+				OrbSurface.Render(ORB_COORDS[Index][0], ORB_COORDS[Index][1], Window);
+			}
+			/*
+			switch (Scene)
+			{
+			case SCENE_LEARN_2:
+				OrbSurface.Render(136, 245, Window);
+			case SCENE_LEARN_3:
+				OrbSurface.Render(136, 45, Window);
+				break;
+			case SCENE_LEARN_4:
+				OrbSurface.Render(136, 245, Window);
+				break;
+			}
+			*/
 		}
 
 		//And render the message last.
@@ -921,13 +976,14 @@ void			Game::Reset			(void)
 		OldDeckCount = DeckCount = SourceDeck->CardsLeft();
 }
 
-void		Game::ShowMessage	(const char * Msg)
+void		Game::ShowMessage	(const char * Msg, bool SetDirty)
 {
 	if (strlen(Msg) < MESSAGE_SIZE)
 	{
 		strcpy(Message, Msg);
 		MessagedAt = SDL_GetTicks();
-		Dirty = true;
+		if (SetDirty)
+			Dirty = true;
 	}
 }
 
@@ -940,17 +996,19 @@ bool		Game::ShowModal		(Uint8 ModalName)
 
 		Modal = ModalName;
 
-		Surface::Draw(Window, Surface::Load("gfx/modals/shadow.png"), 0, 0);
+		Surface::Draw(Window, Surface::Load("gfx/modals/shadow.png"), 0, 0, true);
 
 		switch(Modal)
 		{
 		case MODAL_EXTENSION:
-			Surface::Draw(Window, Surface::Load("gfx/modals/extension.png"), 74, 193);
+			ModalSurface.SetImage("gfx/modals/extension.png");
+			ModalSurface.Render(74, 193, Window);
 			break;
 		case MODAL_GAME_MENU:
 			OnRender(true, false); //Re-render the background, but don't flip it.
 
-			Surface::Draw(Window, Surface::Load("gfx/modals/menu_top.png"), 40, 80);
+			ModalSurface.SetImage("gfx/modals/menu_top.png");
+			ModalSurface.Render(40, 80, Window);
 			for (int i = 0; i < (OPTION_COUNT + MENU_ITEM_COUNT); ++i)
 			{
 				if (i < OPTION_COUNT)
@@ -969,7 +1027,8 @@ bool		Game::ShowModal		(Uint8 ModalName)
 			break;
 		case MODAL_NEW_GAME:
 		case MODAL_MAIN_MENU:
-			Surface::Draw(Window, Surface::Load("gfx/modals/quit.png"), 60, 165);
+			ModalSurface.SetImage("gfx/modals/quit.png");
+			ModalSurface.Render(60, 165, Window);
 			break;
 		}		
 

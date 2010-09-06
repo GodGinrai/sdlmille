@@ -1,4 +1,4 @@
-#define	WEBOS_DEVICE
+//#define	WEBOS_DEVICE
 //#define	ANDROID_DEVICE
 
 #ifndef _SDLMILLE_SURFACE_H
@@ -27,7 +27,7 @@ public:
 			void			SetText		(const char * Text, TTF_Font * Font, int R = 0, int G = 0, int B = 0);
 							operator bool	(void)														const;
 
-	static	bool			Draw		(SDL_Surface * Destination, SDL_Surface * Source, int X, int Y);
+	static	bool			Draw		(SDL_Surface * Destination, SDL_Surface * Source, int X, int Y, bool Free = false);
 	static	SDL_Surface *	Load		(const char * File);
 	static	SDL_Surface *	RenderText	(const char * Text, TTF_Font *Font, int R, int G, int B);
 

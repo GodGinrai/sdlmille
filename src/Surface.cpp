@@ -155,7 +155,7 @@ Surface::operator bool	(void)																const
 	return (MySurface != 0);
 }
 
-bool			Surface::Draw	(SDL_Surface * Destination, SDL_Surface * Source, int X, int Y)
+bool			Surface::Draw	(SDL_Surface * Destination, SDL_Surface * Source, int X, int Y, bool Free)
 {
 	if (!Destination || !Source)
 		return false;
@@ -172,6 +172,9 @@ bool			Surface::Draw	(SDL_Surface * Destination, SDL_Surface * Source, int X, in
 	DestRect.y = Y;
 
 	SDL_BlitSurface(Source, 0, Destination, &DestRect);
+
+	if (Free)
+		SDL_FreeSurface(Source);
 
 	return true;
 }

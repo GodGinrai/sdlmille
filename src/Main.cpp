@@ -38,8 +38,14 @@ int	main	(int argc, char* argv[])
 	chdir("/media/cryptofs/apps/usr/palm/applications/com.webosnerd.sdl-mille/");
 	#endif
 
+	bool	Success;
 	Game	TheGame;
 
+	Success = TheGame.OnExecute();
+
+	if (SDL_WasInit(SDL_INIT_VIDEO))
+		SDL_Quit();
+
 	// Return 0 if the game executed OK. Otherwise, return -1.
-	return (TheGame.OnExecute()) ? 0 : -1;
+	return (Success) ? 0 : -1;
 }
