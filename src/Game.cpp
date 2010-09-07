@@ -268,7 +268,7 @@ void		Game::OnClick		(int X, int Y)
 			{
 				if ((Y >= 120) && (Y <= 400))
 				{
-					int Index = (Y - 120) / 25;
+					int Index = (Y - 120) / 40;
 
 					if (Index < OPTION_COUNT)
 					{
@@ -420,6 +420,8 @@ void		Game::OnClick		(int X, int Y)
 			if ((X >= 5) && (X <= 80))
 			{
 				LastScene = Scene;
+				if (Scene == SCENE_LEARN_2)
+					ClearMessage();
 				if (Scene != SCENE_LEARN_1)
 					--Scene;
 				else
@@ -1057,14 +1059,14 @@ bool		Game::ShowModal		(Uint8 ModalName)
 				{
 					MenuSurfaces[i][0].SetText(OPTION_NAMES[i], GameOverFont, R, G, B);
 					MenuSurfaces[i][1].SetText((GameOptions.GetOpt(i)) ? "ON" : "OFF", GameOverFont, R, G, B);
-					MenuSurfaces[i][1].Render(240, 120 + (i * 25), Window);
+					MenuSurfaces[i][1].Render(240, 120 + (i * 40), Window);
 				}
 				else
 				{
 					MenuSurfaces[i][0].SetText(MENU_ITEM_NAMES[i - OPTION_COUNT], GameOverFont, R, G, B);
 				}
 
-				MenuSurfaces[i][0].Render(50, 120 + (i * 25), Window);
+				MenuSurfaces[i][0].Render(50, 120 + (i * 40), Window);
 			}
 			break;
 		case MODAL_NEW_GAME:
