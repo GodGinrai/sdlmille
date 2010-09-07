@@ -1,7 +1,8 @@
 #ifndef _SDLMILLE_GAME_H
 #define	_SDLMILLE_GAME_H
 
-#define	IN_TUTORIAL ((Scene >= SCENE_LEARN_2) && (Scene <= SCENE_LEARN_7))
+#define	IN_DEMO ((Scene >= SCENE_LEARN_2) && (Scene <= SCENE_LEARN_7))
+#define IN_TUTORIAL ((Scene >= SCENE_LEARN_1) && (Scene <= SCENE_LEARN_7))
 
 #include "Player.h"
 #include "Options.h"
@@ -20,23 +21,27 @@ const	char	CARD_CAPTIONS[CARD_SAFETY_RIGHT_OF_WAY + 1][21] = {
 					"Crash REMEDY", "Fuel REMEDY", "Tire REMEDY", "Speed REMEDY", "Roll REMEDY",
 					"Crash SAFETY", "Fuel SAFETY", "Tire SAFETY", "Right-of-way SAFETY"
 					};
+const	int		HAND_COORDS[][2] =	{
+										{146, 388},
+										{146, 388},
+										{3, 388}
+									};
 const	char	MENU_ITEM_NAMES[MENU_ITEM_COUNT][21] = {"New game", "Main menu"};
 const	int		ORB_COORDS[][2] =	{
 										{136,	45},
 										{136,	245},
 										{146,	364},
 										{146,	364},
-										{3,		364}
 									};
 const	char	SCORE_CAT_NAMES[SCORE_CATEGORY_COUNT][21] = {"Mileage", "Safeties", "All 4", "Coup Fourres", "Completed Trip", "Delayed Action", "Safe Trip", "Extension", "Shutout", "Subtotal", "Previous", "Total"};
 const	char	TUTORIAL_TEXT[][MESSAGE_SIZE] = {
-					"These are the play areas.",
-					"This area is the computer's.",
+					"This is the computer's area.",
 					"And this is your area.",
 					"Click a card to select it.",
 					"Click it again to play.",
-					"Or click here to discard."};
-const	char	VERSION_TEXT[] = "0.4.99-7 (beta1 test7)";
+					"Or click here to discard.",
+					"Enjoy the game!"};
+const	char	VERSION_TEXT[] = "0.5 (beta1)";
 
 class Game
 {
@@ -67,10 +72,12 @@ private:
 
 	/* Properties */
 	SDL_Surface	*Window;
-	Surface		Background,
+	Surface		ArrowSurfaces[2],
+				Background,
 				CaptionSurface,
 				DiscardSurface,
 				DrawCardSurface, DrawTextSurface,
+				HandSurface,
 				LogoSurface,
 				MenuSurface,
 				MessageSurface,

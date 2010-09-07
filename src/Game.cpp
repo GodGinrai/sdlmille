@@ -413,19 +413,40 @@ void		Game::OnClick		(int X, int Y)
 		Scene = SCENE_GAME_PLAY;
 	}
 
-	else if ((Scene >= SCENE_LEARN_1) && (Scene < SCENE_LEARN_7))
+	else if (IN_TUTORIAL)
 	{
-		//Advance to next scene.
-		LastScene = Scene;
-		++Scene;
+		if ((Y >= 5) && (Y <= 80))
+		{
+			if ((X >= 5) && (X <= 80))
+			{
+				LastScene = Scene;
+				if (Scene != SCENE_LEARN_1)
+					--Scene;
+				else
+					Scene = SCENE_MAIN;
+			}
+			else if ((X >= 245) && (X <= 315))
+			{
+				LastScene = Scene;
+				if (Scene != SCENE_LEARN_7)
+					++Scene;
+				else
+				{
+					ClearMessage();
+					Scene = SCENE_MAIN;
+				}
+			}
+		}
 	}
 
+	/*
 	else if (Scene == SCENE_LEARN_7)
 	{
 		ClearMessage();
 		LastScene = Scene;
 		Scene = SCENE_MAIN;
 	}
+	*/
 
 	else if (Scene == SCENE_LEGAL)
 	{
@@ -516,21 +537,27 @@ bool		Game::OnInit		(void)
 
 	if (IN_TUTORIAL)
 	{
-		ShowMessage(TUTORIAL_TEXT[Scene - SCENE_LEARN_2]);
-		/*
-		switch(Scene)
+		ArrowSurfaces[0].SetImage("gfx/arrowl.png");
+		ArrowSurfaces[1].SetImage("gfx/arrowr.png");
+		if (Scene >= SCENE_LEARN_2)
 		{
-		case SCENE_LEARN_2:
-			ShowMessage("These are the play areas.", false);
-			break;
-		case SCENE_LEARN_3:
-			ShowMessage("This area is the computer's.", false);
-			break;
-		case SCENE_LEARN_4:
-			ShowMessage("And this is your area.", false);
-			break;
+			HandSurface.SetImage("gfx/hand.png");
+			ShowMessage(TUTORIAL_TEXT[Scene - SCENE_LEARN_2]);
+			/*
+			switch(Scene)
+			{
+			case SCENE_LEARN_2:
+				ShowMessage("These are the play areas.", false);
+				break;
+			case SCENE_LEARN_3:
+				ShowMessage("This area is the computer's.", false);
+				break;
+			case SCENE_LEARN_4:
+				ShowMessage("And this is your area.", false);
+				break;
+			}
+			*/
 		}
-		*/
 	}
 
 	if (Message[0] != '\0')
@@ -828,7 +855,7 @@ void		Game::OnRender		(bool Force, bool Flip)
 			if (Scene == SCENE_MAIN)
 				LogoSurface.Render(232, 449, Window);
 
-			else if ((Scene == SCENE_GAME_PLAY) || IN_TUTORIAL)
+			else if ((Scene == SCENE_GAME_PLAY) || IN_DEMO)
 			{
 				if (DiscardSurface)
 					DiscardSurface.Render(3, 358, Window);
@@ -860,7 +887,7 @@ void		Game::OnRender		(bool Force, bool Flip)
 			{
 				printf("Drew cards\n");
 				for (int i = 0; i < CARD_MILEAGE_25; ++i)
-					Surface::Draw(Window, Surface::Load(Card::GetFileFromValue(i)), 135 + ((i / 5) * 64), 97 + ((i % 5) * 64) + ((i == CARD_SAFETY_RIGHT_OF_WAY) ? 32 : 0), true);
+					Surface::Draw(Window, Surface::Load(Card::GetFileFromValue(i)), 135 + ((i / 5) * 64), 113 + ((i % 5) * 64) + ((i == CARD_SAFETY_RIGHT_OF_WAY) ? 32 : 0), true);
 			}
 
 			else if (Scene == SCENE_LEGAL)
@@ -868,7 +895,7 @@ void		Game::OnRender		(bool Force, bool Flip)
 		}
 
 		// During play, we also need to render our players
-		if ((Scene == SCENE_GAME_PLAY) || IN_TUTORIAL)
+		if ((Scene == SCENE_GAME_PLAY) || IN_DEMO)
 		{
 			//Force compels players to re-render if this function re-rendered
 			RefreshedSomething |= Players[0].OnRender(Window, 0, Force);
@@ -883,6 +910,7 @@ void		Game::OnRender		(bool Force, bool Flip)
 
 		if (IN_TUTORIAL)
 		{
+			/*
 			if (Scene == SCENE_LEARN_2)
 			{
 				OrbSurface.Render(ORB_COORDS[0][0], ORB_COORDS[0][1], Window);
@@ -890,10 +918,24 @@ void		Game::OnRender		(bool Force, bool Flip)
 			}
 			else
 			{
-				Uint8 Index = Scene - SCENE_LEARN_3;
-				OrbSurface.Render(ORB_COORDS[Index][0], ORB_COORDS[Index][1], Window);
+			*/
+			ArrowSurfaces[0].Render(5, 5, Window);
+			ArrowSurfaces[1].Render(240, 5, Window);
+
+			if (Scene >= SCENE_LEARN_2)
+			{
+				Uint8 Index = Scene - SCENE_LEARN_2;
+				if (Scene < SCENE_LEARN_6)
+					OrbSurface.Render(ORB_COORDS[Index][0], ORB_COORDS[Index][1], Window);
+
+				if ((Scene >= SCENE_LEARN_4) && (Scene < SCENE_LEARN_7))
+				{
+					Index -= 2;
+					HandSurface.Render(HAND_COORDS[Index][0], HAND_COORDS[Index][1], Window);
+				}
 			}
 			/*
+			}
 			switch (Scene)
 			{
 			case SCENE_LEARN_2:
