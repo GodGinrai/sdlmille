@@ -36,10 +36,10 @@ namespace _SDLMille
 	Copy(Source);
 }
 
-				Card::Card				(Uint8 V)
+				Card::Card				(Uint8 ArgValue)
 {
-	if (V <= CARD_NULL_NULL)
-		Set(V);
+	if (ArgValue <= CARD_NULL_NULL)
+		Set(ArgValue);
 	else
 		exit(CARD_VALUE_INVALID);
 }
@@ -61,6 +61,7 @@ bool			Card::Discard			(void)
 		Set(CARD_NULL_NULL);
 		return true;
 	}
+
 	return false;
 }
 
@@ -137,71 +138,54 @@ const char *	Card::GetFileFromValue		(Uint8 ArgValue, bool CoupFourre)
 
 Uint8			Card::GetMatchingSafety	(Uint8 HazardValue)
 {
+	Uint8	RetVal = 0xFF;
 	if (GetTypeFromValue(HazardValue) == CARD_HAZARD)
 	{
+		RetVal = HazardValue + SAFETY_OFFSET;
 		if (HazardValue == CARD_HAZARD_STOP)
-			return HazardValue + SAFETY_OFFSET - 1;
-		else
-			return HazardValue + SAFETY_OFFSET;
+			--RetVal;
 	}
-	else
-		return 0xFF;
+	
+	return RetVal;
 }
 
 Uint8			Card::GetMileValue		(Uint8 ArgValue)
 {
+	Uint8 MileValue = 0;
+
 	if (GetTypeFromValue(ArgValue) == CARD_MILEAGE)
 	{
-		switch (ArgValue)
-		{
-		case	CARD_MILEAGE_25:
-			return 25;
-		case	CARD_MILEAGE_50:
-			return 50;
-		case	CARD_MILEAGE_75:
-			return 75;
-		case	CARD_MILEAGE_100:
-			return 100;
-		case	CARD_MILEAGE_200:
-			return 200;
-		}
+		MileValue = 25 * (ArgValue - CARD_SAFETY_RIGHT_OF_WAY);
+		if (ArgValue == CARD_MILEAGE_200)
+			MileValue += 75;
 	}
-	return 0;
-}
 
-Uint8			Card::GetType			(void)									const
-{
-	return Type;
+	return MileValue;
 }
 
 Uint8			Card::GetTypeFromValue	(Uint8 V)
 {
 	if (V <= CARD_HAZARD_STOP)
 		return CARD_HAZARD;
-	else if (V <= CARD_REMEDY_ROLL)
+	if (V <= CARD_REMEDY_ROLL)
 		return CARD_REMEDY;
-	else if (V <= CARD_SAFETY_RIGHT_OF_WAY)
+	if (V <= CARD_SAFETY_RIGHT_OF_WAY)
 		return CARD_SAFETY;
-	else if (V < CARD_NULL_NULL)
+	if (V < CARD_NULL_NULL)
 		return CARD_MILEAGE;
-	else
-		return CARD_NULL;
-}
-
-Uint8			Card::GetValue			(void)									const
-{
-	return Value;
+	
+	return CARD_NULL;
 }
 
 
 /* Private methods */
 
 
-void			Card::Set				(Uint8 V)
+void			Card::Set				(Uint8 ArgValue)
 {
-	if (V <= CARD_NULL_NULL)
+	if (ArgValue <= CARD_NULL_NULL)
 	{
-		Value = V;
+		Value = ArgValue;
 		Type = GetTypeFromValue(Value);
 	}
 	else

@@ -22,7 +22,7 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 namespace _SDLMille
 {
 
-				Surface::Surface	(void)
+				Surface::Surface		(void)
 {
 	MySurface = 0;
 	Cached = 0;
@@ -30,7 +30,7 @@ namespace _SDLMille
 	Length = 0;
 }
 
-				Surface::~Surface	(void)
+				Surface::~Surface		(void)
 {
 	if (MySurface)
 		SDL_FreeSurface(MySurface);
@@ -39,7 +39,7 @@ namespace _SDLMille
 		delete [] Cached;
 }
 
-void	Surface::Clear	(void)
+void			Surface::Clear			(void)
 {
 	if (MySurface != 0)
 	{
@@ -55,7 +55,7 @@ void	Surface::Clear	(void)
 	}
 }
 
-int		Surface::GetHeight	(void)															const
+int				Surface::GetHeight		(void)																	const
 {
 	if (MySurface != 0)
 		return MySurface->h;
@@ -63,7 +63,7 @@ int		Surface::GetHeight	(void)															const
 	return 0;
 }
 
-int		Surface::GetWidth	(void)															const
+int				Surface::GetWidth		(void)																	const
 {
 	if (MySurface != 0)
 		return MySurface->w;
@@ -71,13 +71,13 @@ int		Surface::GetWidth	(void)															const
 	return 0;
 }
 
-void	Surface::Render	(int X, int Y, SDL_Surface * Destination)							const
+void			Surface::Render			(int X, int Y, SDL_Surface * Destination)								const
 {
 	if (MySurface != 0)
 		Draw(Destination, MySurface, X, Y);
 }
 
-void	Surface::SetImage	(const char * File)
+void			Surface::SetImage		(const char * File)
 {
 	if (CheckCache(File))
 	{
@@ -91,7 +91,7 @@ void	Surface::SetImage	(const char * File)
 	}
 }
 
-void	Surface::SetInteger	(int Value, TTF_Font * Font, bool ShowZero)
+void			Surface::SetInteger		(int Value, TTF_Font * Font, bool ShowZero)
 {
 	if (Value < 0)
 		return;
@@ -136,7 +136,7 @@ void	Surface::SetInteger	(int Value, TTF_Font * Font, bool ShowZero)
 	}
 }
 
-void	Surface::SetText	(const char * Text, TTF_Font * Font, int R, int G, int B)
+void			Surface::SetText		(const char * Text, TTF_Font * Font, int R, int G, int B)
 {
 	if (CheckCache(Text))
 	{
@@ -150,14 +150,14 @@ void	Surface::SetText	(const char * Text, TTF_Font * Font, int R, int G, int B)
 	}
 }
 
-Surface::operator bool	(void)																const
+				Surface::operator bool	(void)																	const
 {
 	return (MySurface != 0);
 }
 
-bool			Surface::Draw	(SDL_Surface * Destination, SDL_Surface * Source, int X, int Y, bool Free)
+bool			Surface::Draw			(SDL_Surface * Destination, SDL_Surface * Source, int X, int Y, bool Free)
 {
-	if (!Destination || !Source)
+	if ((Destination == 0) || (Source == 0))
 		return false;
 
 	#ifdef	ANDROID_DEVICE
@@ -167,7 +167,6 @@ bool			Surface::Draw	(SDL_Surface * Destination, SDL_Surface * Source, int X, in
 	#endif
 
 	SDL_Rect	DestRect;
-
 	DestRect.x = X;
 	DestRect.y = Y;
 
@@ -179,19 +178,13 @@ bool			Surface::Draw	(SDL_Surface * Destination, SDL_Surface * Source, int X, in
 	return true;
 }
 
-SDL_Surface *	Surface::Load	(const char * File)
+SDL_Surface *	Surface::Load			(const char * File)
 {
-	//printf("Loading file.\n");
-	
 	if (File)
 	{
-		//printf("-File provided.\n");
-		
 		SDL_Surface	*Loaded = 0,
 					*Formatted = 0;
 
-		//printf("-Pointers created.\n");
-	
 		#ifdef	ANDROID_DEVICE
 		char	*NewFile = 0;
 		NewFile = new	char[strlen(File) + 5];
@@ -207,49 +200,29 @@ SDL_Surface *	Surface::Load	(const char * File)
 		Loaded = IMG_Load(File);
 		#endif
 
-		if (!Loaded)
-		{
-			//printf("-Not loaded.\n");
+		if (Loaded == 0)
 			return 0;
-		}
-		
-		//printf("-Loaded.\n");
 
 		Formatted = SDL_DisplayFormatAlpha(Loaded);
 		
-		//printf("-Formatted.\n");
-		
 		SDL_FreeSurface(Loaded);
-		
-		//printf("-Freed.\n");
 
-		if (Formatted)
-		{
-			//printf("-Returning formatted surface.\n");
-			return Formatted;
-		}
-		else
-		{
-			//printf("-Unable to format. Returning 0.\n");
-			return 0;
-		}
+		return Formatted;
 	}
 	else
 		return 0;
 }
 
-SDL_Surface *	Surface::RenderText	(const char *Text, TTF_Font *Font, int R, int G, int B)
+SDL_Surface *	Surface::RenderText		(const char *Text, TTF_Font *Font, int R, int G, int B)
 {
 	SDL_Color	TextColor = {R, G, B, 0};
 	SDL_Surface	*Screen = 0,
 				*TextSurface = 0;
 	Screen = SDL_GetVideoSurface();
 
-	if (Font && Screen)
+	if ((Font != 0) && (Screen != 0))
 	{
 		if (!TTF_WasInit())
-			// If TTF hasn't been initialized, there's no way *Font would be a
-			// valid pointer.
 			return 0;
 
 		TextSurface = TTF_RenderText_Blended(Font, Text, TextColor);
@@ -259,34 +232,36 @@ SDL_Surface *	Surface::RenderText	(const char *Text, TTF_Font *Font, int R, int 
 	return 0;
 }
 
+/* Private */
 
-
-
-bool		Surface::CheckCache		(const char * Text)
+bool			Surface::CheckCache		(const char * Text)
 {
-	bool	RetVal = false;
+	bool	CacheDirty = false;
 
-	if (Cached)
+	if (Text == 0)
+		return false;
+
+	if (Cached != 0)
 	{
 		if (strcmp(Cached, Text))
 		{
-			RetVal = true;
+			CacheDirty = true;
 			delete [] Cached;
 			Cached = 0;
 			Length = 0;
 		}
 	}
 	else
-		RetVal = true;
+		CacheDirty = true;
 
-	if (RetVal)
+	if (CacheDirty)
 	{
 		Length = strlen(Text);
 		Cached = new char[Length + 1];
 		strcpy(Cached, Text);
 	}
 
-	return RetVal;
+	return CacheDirty;
 }
 
 }
