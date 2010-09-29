@@ -69,9 +69,7 @@ namespace _SDLMille
 
 	//Staggered deal
 	for (int i = 0; i < 13; ++i)
-	{
 		Players[i % 2].Draw();
-	}
 
 	if (SourceDeck)
 		OldDeckCount = DeckCount = SourceDeck->CardsLeft();
@@ -111,6 +109,31 @@ void		Game::ClearMessage	(void)
 	Dirty = true;
 }
 
+void		Game::ComputerMove	(void)
+{
+	bool Played = false;
+
+	for (int i = 0; i < HAND_SIZE; ++i)
+	{	
+		if (IsValidPlay(i))	// Play the first valid move we find (the computer is currently stupid)
+		{
+			OnPlay(i);
+			Played = true;
+			break;
+		}
+	}
+
+	if (Played == false)
+	{
+		for (int i = 0; i < HAND_SIZE; ++i)	//No valid moves, discard
+		{
+			Pop(i);
+			if (Discard())
+				break;
+		}
+	}
+}
+
 bool		Game::IsValidPlay	(Uint8 Index)									const
 {
 	Uint8	Type =	Players[Current].GetType(Index),
@@ -131,7 +154,7 @@ bool		Game::IsValidPlay	(Uint8 Index)									const
 		if (Players[Current].IsLimited())
 		{
 			// Enforce speed limit
-			if (Value > CARD_MILEAGE_50)
+			if (MileageValue > 50)
 				return false;
 		}
 
@@ -187,7 +210,6 @@ bool		Game::IsValidPlay	(Uint8 Index)									const
 				// We're already rolling
 				return false;
 		}
-
 		else
 		{
 			if (TopCardType == CARD_HAZARD)
@@ -203,7 +225,6 @@ bool		Game::IsValidPlay	(Uint8 Index)									const
 					// We're not limited, so we can't end the limit
 					return false;
 			}
-
 			else
 			{
 				if (TopCardType != CARD_HAZARD)
@@ -229,9 +250,9 @@ bool		Game::IsValidPlay	(Uint8 Index)									const
 
 void		Game::OnClick		(int X, int Y)
 {
-	if (Frozen)
+	if (Frozen)		//Don't register clicks when frozen
 	{
-		if (abs(static_cast<int>(SDL_GetTicks() - FrozenAt)) > 1000)
+		if ((SDL_GetTicks() - 1000) > FrozenAt)
 		{
 			Frozen = false;
 			FrozenAt = 0;
@@ -240,7 +261,7 @@ void		Game::OnClick		(int X, int Y)
 			return;
 	}
 
-	if (Modal < MODAL_NONE)
+	if (Modal < MODAL_NONE)		// Handle clicks on a modal window
 	{
 		if (Modal == MODAL_EXTENSION)
 		{
@@ -270,13 +291,13 @@ void		Game::OnClick		(int X, int Y)
 				{
 					int Index = (Y - 120) / 40;
 
-					if (Index < OPTION_COUNT)
+					if (Index < OPTION_COUNT)	//Clicked an option toggle
 					{
 						GameOptions.SwitchOpt(Index);
 						ShowModal(Modal);
 						return;
 					}
-					else if (Index < (OPTION_COUNT + MENU_ITEM_COUNT))
+					else if (Index < (OPTION_COUNT + MENU_ITEM_COUNT)) //Clicked a menu item
 					{
 						switch (Index - OPTION_COUNT)
 						{
@@ -292,7 +313,7 @@ void		Game::OnClick		(int X, int Y)
 			}						
 			if ((X >= 251) && (X <= 277))
 			{
-				if ((Y >= 83) && (Y <= 109))
+				if ((Y >= 83) && (Y <= 109))	// Clicked the X button
 				{
 					GameOptions.SaveOpts();
 					Modal = MODAL_NONE;
@@ -302,9 +323,9 @@ void		Game::OnClick		(int X, int Y)
 		}
 		else if ((Modal == MODAL_NEW_GAME) || (Modal == MODAL_MAIN_MENU))
 		{
-			if ((X >= 65) && (X <= 255) && (Y >= 220) && (Y <= 265))
+			if ((X >= 65) && (X <= 255) && (Y >= 220) && (Y <= 265))	// Clicked Cancel
 				ShowModal(MODAL_GAME_MENU);
-			else if ((X >= 130) && (X <= 190) && (Y >= 281) && (Y <= 311))
+			else if ((X >= 130) && (X <= 190) && (Y >= 281) && (Y <= 311))	//Clicked Confirm
 			{
 				Reset();
 				for (int i = 0; i < PLAYER_COUNT; ++i)
@@ -319,27 +340,26 @@ void		Game::OnClick		(int X, int Y)
 				Modal = MODAL_NONE;
 			}
 		}	
-
 		return;
 	}
 
-	if (Scene == SCENE_MAIN)
+	if (Scene == SCENE_MAIN)	//Main menu
 	{
 		if ((X >= 45) && (X <= 275))
 		{
-			if ((Y >= 300) && (Y <= 355))
+			if ((Y >= 300) && (Y <= 355))	//Clicked Play
 			{
 				Reset();
 				LastScene = SCENE_MAIN;
 				Scene =		SCENE_GAME_PLAY;
 			}
-			if ((Y >= 370) && (Y <= 415))
+			if ((Y >= 370) && (Y <= 415))	//Clicked Learn
 			{
 				LastScene = SCENE_MAIN;
 				Scene =		SCENE_LEARN_1;
 			}
 		}
-		if ((X >= 232) && (Y >= 449))
+		if ((X >= 232) && (Y >= 449))		//Clicked GPL logo
 		{
 			LastScene = Scene;
 			Scene = SCENE_LEGAL;
@@ -347,77 +367,66 @@ void		Game::OnClick		(int X, int Y)
 		}
 	}
 
-	else if (Scene == SCENE_GAME_PLAY)
+	else if (Scene == SCENE_GAME_PLAY)		//In game play
 	{
 		if (Current == 0) // Don't respond to clicks unless it's the human's turn
 		{
-			if (Y < 175)
+			if (Y < 175)	//Clicked within opponent's tableau
 			{
-				if ((Y < 45) && (X < 80))
+				if ((Y < 45) && (X < 80))		//Clicked Menu button
 					ShowModal(MODAL_GAME_MENU);
 				else
 				{
+					// Play selected card, if it's a hazard
 					if (Players[Current].GetType(FindPopped()) == CARD_HAZARD)
 						Pop(FindPopped());
 				}
 			}
-
-			else if ((Y > 175) && (Y < 350))
-				Pop(FindPopped());
-
-			else if ((Y >= 358) && (Y <= 476))
+			else if ((Y > 175) && (Y < 350))	//Clicked within own tableau
+				Pop(FindPopped());	//Play selected card, if any
+			else if ((Y >= 358) && (Y <= 476))	//Clicked within the two rows at the bottom of the screen
 			{
 				Uint8	Add = 0,
 						Index = 0;
 
-				if (Y >= 425)
-					// Player clicked the bottom row of their hand. Add 4 to the index
+				if (Y >= 425)	// Clicked the bottom row. Add 4 to the index
 					Add = 4;
-
-				else if (Y > 410)
-					// We don't need to respond to this click
+				else if (Y > 410)	//Clicked in the dead zone
 					return; 
 
-				if (X >= 86)
+				if (X >= 86)	//Clicked within hand
 				{
-					// This is a fancy way of figuring out which card the user clicked
-					if (((X - 84) % 65) <= 35)
+					if (((X - 84) % 65) <= 35)	//Click was not in horizontal dead zone
 					{
 						Index = ((X - 84) / 65) + Add;
 
-						// Index 0 is the "X" above the fourth card
-						if (Index > 0)
-							// Then we pop it
+						if (Index > 0)	//Clicked a card, so pop it
 							Pop(Index - 1);
-						else
+						else //Clicked the X, so cancel selection/click
 						{
-							//Cancel selection and cancel click
 							Players[0].UnPop(FindPopped());
 							return;
 						}
 					}
 				}
-
-				else if ((X >= 3) && (X <= 43))
-					// User clicked the discard pile
+				else if ((X >= 3) && (X <= 43) && (Y <= 410))	//Clicked the discard pile
 					Discard();
 			}
 		}
 	}
 
-	else if (Scene == SCENE_GAME_OVER)
+	else if (Scene == SCENE_GAME_OVER)	//Score screen, start new game on click
 	{
-		//Start new game
 		Reset();
 		LastScene = Scene;
 		Scene = SCENE_GAME_PLAY;
 	}
 
-	else if (IN_TUTORIAL)
+	else if (IN_TUTORIAL)	//Tutorial scenes
 	{
 		if ((Y >= 5) && (Y <= 80))
 		{
-			if ((X >= 5) && (X <= 80))
+			if ((X >= 5) && (X <= 80))	//Clicked back arrow
 			{
 				LastScene = Scene;
 				if (Scene == SCENE_LEARN_2)
@@ -427,7 +436,7 @@ void		Game::OnClick		(int X, int Y)
 				else
 					Scene = SCENE_MAIN;
 			}
-			else if ((X >= 245) && (X <= 315))
+			else if ((X >= 245) && (X <= 315))	//Clicked forward arrow
 			{
 				LastScene = Scene;
 				if (Scene != SCENE_LEARN_7)
@@ -441,16 +450,7 @@ void		Game::OnClick		(int X, int Y)
 		}
 	}
 
-	/*
-	else if (Scene == SCENE_LEARN_7)
-	{
-		ClearMessage();
-		LastScene = Scene;
-		Scene = SCENE_MAIN;
-	}
-	*/
-
-	else if (Scene == SCENE_LEGAL)
+	else if (Scene == SCENE_LEGAL)	//Legal scene, return to main menu on click
 	{
 		LastScene = Scene;
 		Scene = SCENE_MAIN;
@@ -460,16 +460,16 @@ void		Game::OnClick		(int X, int Y)
 void		Game::OnEvent		(SDL_Event * Event)
 {
 	int	X = 0, Y = 0;
-	if (Event)
+
+	if (Event != 0)
 	{
 		if (Event->type == SDL_QUIT)
 			Running = false;
-
-		else if (Event->type == SDL_MOUSEBUTTONUP)
+		else if (Event->type == SDL_MOUSEBUTTONUP)	//Mouse click
 		{
 			X = Event->button.x;
 			Y = Event->button.y;
-			#ifdef	ANDROID_DEVICE
+			#ifdef	ANDROID_DEVICE		//Fix X and Y for WVGA
 			if ((Y < 40) || (Y > 760))
 				return;
 			else
@@ -480,8 +480,7 @@ void		Game::OnEvent		(SDL_Event * Event)
 			#endif
 			OnClick(X, Y);
 		}
-
-		else if (Event->type == SDL_KEYUP)
+		else if (Event->type == SDL_KEYUP)	//Debugging purposes
 		{
 			//Players[1].ReceiveHazard(rand() % 5);
 		}
@@ -518,6 +517,8 @@ bool		Game::OnExecute		(void)
 
 bool		Game::OnInit		(void)
 {
+	Dirty = false;
+
 	if (!Window)
 	{
 		// Set up our display if we haven't already
@@ -531,10 +532,9 @@ bool		Game::OnInit		(void)
 		#else
 		if(!(Window = SDL_SetVideoMode(320, 480, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)))
 		#endif
-
 			return false;
 
-		SDL_WM_SetCaption("SDL Mille", "mille.ico");
+		SDL_WM_SetCaption("SDL Mille", "SDL Mille");
 	}
 
 	if (IN_TUTORIAL)
@@ -545,20 +545,6 @@ bool		Game::OnInit		(void)
 		{
 			HandSurface.SetImage("gfx/hand.png");
 			ShowMessage(TUTORIAL_TEXT[Scene - SCENE_LEARN_2]);
-			/*
-			switch(Scene)
-			{
-			case SCENE_LEARN_2:
-				ShowMessage("These are the play areas.", false);
-				break;
-			case SCENE_LEARN_3:
-				ShowMessage("This area is the computer's.", false);
-				break;
-			case SCENE_LEARN_4:
-				ShowMessage("And this is your area.", false);
-				break;
-			}
-			*/
 		}
 	}
 
@@ -604,7 +590,7 @@ bool		Game::OnInit		(void)
 
 		if (Scene == SCENE_GAME_PLAY)
 			MenuSurface.SetImage("gfx/menu.png");
-		else if (Scene == SCENE_LEARN_2)// range check
+		else
 			OrbSurface.SetImage("gfx/orb.png");
 
 		return true;
@@ -660,11 +646,12 @@ bool		Game::OnInit		(void)
 
 void		Game::OnLoop		(void)
 {
-	if (Message[0] != '\0')
+	if (Message[0] != '\0')	//Clear message if necessary
 	{
-		if ((abs(static_cast<int>(SDL_GetTicks() - MessagedAt)) > 2500) && (Scene != SCENE_LEARN_2))
+		if (((SDL_GetTicks() - 2500) > MessagedAt) && !IN_DEMO)
 		{
 			ClearMessage();
+			Dirty = true;
 		}
 	}
 
@@ -677,12 +664,12 @@ void		Game::OnLoop		(void)
 		{
 			if (!Extended && !ExtensionDeclined)
 			{
-				if (Players[0].GetMileage() == 700)
+				if (Players[0].GetMileage() == 700) //Give player option to extend
 				{
 					if (Modal != MODAL_EXTENSION)
 						ShowModal(MODAL_EXTENSION);
 				}
-				else if (Players[1].GetMileage() == 700)
+				else if (Players[1].GetMileage() == 700) //Computer randomly decides whether to extend
 				{
 					srand(time(0));
 					if (rand() % 2)
@@ -694,19 +681,19 @@ void		Game::OnLoop		(void)
 					else
 						ExtensionDeclined = true;
 				}
-				else
+				else	//Hand ended with trip uncompleted
 					ExtensionDeclined = true;
 
 				return;
 			}
 
-			Frozen = true;
+			Frozen = true;	//Freeze to prevent premature closing of score screen
 			FrozenAt = SDL_GetTicks();
 
 			GetScores();
 
 			LastScene = Scene;
-			Scene = SCENE_GAME_OVER;
+			Scene = SCENE_GAME_OVER;	//Switch to score screen
 
 			return;
 		}
@@ -714,42 +701,12 @@ void		Game::OnLoop		(void)
 		if (Players[Current].IsOutOfCards())
 			ChangePlayer();
 
-		if (SourceDeck)
-		{
-			// "1 - Current" gives us the opponent
-			//Players[1 - Current].Draw();
-			DeckCount = SourceDeck->CardsLeft();
-		}
-
 		if (Current == 1)
 		{
 			// Delay for a moment, then the computer makes a move
 			SDL_Delay((GameOptions.GetOpt(OPTION_FAST_GAME)) ? 200 : 500);
 
-			bool Played = false;
-
-			for (int i = 0; i < HAND_SIZE; ++i)
-			{	
-				// Play the first valid move we find (the computer is currently stupid)
-				if (IsValidPlay(i))
-				{
-					OnPlay(i);
-					Played = true;
-					break;
-				}
-			}
-
-			if (Played == false)
-			{
-				// If the computer didn't find a valid move, it will discard the first
-				// non-empty slot in its hand
-				for (int i = 0; i < HAND_SIZE; ++i)
-				{
-					Pop(i);
-					if (Discard())
-						break;
-				}
-			}
+			ComputerMove();
 		}
 	}
 }
@@ -775,7 +732,7 @@ void		Game::OnPlay		(Uint8 Index)
 
 		if (Type != CARD_SAFETY)
 			ChangePlayer();
-		else
+		else	//Playing a safety gives us another turn.
 		{
 			if (DiscardedCard != CARD_NULL_NULL)
 				// A Coup Fourre bounced a card off the player's tableau. Put it on
@@ -783,18 +740,15 @@ void		Game::OnPlay		(Uint8 Index)
 				DiscardTop = DiscardedCard;
 
 			if (SourceDeck)
-			{
 				// We immediately draw another card after playing a safety.
 				Players[Current].Draw();
-				DeckCount = SourceDeck->CardsLeft();
-			}
 		}
 	}
 }
 
 void		Game::OnRender		(bool Force, bool Flip)
 {
-	if ((Modal == MODAL_NONE) || Force)
+	if ((Modal == MODAL_NONE) || Force)	//Don't re-render during modal, unless forced
 	{
 		bool	RefreshedSomething =	false, // We only flip the display if something changed
 				SceneChanged =			false; // Control variable. Do we need to call OnInit()?
@@ -804,36 +758,19 @@ void		Game::OnRender		(bool Force, bool Flip)
 		#endif
 
 		// If the scene, discard pile, or deck count have changed, we need to do a refresh
-		if (Scene != LastScene)
-		{
-			SceneChanged = true;
-			LastScene = Scene;
-		}
-		if (OldDiscardTop != DiscardTop)
-		{
-			SceneChanged = true;
-			OldDiscardTop = DiscardTop;
-		}
-
-		if (OldDeckCount != DeckCount)
-		{
-			SceneChanged = true;
-			OldDeckCount = DeckCount;
-		}
+		SceneChanged |= CheckForChange(OldDeckCount, DeckCount);
+		SceneChanged |= CheckForChange(OldDiscardTop, DiscardTop);
+		SceneChanged |= CheckForChange(LastScene, Scene);
 
 		// Also if we're otherwise dirty
-		if (Dirty)
-		{
-			SceneChanged = true;
-			Dirty = false;
-		}
+		SceneChanged |= Dirty;
 
 		//Re-render the background if the hand has changed
 		if ((Scene == SCENE_GAME_PLAY) && Players[0].IsDirty())
 		{
-			if (GameOptions.GetOpt(OPTION_CARD_CAPTIONS))
+			if (GameOptions.GetOpt(OPTION_CARD_CAPTIONS)) //With captions, we need to re-init
 				SceneChanged = true;
-			else
+			else	//Without captions, we just need to re-render
 				Force = true;
 		}
 
@@ -912,21 +849,13 @@ void		Game::OnRender		(bool Force, bool Flip)
 
 		if (IN_TUTORIAL)
 		{
-			/*
-			if (Scene == SCENE_LEARN_2)
-			{
-				OrbSurface.Render(ORB_COORDS[0][0], ORB_COORDS[0][1], Window);
-				OrbSurface.Render(ORB_COORDS[1][0], ORB_COORDS[1][1], Window);
-			}
-			else
-			{
-			*/
 			ArrowSurfaces[0].Render(5, 5, Window);
 			ArrowSurfaces[1].Render(240, 5, Window);
 
 			if (Scene >= SCENE_LEARN_2)
 			{
 				Uint8 Index = Scene - SCENE_LEARN_2;
+
 				if (Scene < SCENE_LEARN_6)
 					OrbSurface.Render(ORB_COORDS[Index][0], ORB_COORDS[Index][1], Window);
 
@@ -936,20 +865,6 @@ void		Game::OnRender		(bool Force, bool Flip)
 					HandSurface.Render(HAND_COORDS[Index][0], HAND_COORDS[Index][1], Window);
 				}
 			}
-			/*
-			}
-			switch (Scene)
-			{
-			case SCENE_LEARN_2:
-				OrbSurface.Render(136, 245, Window);
-			case SCENE_LEARN_3:
-				OrbSurface.Render(136, 45, Window);
-				break;
-			case SCENE_LEARN_4:
-				OrbSurface.Render(136, 245, Window);
-				break;
-			}
-			*/
 		}
 
 		//And render the message last.
@@ -1098,6 +1013,17 @@ inline void		Game::ChangePlayer	(void)
 		Current = 1 - Current;
 		Players[Current].Draw();
 	}
+}
+
+bool			Game::CheckForChange	(Uint8 &Old, Uint8 &New)
+{
+	if (Old != New)
+	{
+		Old = New;
+		return true;
+	}
+
+	return false;
 }
 
 bool			Game::Discard		(void)

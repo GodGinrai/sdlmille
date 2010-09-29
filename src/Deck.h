@@ -1,3 +1,22 @@
+/*
+This file is part of SDL Mille.
+
+SDL Mille is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+SDL Mille is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
+
+(See file LICENSE for full text of license)
+*/
+
 #ifndef _SDLMILLE_DECK_H
 #define	_SDLMILLE_DECK_H
 
@@ -8,24 +27,20 @@ namespace	_SDLMille
 {
 
 // Card types and values
-enum	{
-			CARD_HAZARD = 0, CARD_REMEDY, CARD_SAFETY, CARD_MILEAGE,
-			CARD_NULL
-		};
+enum	{	CARD_HAZARD = 0, CARD_REMEDY, CARD_SAFETY, CARD_MILEAGE, CARD_NULL	};
+
 enum	{	CARD_HAZARD_ACCIDENT = 0, CARD_HAZARD_GAS, CARD_HAZARD_FLAT, CARD_HAZARD_SPEED_LIMIT, CARD_HAZARD_STOP,	//  4
 			CARD_REMEDY_REPAIR, CARD_REMEDY_FUEL, CARD_REMEDY_SPARE, CARD_REMEDY_END_LIMIT, CARD_REMEDY_ROLL,		//  9
 			CARD_SAFETY_DRIVING_ACE, CARD_SAFETY_EXTRA_TANK, CARD_SAFETY_PUNCTURE_PROOF, CARD_SAFETY_RIGHT_OF_WAY,	// 13
 			CARD_MILEAGE_25, CARD_MILEAGE_50, CARD_MILEAGE_75, CARD_MILEAGE_100, CARD_MILEAGE_200,					// 18
-			CARD_NULL_NULL
-		};
-
+			CARD_NULL_NULL	};
 
 const int	DECK_ERROR = 2000;
 
 const	Uint8	DECK_SIZE =	101,
 				STD_DECK[DECK_SIZE] =
-	{
-		CARD_HAZARD_ACCIDENT, CARD_HAZARD_ACCIDENT, // Removed one of each hazard, since we have two players.
+
+	{	CARD_HAZARD_ACCIDENT, CARD_HAZARD_ACCIDENT, // Removed one of each hazard, since we have two players.
 		CARD_HAZARD_GAS, CARD_HAZARD_GAS,
 		CARD_HAZARD_FLAT, CARD_HAZARD_FLAT,
 		CARD_HAZARD_SPEED_LIMIT, CARD_HAZARD_SPEED_LIMIT, CARD_HAZARD_SPEED_LIMIT,
@@ -45,8 +60,7 @@ const	Uint8	DECK_SIZE =	101,
 		CARD_MILEAGE_75, CARD_MILEAGE_75, CARD_MILEAGE_75, CARD_MILEAGE_75, CARD_MILEAGE_75,
 		CARD_MILEAGE_100, CARD_MILEAGE_100, CARD_MILEAGE_100, CARD_MILEAGE_100, CARD_MILEAGE_100, CARD_MILEAGE_100,
 		CARD_MILEAGE_100, CARD_MILEAGE_100, CARD_MILEAGE_100, CARD_MILEAGE_100, CARD_MILEAGE_100, CARD_MILEAGE_100,
-		CARD_MILEAGE_200, CARD_MILEAGE_200, CARD_MILEAGE_200, CARD_MILEAGE_200
-	};
+		CARD_MILEAGE_200, CARD_MILEAGE_200, CARD_MILEAGE_200, CARD_MILEAGE_200	};
 
 class Deck
 {

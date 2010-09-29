@@ -35,11 +35,9 @@ int		Deck::CardsLeft	(void)	const
 Uint8	Deck::Draw		(void)
 {
 	Uint8	RetVal = CARD_NULL_NULL;
-	//std::cout << static_cast<int>(Marker) << '\n';
 	if (Marker < DECK_SIZE)
 	{
 		RetVal = STD_DECK[Order[Marker]];
-		//Available[Marker] = false;
 		++Marker;
 	}
 	return RetVal;
@@ -52,6 +50,8 @@ bool	Deck::Empty		(void)	const
 
 void		Deck::Shuffle	(void)
 {
+	//TODO: Benchmark this vs. using a vector with its built-in shuffling method.
+
 	//Reset marker
 	Marker = 0;
 
