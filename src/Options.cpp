@@ -22,18 +22,9 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 namespace _SDLMille
 {
 
-Options::Options	(void)
+bool	Options::GetOpt		(int Option)				const
 {
-	Opts = 1;
-}
-
-Options::~Options	(void)
-{
-}
-
-bool	Options::GetOpt	(int Option)
-{
-	if (Option < (sizeof(char) * 8))
+	if (Option < OPTION_COUNT)
 		return ((Opts >> Option) & 1);
 
 	return false;
@@ -46,15 +37,16 @@ bool	Options::ReadOpts	(void)
 	bool Success = false;
 	struct	stat	Info;
 
-	if (stat("options.dat", &Info) == 0)
+	if (stat("options.dat", &Info) == 0)	//File exists
 	{
 		ifstream	OptsFile ("options.dat", ios::in | ios::binary);
 		
-		if (OptsFile.bad())
+		if (!OptsFile.is_open())
 			return false;
 
 		OptsFile.seekg(0);
-		Success = OptsFile.read(&Opts, 1);
+		OptsFile.read(&Opts, 1);
+		Success = OptsFile.good();
 		OptsFile.close();
 
 		return Success;
@@ -63,18 +55,19 @@ bool	Options::ReadOpts	(void)
 	return false;
 }
 
-bool	Options::SaveOpts	(void)
+bool	Options::SaveOpts	(void)						const
 {
 	using namespace std;
 
 	bool Success = false;
 	ofstream OptsFile ("options.dat", ios::out | ios::binary);
 
-	if (OptsFile.bad())
+	if (!OptsFile.is_open())
 		return false;
 
 	OptsFile.seekp(0);
-	Success = OptsFile.write(&Opts, 1);
+	OptsFile.write(&Opts, 1);
+	Success = OptsFile.good();
 	OptsFile.close();
 
 	return Success;	
@@ -98,9 +91,7 @@ bool	Options::SetOpt		(int Option, bool Switch)
 bool	Options::SwitchOpt	(int Option)
 {
 	if (Option < OPTION_COUNT)
-	{
 		return SetOpt(Option, !GetOpt(Option));
-	}
 
 	return false;
 }
