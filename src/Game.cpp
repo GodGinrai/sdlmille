@@ -21,8 +21,9 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace _SDLMille
 {
+/*Public methods */
 
-			Game::Game			(void)
+		Game::Game				(void)
 {
 	Current = 0;	// Set current player to Player 1
 
@@ -82,7 +83,7 @@ namespace _SDLMille
 	GameOverFont = TTF_OpenFont("LiberationMono-Regular.ttf", 18);
 }
 
-			Game::~Game			(void)
+		Game::~Game				(void)
 {
 	GameOptions.SaveOpts();
 
@@ -101,7 +102,57 @@ namespace _SDLMille
 		TTF_Quit();
 }
 
-void		Game::ClearMessage	(void)
+bool	Game::OnExecute			(void)
+{
+	if (!OnInit())
+		return false;
+
+	SDL_Event	Event;
+
+	// Main loop
+	while (Running)
+	{
+		while (SDL_PollEvent(&Event))
+		{
+			OnEvent(&Event);
+		}
+
+		// We have to render twice because the computer moves during OnLoop() and we
+		// want to render the human's move before the 500ms delay. Hopefully this will
+		// be fixed soon.
+		OnRender(); 
+		OnLoop();
+		OnRender();
+		SDL_Delay(25);
+	}
+	
+	return true;
+
+}
+
+/* Private methods */
+
+void	Game::ChangePlayer		(void)
+{
+	if (!EndOfGame())
+	{
+		Current = 1 - Current;
+		Players[Current].Draw();
+	}
+}
+
+bool	Game::CheckForChange	(Uint8 &Old, Uint8 &New)
+{
+	if (Old != New)
+	{
+		Old = New;
+		return true;
+	}
+
+	return false;
+}
+
+void	Game::ClearMessage		(void)
 {
 	Message[0] = '\0';
 	MessagedAt = 0;
@@ -109,7 +160,7 @@ void		Game::ClearMessage	(void)
 	Dirty = true;
 }
 
-void		Game::ComputerMove	(void)
+void	Game::ComputerMove		(void)
 {
 	bool Played = false;
 
@@ -134,7 +185,173 @@ void		Game::ComputerMove	(void)
 	}
 }
 
-bool		Game::IsValidPlay	(Uint8 Index)									const
+bool	Game::Discard			(void)
+{
+	bool Success =	false;
+
+	Uint8	Value =	CARD_NULL_NULL,
+			Index =	FindPopped(); // Find out which card is popped
+
+	if (Index < HAND_SIZE)
+	{
+		Value	= Players[Current].GetValue(Index);
+		Success = Players[Current].Discard(Index);
+
+		if (Success)
+		{
+			if (Value != CARD_NULL_NULL)	// Sanity check
+				DiscardTop = Value;	// Put the card on top of the discard pile
+
+			Players[Current].UnPop(Index);
+			ChangePlayer();
+		}
+	}
+
+	return Success;
+}
+
+bool	Game::EndOfGame			(void)								const
+{
+	if (Players[0].IsOutOfCards() && Players[1].IsOutOfCards())	//Both players are out of cards
+		return true;
+
+	for (int i = 0; i < PLAYER_COUNT; ++i)
+	{
+		if (Players[i].GetMileage() == ((Extended) ? 1000 : 700))	//A player has completed the trip
+			return true;
+	}
+
+	return false;
+}
+
+Uint8	Game::FindPopped		(void)								const
+{
+	// Find which card in the hand is "popped"
+	for (int i = 0; i < HAND_SIZE; ++i)
+	{
+		if (Players[Current].IsPopped(i))
+			return i;
+	}
+
+	return 0xFF;
+}
+
+void	Game::GetScores			(void)
+{
+	if (EndOfGame())
+	{
+		for (int i = 0; i < PLAYER_COUNT; ++i)
+		{
+			int Score = 0,
+				PlayerSafetyCount = 0, PlayerCoupFourreCount = 0,
+				CategoryIndex = 0;
+
+			/* Points scored by everyone */
+
+			// Distance (1pt per mile travelled)
+			Score += Players[i].GetMileage();
+			ScoreBreakdown[i][CategoryIndex] = Score;
+			++CategoryIndex;
+			
+			for (int j = 0; j < SAFETY_COUNT; ++j) // Get info about safeties and Coup Fourres
+			{
+				if (Players[i].HasSafety(j + SAFETY_OFFSET))
+				{
+					++PlayerSafetyCount;
+					if (Players[i].HasCoupFourre(j + SAFETY_OFFSET))
+						++PlayerCoupFourreCount;
+				}
+			}
+
+			// 100pt for each safety, no matter how played
+			if (PlayerSafetyCount)
+			{
+				int SafetyScore = PlayerSafetyCount * 100;
+				Score += SafetyScore;
+				ScoreBreakdown[i][CategoryIndex] = SafetyScore;
+			}
+			++CategoryIndex;
+
+			// 300pt bonus for all four safeties
+			if (PlayerSafetyCount == 4)
+			{
+				Score += 300;
+				ScoreBreakdown[i][CategoryIndex] = 300;
+			}
+			++CategoryIndex;
+
+			// 300pt bonus for each Coup Fourre
+			if (PlayerCoupFourreCount)
+			{
+				int CoupFourreScore = PlayerCoupFourreCount * 300;
+				Score += CoupFourreScore;
+				ScoreBreakdown[i][CategoryIndex] += CoupFourreScore;
+			}
+			++CategoryIndex;
+
+			/* Points scored only by the player which completed the trip */
+
+			if (Players[i].GetMileage() == ((Extended) ? 1000 : 700))
+			{
+				// 400pt for completing trip
+				Score += 400;
+				ScoreBreakdown[i][CategoryIndex] = 400;
+				++CategoryIndex;
+
+				// 300pt bonus for delayed action (draw pile exhausted before trip completion)
+				if (SourceDeck)
+				{
+					if (SourceDeck->Empty())
+					{
+						Score += 300;
+						ScoreBreakdown[i][CategoryIndex] = 300;
+					}
+				}
+				++CategoryIndex;
+
+				// 300pt bonus for safe trip (no 200-mile cards)
+				if (Players[i].Get200Count() == 0)
+				{
+					Score += 300;
+					ScoreBreakdown[i][CategoryIndex] = 300;
+				}
+				++CategoryIndex;
+
+				// 200pt bonus for completing an extended trip
+				if (Extended)
+				{
+					Score += 200;
+					ScoreBreakdown[i][CategoryIndex] = 200;
+				}
+				++CategoryIndex;
+
+				// 500pt shutout bonus (opponent did not play any mileage cards during the hand)
+				if (Players[1 - i].GetMileage() == 0)
+				{
+					Score += 500;
+					ScoreBreakdown[i][CategoryIndex] = 500;
+				}
+			}
+			else
+				CategoryIndex += 4;
+
+			++CategoryIndex;
+
+			Scores[i] = Score;
+			ScoreBreakdown[i][CategoryIndex] = Score;	//Set subtotal
+
+			++CategoryIndex;
+
+			ScoreBreakdown[i][CategoryIndex] = RunningScores[i];	//Set previous score
+
+			++CategoryIndex;
+
+			ScoreBreakdown[i][CategoryIndex] = RunningScores[i] + Score;	//Set total score
+		}
+	}
+}
+
+bool	Game::IsValidPlay		(Uint8 Index)						const
 {
 	Uint8	Type =	Players[Current].GetType(Index),
 			Value =	Players[Current].GetValue(Index);
@@ -248,7 +465,7 @@ bool		Game::IsValidPlay	(Uint8 Index)									const
 	return false;
 }
 
-void		Game::OnClick		(int X, int Y)
+void	Game::OnClick			(int X, int Y)
 {
 	if (Frozen)		//Don't register clicks when frozen
 	{
@@ -457,7 +674,7 @@ void		Game::OnClick		(int X, int Y)
 	}
 }
 
-void		Game::OnEvent		(SDL_Event * Event)
+void	Game::OnEvent			(SDL_Event * Event)
 {
 	int	X = 0, Y = 0;
 
@@ -487,35 +704,7 @@ void		Game::OnEvent		(SDL_Event * Event)
 	}
 }
 
-bool		Game::OnExecute		(void)
-{
-	if (!OnInit())
-		return false;
-
-	SDL_Event	Event;
-
-	// Main loop
-	while (Running)
-	{
-		while (SDL_PollEvent(&Event))
-		{
-			OnEvent(&Event);
-		}
-
-		// We have to render twice because the computer moves during OnLoop() and we
-		// want to render the human's move before the 500ms delay. Hopefully this will
-		// be fixed soon.
-		OnRender(); 
-		OnLoop();
-		OnRender();
-		SDL_Delay(25);
-	}
-	
-	return true;
-
-}
-
-bool		Game::OnInit		(void)
+bool	Game::OnInit			(void)
 {
 	Dirty = false;
 
@@ -644,7 +833,7 @@ bool		Game::OnInit		(void)
 	return false;
 }
 
-void		Game::OnLoop		(void)
+void	Game::OnLoop			(void)
 {
 	if (Message[0] != '\0')	//Clear message if necessary
 	{
@@ -711,7 +900,7 @@ void		Game::OnLoop		(void)
 	}
 }
 
-void		Game::OnPlay		(Uint8 Index)
+void	Game::OnPlay			(Uint8 Index)
 {
 	// DiscardedCard places the correct card on top of the discard pile after a Coup Fourre.
 	Uint8 DiscardedCard = CARD_NULL_NULL;
@@ -746,7 +935,7 @@ void		Game::OnPlay		(Uint8 Index)
 	}
 }
 
-void		Game::OnRender		(bool Force, bool Flip)
+void	Game::OnRender			(bool Force, bool Flip)
 {
 	if ((Modal == MODAL_NONE) || Force)	//Don't re-render during modal, unless forced
 	{
@@ -788,22 +977,16 @@ void		Game::OnRender		(bool Force, bool Flip)
 			#endif
 			
 			// Render the appropriate surfaces
-			if (Background)
-				Background.Render(0, 0, Window);
+			Background.Render(0, 0, Window);
 
 			if (Scene == SCENE_MAIN)
 				LogoSurface.Render(232, 449, Window);
-
 			else if ((Scene == SCENE_GAME_PLAY) || IN_DEMO)
 			{
-				if (DiscardSurface)
-					DiscardSurface.Render(3, 358, Window);
-				if (DrawCardSurface)
-					DrawCardSurface.Render(3, 420, Window);
-				if (DrawTextSurface)
-					DrawTextSurface.Render(23 - (DrawTextSurface.GetWidth() / 2), 440, Window);
+				DiscardSurface.Render(3, 358, Window);
+				DrawCardSurface.Render(3, 420, Window);
+				DrawTextSurface.Render(23 - (DrawTextSurface.GetWidth() / 2), 440, Window);
 			}
-
 			else if (Scene == SCENE_GAME_OVER)
 			{
 				int X = 0, Y = 0;
@@ -821,20 +1004,17 @@ void		Game::OnRender		(bool Force, bool Flip)
 					}
 				}
 			}
-
 			else if (Scene == SCENE_LEARN_1)
 			{
 				printf("Drew cards\n");
 				for (int i = 0; i < CARD_MILEAGE_25; ++i)
 					Surface::Draw(Window, Surface::Load(Card::GetFileFromValue(i)), 135 + ((i / 5) * 64), 113 + ((i % 5) * 64) + ((i == CARD_SAFETY_RIGHT_OF_WAY) ? 32 : 0), true);
 			}
-
 			else if (Scene == SCENE_LEGAL)
 				VersionSurface.Render(315 - VersionSurface.GetWidth(), 1, Window);
 		}
 
-		// During play, we also need to render our players
-		if ((Scene == SCENE_GAME_PLAY) || IN_DEMO)
+		if ((Scene == SCENE_GAME_PLAY) || IN_DEMO) // During play, we also need to render our players
 		{
 			//Force compels players to re-render if this function re-rendered
 			RefreshedSomething |= Players[0].OnRender(Window, 0, Force);
@@ -843,23 +1023,23 @@ void		Game::OnRender		(bool Force, bool Flip)
 			//Render caption over hand
 			if (GameOptions.GetOpt(OPTION_CARD_CAPTIONS))
 				CaptionSurface.Render((320 - CaptionSurface.GetWidth()) / 2, (350 - CaptionSurface.GetHeight()) - 10, Window);
-			if (MenuSurface && (Scene == SCENE_GAME_PLAY))
+			if (Scene == SCENE_GAME_PLAY)
 				MenuSurface.Render(2, 5, Window);
 		}
 
 		if (IN_TUTORIAL)
 		{
-			ArrowSurfaces[0].Render(5, 5, Window);
+			ArrowSurfaces[0].Render(5, 5, Window);	//Render back and forward arrows
 			ArrowSurfaces[1].Render(240, 5, Window);
 
 			if (Scene >= SCENE_LEARN_2)
 			{
 				Uint8 Index = Scene - SCENE_LEARN_2;
 
-				if (Scene < SCENE_LEARN_6)
+				if (Scene < SCENE_LEARN_6)	//Render orb
 					OrbSurface.Render(ORB_COORDS[Index][0], ORB_COORDS[Index][1], Window);
 
-				if ((Scene >= SCENE_LEARN_4) && (Scene < SCENE_LEARN_7))
+				if ((Scene >= SCENE_LEARN_4) && (Scene < SCENE_LEARN_7)) //Render hand icon
 				{
 					Index -= 2;
 					HandSurface.Render(HAND_COORDS[Index][0], HAND_COORDS[Index][1], Window);
@@ -867,16 +1047,26 @@ void		Game::OnRender		(bool Force, bool Flip)
 			}
 		}
 
-		//And render the message last.
-		if (MessageSurface)
-			MessageSurface.Render(((320 - MessageSurface.GetWidth()) / 2), 125, Window);
+		MessageSurface.Render(((320 - MessageSurface.GetWidth()) / 2), 125, Window); //Render the message last.
 
 		if (RefreshedSomething && Flip)
 			SDL_Flip(Window);
 	}
 }
 
-void			Game::Reset			(void)
+void	Game::Pop				(Uint8 Index)
+{
+	if (Players[Current].IsPopped(Index) && IsValidPlay(Index))
+	{
+		// If the card is already popped, then play it (if it's a valid play)
+		Players[Current].UnPop(Index);
+		OnPlay(Index);
+	}
+	else
+		Players[Current].Pop(Index);	//If it's not already popped, pop it
+}
+
+void	Game::Reset				(void)
 {
 	//Reset my stuff
 	if (SourceDeck)
@@ -924,38 +1114,34 @@ void			Game::Reset			(void)
 			Players[i].SetSource(SourceDeck);
 	}
 
-	//Staggered deal
-	for (int i = 0; i < 13; ++i)
-	{
+	for (int i = 0; i < 13; ++i) //Staggered deal
 		Players[i % 2].Draw();
-	}
 
 	//Odds and ends
 	if (SourceDeck)
 		OldDeckCount = DeckCount = SourceDeck->CardsLeft();
 }
 
-void		Game::ShowMessage	(const char * Msg, bool SetDirty)
+void	Game::ShowMessage		(const char * Msg, bool SetDirty)
 {
 	if (strlen(Msg) < MESSAGE_SIZE)
 	{
 		strcpy(Message, Msg);
 		MessagedAt = SDL_GetTicks();
-		if (SetDirty)
-			Dirty = true;
+		Dirty |= SetDirty;
 	}
 }
 
-bool		Game::ShowModal		(Uint8 ModalName)
+bool	Game::ShowModal			(Uint8 ModalName)
 {
 	if (ModalName < MODAL_NONE)
 	{
 		int R, G, B;
-		R = G = B = 255;
+		R = G = B = 255;	//Set text color
 
 		Modal = ModalName;
 
-		Surface::Draw(Window, Surface::Load("gfx/modals/shadow.png"), 0, 0, true);
+		Surface::Draw(Window, Surface::Load("gfx/modals/shadow.png"), 0, 0, true);	//Render shadow
 
 		switch(Modal)
 		{
@@ -968,7 +1154,7 @@ bool		Game::ShowModal		(Uint8 ModalName)
 
 			ModalSurface.SetImage("gfx/modals/menu_top.png");
 			ModalSurface.Render(40, 80, Window);
-			for (int i = 0; i < (OPTION_COUNT + MENU_ITEM_COUNT); ++i)
+			for (int i = 0; i < (OPTION_COUNT + MENU_ITEM_COUNT); ++i)	//Render options and other menu items
 			{
 				if (i < OPTION_COUNT)
 				{
@@ -977,9 +1163,7 @@ bool		Game::ShowModal		(Uint8 ModalName)
 					MenuSurfaces[i][1].Render(240, 120 + (i * 40), Window);
 				}
 				else
-				{
 					MenuSurfaces[i][0].SetText(MENU_ITEM_NAMES[i - OPTION_COUNT], GameOverFont, R, G, B);
-				}
 
 				MenuSurfaces[i][0].Render(50, 120 + (i * 40), Window);
 			}
@@ -1003,206 +1187,5 @@ bool		Game::ShowModal		(Uint8 ModalName)
 
 
 
-/* Private methods */
-
-
-inline void		Game::ChangePlayer	(void)
-{
-	if (!EndOfGame())
-	{
-		Current = 1 - Current;
-		Players[Current].Draw();
-	}
-}
-
-bool			Game::CheckForChange	(Uint8 &Old, Uint8 &New)
-{
-	if (Old != New)
-	{
-		Old = New;
-		return true;
-	}
-
-	return false;
-}
-
-bool			Game::Discard		(void)
-{
-	bool Success =	false;
-
-	Uint8	Value =	CARD_NULL_NULL,
-			Index =	FindPopped(); // Find out which card is popped
-
-	if (Index < HAND_SIZE)
-	{
-		Value =		Players[Current].GetValue(Index);
-		Success =	Players[Current].Discard(Index);
-
-		if (Success)
-		{
-			if (Value != CARD_NULL_NULL) // Sanity check
-				// Put the card on top of the discard pile
-				DiscardTop = Value;
-
-			Players[Current].UnPop(Index);
-			ChangePlayer();
-		}
-	}
-
-	return Success;
-}
-
-void			Game::GetScores			(void)
-{
-	if (EndOfGame())
-	{
-		for (int i = 0; i < PLAYER_COUNT; ++i)
-		{
-			int Score = 0,
-				PlayerSafetyCount = 0, PlayerCoupFourreCount = 0,
-				CategoryIndex = 0;
-
-			/* Points scored by everyone */
-
-			// Distance (1pt per mile travelled)
-			Score += Players[i].GetMileage();
-			ScoreBreakdown[i][CategoryIndex] = Score;
-			++CategoryIndex;
-			
-			for (int j = 0; j < SAFETY_COUNT; ++j) // Get info about safeties and Coup Fourres
-			{
-				if (Players[i].HasSafety(j + SAFETY_OFFSET))
-				{
-					++PlayerSafetyCount;
-					if (Players[i].HasCoupFourre(j + SAFETY_OFFSET))
-						++PlayerCoupFourreCount;
-				}
-			}
-
-			// 100pt for each safety, no matter how played
-			if (PlayerSafetyCount)
-			{
-				int SafetyScore = PlayerSafetyCount * 100;
-				Score += SafetyScore;
-				ScoreBreakdown[i][CategoryIndex] = SafetyScore;
-			}
-			++CategoryIndex;
-
-			// 300pt bonus for all four safeties
-			if (PlayerSafetyCount == 4)
-			{
-				Score += 300;
-				ScoreBreakdown[i][CategoryIndex] = 300;
-			}
-			++CategoryIndex;
-
-			// 300pt bonus for each Coup Fourre
-			if (PlayerCoupFourreCount)
-			{
-				int CoupFourreScore = PlayerCoupFourreCount * 300;
-				Score += CoupFourreScore;
-				ScoreBreakdown[i][CategoryIndex] += CoupFourreScore;
-			}
-			++CategoryIndex;
-
-			/* Points scored only by the player which completed the trip */
-
-			if (Players[i].GetMileage() == ((Extended) ? 1000 : 700))
-			{
-				// 400pt for completing trip
-				Score += 400;
-				ScoreBreakdown[i][CategoryIndex] = 400;
-				++CategoryIndex;
-
-				// 300pt bonus for delayed action (draw pile exhausted before trip completion)
-				if (SourceDeck)
-				{
-					if (SourceDeck->Empty())
-					{
-						Score += 300;
-						ScoreBreakdown[i][CategoryIndex] = 300;
-					}
-				}
-				++CategoryIndex;
-
-				// 300pt bonus for safe trip (no 200-mile cards)
-				if (Players[i].Get200Count() == 0)
-				{
-					Score += 300;
-					ScoreBreakdown[i][CategoryIndex] = 300;
-				}
-				++CategoryIndex;
-
-				// 200pt bonus for completing an extended trip
-				if (Extended)
-				{
-					Score += 200;
-					ScoreBreakdown[i][CategoryIndex] = 200;
-				}
-				++CategoryIndex;
-
-				// 500pt shutout bonus (opponent did not play any mileage cards during the hand)
-				if (Players[1 - i].GetMileage() == 0)
-				{
-					Score += 500;
-					ScoreBreakdown[i][CategoryIndex] = 500;
-				}
-			}
-			else
-				CategoryIndex += 4;
-
-			++CategoryIndex;
-
-			Scores[i] = Score;
-			ScoreBreakdown[i][CategoryIndex] = Score;
-
-			++CategoryIndex;
-
-			ScoreBreakdown[i][CategoryIndex] = RunningScores[i];
-
-			++CategoryIndex;
-
-			ScoreBreakdown[i][CategoryIndex] = RunningScores[i] + Score;
-		}
-	}
-}
-
-bool	Game::EndOfGame		(void)										const
-{
-	if (Players[0].IsOutOfCards() && Players[1].IsOutOfCards())
-		return true;
-
-	for (int i = 0; i < PLAYER_COUNT; ++i)
-	{
-		if (Players[i].GetMileage() == ((Extended) ? 1000 : 700))
-			return true;
-	}
-
-	return false;
-}
-
-Uint8	Game::FindPopped	(void)	/* Find which card in the hand is "popped" */	const
-{
-	for (int i = 0; i < HAND_SIZE; ++i)
-	{
-		if (Players[Current].IsPopped(i))
-			return i;
-	}
-
-	return 0xFF;
-}
-
-void	Game::Pop	(Uint8 Index)
-{
-	if (Players[Current].IsPopped(Index) && IsValidPlay(Index))
-	{
-		// If the card is already popped, then play it (if it's a valid play)
-		Players[Current].UnPop(Index);
-		OnPlay(Index);
-	}
-	else
-		// If it's not already popped, pop it
-		Players[Current].Pop(Index);
-}
 
 }
