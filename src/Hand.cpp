@@ -27,13 +27,7 @@ namespace _SDLMille
 	Dirty = false;
 
 	for (int i = 0; i < HAND_SIZE; ++i)
-	{
 		Popped[i] = false;
-	}
-}
-
-		Hand::~Hand(void)
-{
 }
 
 bool	Hand::Discard	(Uint8 Index)
@@ -61,7 +55,7 @@ bool	Hand::Draw		(Deck * Source, Uint8 Index)
 	return false;
 }
 
-Uint8	Hand::GetType	(Uint8 Index)		const
+Uint8	Hand::GetType	(Uint8 Index)						const
 {
 	if (Index < HAND_SIZE)
 		return ThisHand[Index].GetType();
@@ -69,7 +63,7 @@ Uint8	Hand::GetType	(Uint8 Index)		const
 	return CARD_NULL;
 }
 
-Uint8	Hand::GetValue	(Uint8 Index)		const
+Uint8	Hand::GetValue	(Uint8 Index)						const
 {
 	if (Index < HAND_SIZE)
 		return ThisHand[Index].GetValue();
@@ -77,7 +71,7 @@ Uint8	Hand::GetValue	(Uint8 Index)		const
 	return CARD_NULL_NULL;
 }
 
-bool	Hand::IsPopped	(Uint8 Index)		const
+bool	Hand::IsPopped	(Uint8 Index)						const
 {
 	if (Index < HAND_SIZE)
 		return Popped[Index];
@@ -87,15 +81,11 @@ bool	Hand::IsPopped	(Uint8 Index)		const
 
 void	Hand::OnInit	(void)
 {
-	if (!Overlay)
-		Overlay.SetImage("gfx/orb.png");
-	if (!CancelSurface)
-		CancelSurface.SetImage("gfx/cancel.png");
+	Overlay.SetImage("gfx/orb.png");
+	CancelSurface.SetImage("gfx/cancel.png");
 
 	for (int i = 0; i < HAND_SIZE; ++i)
-	{
 		CardSurfaces[i].SetImage(Card::GetFileFromValue(ThisHand[i].GetValue()));
-	}
 }
 
 bool	Hand::OnRender	(SDL_Surface * Surface, bool Force)
@@ -109,7 +99,7 @@ bool	Hand::OnRender	(SDL_Surface * Surface, bool Force)
 			{80, 350, 240, 130};
 		#endif
 
-	if (Surface)
+	if (Surface != 0)
 	{
 		if (Dirty || Force)
 		{
@@ -128,12 +118,9 @@ bool	Hand::OnRender	(SDL_Surface * Surface, bool Force)
 					Y =	0;
 
 				if (i < 4)
-				{
 					// The first three cards get a right-shift one space. Y is set for the top row.
 					//X += 65;
 					Y = 358;
-				}
-
 				else
 				{
 					// The remaining cards get a left-shift four spaces (to account for the four spaces
@@ -149,11 +136,9 @@ bool	Hand::OnRender	(SDL_Surface * Surface, bool Force)
 					int	Index = i - 1;
 					if (CardSurfaces[Index])
 					{
-						// Draw the cards
-						CardSurfaces[Index].Render(X, Y, Surface);
+						CardSurfaces[Index].Render(X, Y, Surface);	//Draw the cards
 
-						if (Popped[Index] && Overlay)
-							// If this card is popped, render the orb over it
+						if (Popped[Index] && Overlay)	//If this card is popped, render the orb over it
 							Overlay.Render(X, Y + 8, Surface);
 					}
 				}
@@ -170,8 +155,7 @@ void	Hand::Pop		(Uint8 Index)
 	{
 		if (!Popped[Index]) // If it's not already popped
 		{
-			// Unpop any other cards
-			for (int i = 0; i < HAND_SIZE; ++i)
+			for (int i = 0; i < HAND_SIZE; ++i)	//Unpop any other cards
 			{
 				if (Popped[i] == true)
 				{
@@ -182,8 +166,7 @@ void	Hand::Pop		(Uint8 Index)
 
 			if (ThisHand[Index].GetType() != CARD_NULL) // This isn't an empty slot
 			{
-				// Pop it
-				Popped[Index] = true;
+				Popped[Index] = true;	//Pop it
 				Dirty = true;
 			}
 		}
