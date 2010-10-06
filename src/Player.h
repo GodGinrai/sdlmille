@@ -7,8 +7,7 @@
 namespace _SDLMille
 {
 
-const int	PLAYER_GIVEN_NO_ARGUMENT =	3000,
-			PLAYER_NOT_ENOUGH_CARDS =	3001;
+const int	PLAYER_GIVEN_NO_ARGUMENT =	3000;
 
 class Player
 {
@@ -43,57 +42,57 @@ private:
 	Deck *		SourceDeck;
 };
 
-inline	Uint8	Player::GetTopCard	(bool SpeedPile)	const
-{
-	return MyTableau.GetTopCard(SpeedPile);
-}
-
-inline	int		Player::GetMileage	(void)				const
-{
-	return MyTableau.GetMileage();
-}
-
-inline	bool	Player::IsDirty		(void)				const
-{
-	return PlayerHand.IsDirty();
-}
-
-inline	Uint8	Player::Get200Count		(void)			const
+inline	Uint8	Player::Get200Count		(void)				const
 {
 	return MyTableau.Get200Count();
 }
 
-inline	Uint8	Player::GetType			(Uint8 Index)	const
+inline	int		Player::GetMileage		(void)				const
+{
+	return MyTableau.GetMileage();
+}
+
+inline	Uint8	Player::GetTopCard		(bool SpeedPile)	const
+{
+	return MyTableau.GetTopCard(SpeedPile);
+}
+
+inline	Uint8	Player::GetType			(Uint8 Index)		const
 {
 	return PlayerHand.GetType(Index);
 }
 
-inline	Uint8	Player::GetValue		(Uint8 Index)	const
+inline	Uint8	Player::GetValue		(Uint8 Index)		const
 {
 	return PlayerHand.GetValue(Index);
 }
 
-inline	bool	Player::HasCoupFourre	(Uint8 Value)	const
+inline	bool	Player::HasCoupFourre	(Uint8 Value)		const
 {
 	return MyTableau.HasCoupFourre(Value);
 }
 
-inline	bool	Player::HasSafety		(Uint8 Value)	const
+inline	bool	Player::HasSafety		(Uint8 Value)		const
 {
 	return MyTableau.HasSafety(Value);
 }
 
-inline	bool	Player::IsLimited		(void)			const
+inline	bool	Player::IsDirty			(void)				const
+{
+	return PlayerHand.IsDirty();
+}
+
+inline	bool	Player::IsLimited		(void)				const
 {
 	return MyTableau.HasSpeedLimit();
 }
 
-inline	bool	Player::IsPopped		(Uint8 Index)	const
+inline	bool	Player::IsPopped		(Uint8 Index)		const
 {
 	return PlayerHand.IsPopped(Index);
 }
 
-inline	bool	Player::IsRolling		(void)			const
+inline	bool	Player::IsRolling		(void)				const
 {
 	return MyTableau.IsRolling();
 }

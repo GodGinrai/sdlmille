@@ -92,13 +92,6 @@ bool	Hand::OnRender	(SDL_Surface * Surface, bool Force)
 {
 	bool	WasDirty = Dirty;
 	
-	SDL_Rect	BackdropRect =
-		#ifdef ANDROID_DEVICE
-			{100, 570, 380, 190};
-		#else
-			{80, 350, 240, 130};
-		#endif
-
 	if (Surface != 0)
 	{
 		if (Dirty || Force)

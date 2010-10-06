@@ -58,6 +58,11 @@ private:
 					Length;
 };
 
+inline	Surface::operator bool	(void)	const
+{
+	return (MySurface != 0);
+}
+
 }
 
 #endif

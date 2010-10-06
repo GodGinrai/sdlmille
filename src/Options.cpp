@@ -41,18 +41,16 @@ bool	Options::ReadOpts	(void)
 	{
 		ifstream	OptsFile ("options.dat", ios::in | ios::binary);
 		
-		if (!OptsFile.is_open())
-			return false;
-
-		OptsFile.seekg(0);
-		OptsFile.read(&Opts, 1);
-		Success = OptsFile.good();
-		OptsFile.close();
-
-		return Success;
+		if (OptsFile.is_open())
+		{
+			OptsFile.seekg(0);
+			OptsFile.read(&Opts, 1);
+			Success = OptsFile.good();
+			OptsFile.close();
+		}
 	}
 
-	return false;
+	return Success;
 }
 
 bool	Options::SaveOpts	(void)						const
@@ -62,13 +60,13 @@ bool	Options::SaveOpts	(void)						const
 	bool Success = false;
 	ofstream OptsFile ("options.dat", ios::out | ios::binary);
 
-	if (!OptsFile.is_open())
-		return false;
-
-	OptsFile.seekp(0);
-	OptsFile.write(&Opts, 1);
-	Success = OptsFile.good();
-	OptsFile.close();
+	if (OptsFile.is_open())
+	{
+		OptsFile.seekp(0);
+		OptsFile.write(&Opts, 1);
+		Success = OptsFile.good();
+		OptsFile.close();
+	}
 
 	return Success;	
 }

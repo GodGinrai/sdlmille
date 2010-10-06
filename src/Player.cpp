@@ -24,8 +24,7 @@ namespace _SDLMille
 
 		Player::Player			(void)
 {
-	// Player does not qualify for a Coup Fourre at this time
-	QualifiedCoupFourre = 0xFF;
+	QualifiedCoupFourre = 0xFF;	//Player does not qualify for a Coup Fourre
 	SourceDeck = 0;
 }
 
@@ -33,8 +32,7 @@ bool	Player::Discard			(Uint8 Index)
 {
 	if (PlayerHand.Discard(Index))
 	{
-		// Discarding disqualifies the player from their Coup Fourre
-		QualifiedCoupFourre = 0xFF;
+		QualifiedCoupFourre = 0xFF;	//Discarding disqualifies the player from any Coup Fourre
 		return true;
 	}
 
@@ -43,7 +41,7 @@ bool	Player::Discard			(Uint8 Index)
 
 void	Player::Draw			(void)
 {
-	if (SourceDeck)
+	if (SourceDeck != 0)
 	{
 		for (int i = 0; i < HAND_SIZE; ++i)
 		{
@@ -60,15 +58,13 @@ void	Player::Draw			(void)
 
 bool	Player::Draw			(Uint8 Index)
 {
-	if (SourceDeck)
+	if (SourceDeck != 0)
 		return PlayerHand.Draw(SourceDeck, Index);
 
 	return false;
 }
 
-
-
-bool	Player::IsOutOfCards	(void)										const
+bool	Player::IsOutOfCards	(void)												const
 {
 	// If we find a populated card slot, immediately return false.
 	for (int i = 0; i < HAND_SIZE; ++i)
@@ -77,8 +73,7 @@ bool	Player::IsOutOfCards	(void)										const
 			return false;
 	}
 
-	// We only get here if we didn't find a populated slot
-	return true;
+	return true;	//We didn't find a populated slot
 }
 
 Uint8	Player::OnPlay			(Uint8 Index)
@@ -93,33 +88,30 @@ Uint8	Player::OnPlay			(Uint8 Index)
 		// hazard that we just suffered. Therefore, this is a Coup Fourre.
 		CoupFourre = true;
 
-		// Speed limit is a control variable that determines whether we fetch the top
-		// of the battle pile or the speed pile. We need this so we can place the
-		// appropriate card on top of the discard pile. This is accomplished by returning
-		// the value of top card.
+		/*	Speed limit is a control variable that determines whether we fetch the top
+			of the battle pile or the speed pile. We need this so we can place the
+			appropriate card on top of the discard pile. This is accomplished by returning
+			the value of top card. */
 		if (QualifiedCoupFourre == CARD_HAZARD_SPEED_LIMIT)
-		{
 			SpeedLimit = true;
-		}
 
-		ReturnValue = MyTableau.GetTopCard(SpeedLimit);
+		ReturnValue = GetTopCard(SpeedLimit);
 	}
 
-	MyTableau.OnPlay(PlayerHand.GetValue(Index), CoupFourre, SpeedLimit);
-	QualifiedCoupFourre = 0xFF;
+	MyTableau.OnPlay(GetValue(Index), CoupFourre, SpeedLimit);
+	QualifiedCoupFourre = 0xFF;	//Playing disqualifies any Coup Fourre
 
 	return ReturnValue;
 }
 
 bool	Player::OnRender		(SDL_Surface * Surface, Uint8 PlayerIndex, bool Force)
 {
-	// DidSomething is a control variable that tells our calling function whether or not
-	// we actually rendered anything. If nobody in the call chain "does something" then
-	// the top-level function will not flip the screen.
+	/*	DidSomething is a control variable that tells our calling function whether or not
+		we actually rendered anything. If nobody in the call chain "does something" then
+		the top-level function will not flip the screen. */
 	bool DidSomething =		false;
 
-	// Only render the human player's hand
-	if (PlayerIndex == 0)
+	if (PlayerIndex == 0)		//Render the human player's hand
 		DidSomething = PlayerHand.OnRender(Surface, Force);
 
 	DidSomething |= MyTableau.OnRender(Surface, PlayerIndex, Force);
@@ -131,7 +123,7 @@ bool	Player::OnRender		(SDL_Surface * Surface, Uint8 PlayerIndex, bool Force)
 bool	Player::ReceiveHazard	(Uint8 Value)
 {
 	// Sanity check: we don't have immunity to the hazard, and it is, in fact, a hazard
-	if (!MyTableau.HasSafety(Card::GetMatchingSafety(Value)) && (Card::GetTypeFromValue(Value) == CARD_HAZARD))
+	if (!HasSafety(Card::GetMatchingSafety(Value)) && (Card::GetTypeFromValue(Value) == CARD_HAZARD))
 	{
 		// Send the card down to our tableau
 		MyTableau.OnPlay(Value, false, false);
@@ -156,8 +148,7 @@ void	Player::Reset			(void)
 
 void	Player::SetSource		(Deck * ArgSource)
 {
-	// if SourceDeck is not already set, and ArgSource is not 0
-	if (!SourceDeck && ArgSource)
+	if ((SourceDeck == 0) && (ArgSource != 0))	//SourceDeck isn't set, and ArgSource is set
 		SourceDeck = ArgSource;
 }
 

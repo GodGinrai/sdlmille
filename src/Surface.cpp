@@ -32,10 +32,10 @@ namespace _SDLMille
 
 				Surface::~Surface		(void)
 {
-	if (MySurface)
+	if (MySurface != 0)
 		SDL_FreeSurface(MySurface);
 
-	if (Cached)
+	if (Cached != 0)
 		delete [] Cached;
 }
 
@@ -53,106 +53,6 @@ void			Surface::Clear			(void)
 		Cached = 0;
 		Length = 0;
 	}
-}
-
-int				Surface::GetHeight		(void)																	const
-{
-	if (MySurface != 0)
-		return MySurface->h;
-
-	return 0;
-}
-
-int				Surface::GetWidth		(void)																	const
-{
-	if (MySurface != 0)
-		return MySurface->w;
-
-	return 0;
-}
-
-void			Surface::Render			(int X, int Y, SDL_Surface * Destination)								const
-{
-	if (MySurface != 0)
-		Draw(Destination, MySurface, X, Y);
-}
-
-void			Surface::SetImage		(const char * File)
-{
-	if (CheckCache(File))
-	{
-		if (MySurface)
-		{
-			SDL_FreeSurface(MySurface);
-			MySurface = 0;
-		}
-
-		MySurface = Load(File);
-	}
-}
-
-void			Surface::SetInteger		(int Value, TTF_Font * Font, bool ShowZero)
-{
-	if (Value < 0)
-		return;
-
-	if (CheckCache("INTEGER") || (Value != Integer))
-	{
-		Integer = Value;
-
-		if (MySurface)
-		{
-			SDL_FreeSurface(MySurface);
-			MySurface = 0;
-		}
-
-		if (Value == 0)
-		{
-			if (ShowZero)
-				MySurface = RenderText("0", Font, 0, 0, 0);
-			else
-				MySurface = RenderText("-", Font, 0, 0, 0);
-		}
-		else
-		{
-			int		NumDigits = 0,
-					TempNum = Value;
-			char *	MyText = 0;
-
-			while (TempNum > 0)
-			{
-				++NumDigits;
-				TempNum /= 10;
-			}
-
-			MyText = new char[NumDigits + 1];
-
-			if ((MyText != 0) && (Value <= pow((double)10, NumDigits))) //Sanity check
-			{
-				sprintf(MyText, "%u", Value);
-				MySurface = RenderText(MyText, Font, 0, 0, 0);
-			}
-		}
-	}
-}
-
-void			Surface::SetText		(const char * Text, TTF_Font * Font, int R, int G, int B)
-{
-	if (CheckCache(Text))
-	{
-		if (MySurface)
-		{
-			SDL_FreeSurface(MySurface);
-			MySurface = 0;
-		}
-
-		MySurface = RenderText(Text, Font, R, G, B);
-	}
-}
-
-				Surface::operator bool	(void)																	const
-{
-	return (MySurface != 0);
 }
 
 bool			Surface::Draw			(SDL_Surface * Destination, SDL_Surface * Source, int X, int Y, bool Free)
@@ -178,13 +78,30 @@ bool			Surface::Draw			(SDL_Surface * Destination, SDL_Surface * Source, int X, 
 	return true;
 }
 
+int				Surface::GetHeight		(void)																	const
+{
+	if (MySurface != 0)
+		return MySurface->h;
+
+	return 0;
+}
+
+int				Surface::GetWidth		(void)																	const
+{
+	if (MySurface != 0)
+		return MySurface->w;
+
+	return 0;
+}
+
 SDL_Surface *	Surface::Load			(const char * File)
 {
-	if (File)
+	if (File != 0)
 	{
 		SDL_Surface	*Loaded = 0,
 					*Formatted = 0;
 
+		// TODO: Fix this kludge
 		#ifdef	ANDROID_DEVICE
 		char	*NewFile = 0;
 		NewFile = new	char[strlen(File) + 5];
@@ -213,18 +130,19 @@ SDL_Surface *	Surface::Load			(const char * File)
 		return 0;
 }
 
+void			Surface::Render			(int X, int Y, SDL_Surface * Destination)								const
+{
+	if (MySurface != 0)
+		Draw(Destination, MySurface, X, Y);
+}
+
 SDL_Surface *	Surface::RenderText		(const char *Text, TTF_Font *Font, int R, int G, int B)
 {
 	SDL_Color	TextColor = {R, G, B, 0};
-	SDL_Surface	*Screen = 0,
-				*TextSurface = 0;
-	Screen = SDL_GetVideoSurface();
+	SDL_Surface	*TextSurface = 0;
 
-	if ((Font != 0) && (Screen != 0))
+	if (Font != 0)
 	{
-		if (!TTF_WasInit())
-			return 0;
-
 		TextSurface = TTF_RenderText_Blended(Font, Text, TextColor);
 		return TextSurface;
 	}
@@ -232,7 +150,83 @@ SDL_Surface *	Surface::RenderText		(const char *Text, TTF_Font *Font, int R, int
 	return 0;
 }
 
-/* Private */
+void			Surface::SetImage		(const char * File)
+{
+	if (CheckCache(File))
+	{
+		if (MySurface != 0)
+		{
+			SDL_FreeSurface(MySurface);
+			MySurface = 0;
+		}
+
+		MySurface = Load(File);
+	}
+}
+
+void			Surface::SetInteger		(int Value, TTF_Font * Font, bool ShowZero)
+{
+	if ((Value < 0) || (Font == 0))
+		return;
+
+	if (CheckCache("INTEGER") || (Value != Integer))
+	{
+		Integer = Value;
+
+		if (MySurface != 0)
+		{
+			SDL_FreeSurface(MySurface);
+			MySurface = 0;
+		}
+
+		if (Value == 0)
+		{
+			if (ShowZero)
+				MySurface = RenderText("0", Font, 0, 0, 0);
+			else
+				MySurface = RenderText("-", Font, 0, 0, 0);
+		}
+		else
+		{
+			int		NumDigits = 0,
+					TempNum = Value;
+			char	*MyText = 0;
+
+			while (TempNum > 0)
+			{
+				++NumDigits;
+				TempNum /= 10;
+			}
+
+			MyText = new char[NumDigits + 1];
+
+			if ((MyText != 0) && (Value <= pow((double)10, NumDigits))) //Sanity check
+			{
+				sprintf(MyText, "%u", Value);
+				MySurface = RenderText(MyText, Font, 0, 0, 0);
+			}
+		}
+	}
+}
+
+void			Surface::SetText		(const char * Text, TTF_Font * Font, int R, int G, int B)
+{
+	if (Font == 0)
+		return;
+
+	if (CheckCache(Text))
+	{
+		if (MySurface != 0)
+		{
+			SDL_FreeSurface(MySurface);
+			MySurface = 0;
+		}
+
+		MySurface = RenderText(Text, Font, R, G, B);
+	}
+}
+
+/* Private methods */
 
 bool			Surface::CheckCache		(const char * Text)
 {
