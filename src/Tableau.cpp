@@ -24,21 +24,17 @@ namespace _SDLMille
 
 		Tableau::Tableau		(void)
 {
-	// Pointers
 	MyFont = 0;
 
 	for (int i = 0; i < MILEAGE_PILES; ++i)
-	{
 		CardCount[i] = 0;
-	}
 
 	for (int i = 0; i < SAFETY_COUNT; ++i)
 	{
 		Safeties[i] = false;
 		CoupFourres[i] = false;
 	}
-
-	// Vars
+	
 	Dirty = true;
 	Mileage = 0;
 	OldTopCard = TopCard = CARD_NULL_NULL;
@@ -53,17 +49,13 @@ namespace _SDLMille
 		Tableau::~Tableau		(void)
 {
 	if (MyFont)
-		// TODO: Find a way to fix the following. SDL_ttf reuses pointers, so this will
-		// end up closing an invalid pointer (we have two tableaus using the same font).
-		// I think SDL_ttf handles this gracefully, but it does cause an access violation
-		// when run on Visual Studio in debug mode
+		/*	TODO: Find a way to fix the following. SDL_ttf reuses pointers, so this will
+			end up closing an invalid pointer (we have two tableaus using the same font).
+			I think SDL_ttf handles this gracefully, but it does cause an access violation
+			when run on Visual Studio in debug mode	*/
 		TTF_CloseFont(MyFont);
 }
 
-Uint8	Tableau::Get200Count	(void)											const
-{
-	return CardCount[MILEAGE_PILES - 1];
-}
 
 Uint8	Tableau::GetTopCard		(bool SpeedPile)								const
 {
@@ -75,28 +67,27 @@ Uint8	Tableau::GetTopCard		(bool SpeedPile)								const
 
 bool	Tableau::HasCoupFourre	(Uint8 Value)									const
 {
-	int Index = -1;
-
 	if (HasSafety(Value))
-		Index = Value - SAFETY_OFFSET;
-
-	if ((Index >= 0) && (Index < SAFETY_COUNT))
-		return CoupFourres[Index];
+		return CoupFourres[Value - SAFETY_OFFSET];
 
 	return false;
 }
 
 bool	Tableau::HasSafety		(Uint8 Value)									const
 {
-	int Index = -1;
 
 	if (Card::GetTypeFromValue(Value) == CARD_SAFETY)
-		Index = Value - SAFETY_OFFSET;
-
-	if ((Index >= 0) && (Index < SAFETY_COUNT))
-		return Safeties[Index];
+		return Safeties[Value - SAFETY_OFFSET];
 
 	return false;
+}
+
+bool	Tableau::HasSpeedLimit	(void)											const
+{
+	if (Safeties[CARD_SAFETY_RIGHT_OF_WAY - SAFETY_OFFSET])
+		return false;
+
+	return (LimitCard == CARD_HAZARD_SPEED_LIMIT);
 }
 
 bool	Tableau::IsRolling		(void)											const
@@ -141,11 +132,7 @@ void	Tableau::OnInit			(void)
 	}
 
 	if ((Mileage <= 1000) && MyFont)
-	{
-		// We have a font, and the mileage is sane
-		MileageTextSurface.SetInteger(Mileage, MyFont);
-	}
-
+		MileageTextSurface.SetInteger(Mileage, MyFont);	// Font is valid, mileage is sane
 }
 
 void	Tableau::OnPlay			(Uint8 Value, bool CoupFourre, bool SpeedLimit)
@@ -170,7 +157,6 @@ void	Tableau::OnPlay			(Uint8 Value, bool CoupFourre, bool SpeedLimit)
 				exit(TABLEAU_TOO_MANY_CARDS);
 		}
 		break;
-
 	case CARD_HAZARD:
 		if (Value == CARD_HAZARD_SPEED_LIMIT)
 		{
@@ -186,7 +172,6 @@ void	Tableau::OnPlay			(Uint8 Value, bool CoupFourre, bool SpeedLimit)
 				SetTopCard(Value);
 		}
 		break;
-
 	case CARD_REMEDY:
 		if (Value == CARD_REMEDY_END_LIMIT)
 		{
@@ -204,7 +189,6 @@ void	Tableau::OnPlay			(Uint8 Value, bool CoupFourre, bool SpeedLimit)
 				SetTopCard(Value);
 		}
 		break;
-
 	case CARD_SAFETY:
 		Index = Value - SAFETY_OFFSET;
 		if (Index < SAFETY_COUNT)
@@ -226,11 +210,11 @@ void	Tableau::OnPlay			(Uint8 Value, bool CoupFourre, bool SpeedLimit)
 	}
 }
 
-bool	Tableau::OnRender		(SDL_Surface * Surface, Uint8 PlayerIndex, bool Force)
+bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 {
 	bool	WasDirty = Dirty;
 
-	if (Surface)
+	if (Target != 0)
 	{
 		if (Dirty || Force)
 		{
@@ -272,23 +256,18 @@ bool	Tableau::OnRender		(SDL_Surface * Surface, Uint8 PlayerIndex, bool Force)
 			else
 				R = 191;
 
-			SDL_FillRect(Surface, &PlayerRect, SDL_MapRGB(Surface->format, R, G, B));
+			SDL_FillRect(Target, &PlayerRect, SDL_MapRGB(Target->format, R, G, B));
 
 			// Draw our stuff
 			for (int i = 0; i < MILEAGE_PILES; ++i)
 			{
 				for (int j = 0; j < MAX_PILE_SIZE; ++ j)
-				{
-					if (PileSurfaces[i][j])
-						PileSurfaces[i][j].Render((i * 42) + 2, Y + (j * 8), Surface);
-				}
+					PileSurfaces[i][j].Render((i * 42) + 2, Y + (j * 8), Target);
 			}
 
-			if (BattleSurface)
-				BattleSurface.Render(220, Y, Surface);
+			BattleSurface.Render(220, Y, Target);
 
-			if (LimitSurface)
-				LimitSurface.Render(263, Y, Surface);
+			LimitSurface.Render(263, Y, Target);
 
 			for (int i = 0; i < SAFETY_COUNT; ++i)
 			{
@@ -303,12 +282,11 @@ bool	Tableau::OnRender		(SDL_Surface * Surface, Uint8 PlayerIndex, bool Force)
 						X -= 8;
 					}
 
-					SafetySurfaces[i].Render(X, Y + YOffset, Surface);
+					SafetySurfaces[i].Render(X, Y + YOffset, Target);
 				}
 			}
 
-			if (MileageTextSurface)
-				MileageTextSurface.Render(65 - MileageTextSurface.GetWidth(), Y + 150, Surface);
+			MileageTextSurface.Render(65 - MileageTextSurface.GetWidth(), Y + 150, Target);
 		}
 	}
 
@@ -320,19 +298,14 @@ void	Tableau::Reset			(void)
 	for (int i = 0; i < MILEAGE_PILES; ++i)
 	{
 		for (int j = 0; j < MAX_PILE_SIZE; ++j)
-		{
-			if (PileSurfaces[i][j])
-				PileSurfaces[i][j].Clear();
-		}
+			PileSurfaces[i][j].Clear();
 
 		CardCount[i] = 0;
 	}
 
 	for (int i = 0; i < SAFETY_COUNT; ++i)
 	{
-		if (SafetySurfaces[i])
-			SafetySurfaces[i].Clear();
-
+		SafetySurfaces[i].Clear();
 		CoupFourres[i] = Safeties[i] = false;
 	}
 
@@ -343,7 +316,7 @@ void	Tableau::Reset			(void)
 	Mileage = 0;
 }
 
-/* Private */
+/* Private Methods */
 
 void	Tableau::SetTopCard		(Uint8 Value)
 {

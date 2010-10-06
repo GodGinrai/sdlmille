@@ -39,7 +39,7 @@ public:
 	bool		IsDirty		(void)										const;
 	bool		IsPopped	(Uint8 Index)								const;
 	void		OnInit		(void);
-	bool		OnRender	(SDL_Surface * Surface, bool Force = false);
+	bool		OnRender	(SDL_Surface * Target, bool Force = false);
 	void		Pop			(Uint8 Index);
 	void		Reset		(void);
 	void		UnPop		(Uint8 Index);

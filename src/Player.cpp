@@ -104,7 +104,7 @@ Uint8	Player::OnPlay			(Uint8 Index)
 	return ReturnValue;
 }
 
-bool	Player::OnRender		(SDL_Surface * Surface, Uint8 PlayerIndex, bool Force)
+bool	Player::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 {
 	/*	DidSomething is a control variable that tells our calling function whether or not
 		we actually rendered anything. If nobody in the call chain "does something" then
@@ -112,9 +112,9 @@ bool	Player::OnRender		(SDL_Surface * Surface, Uint8 PlayerIndex, bool Force)
 	bool DidSomething =		false;
 
 	if (PlayerIndex == 0)		//Render the human player's hand
-		DidSomething = PlayerHand.OnRender(Surface, Force);
+		DidSomething = PlayerHand.OnRender(Target, Force);
 
-	DidSomething |= MyTableau.OnRender(Surface, PlayerIndex, Force);
+	DidSomething |= MyTableau.OnRender(Target, PlayerIndex, Force);
 
 	return DidSomething;
 }

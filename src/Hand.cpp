@@ -88,11 +88,11 @@ void	Hand::OnInit	(void)
 		CardSurfaces[i].SetImage(Card::GetFileFromValue(ThisHand[i].GetValue()));
 }
 
-bool	Hand::OnRender	(SDL_Surface * Surface, bool Force)
+bool	Hand::OnRender	(SDL_Surface * Target, bool Force)
 {
 	bool	WasDirty = Dirty;
 	
-	if (Surface != 0)
+	if (Target != 0)
 	{
 		if (Dirty || Force)
 		{
@@ -123,16 +123,16 @@ bool	Hand::OnRender	(SDL_Surface * Surface, bool Force)
 				}
 
 				if (i == 0)
-					CancelSurface.Render(X, Y, Surface);
+					CancelSurface.Render(X, Y, Target);
 				else
 				{
 					int	Index = i - 1;
 					if (CardSurfaces[Index])
 					{
-						CardSurfaces[Index].Render(X, Y, Surface);	//Draw the cards
+						CardSurfaces[Index].Render(X, Y, Target);	//Draw the cards
 
 						if (Popped[Index] && Overlay)	//If this card is popped, render the orb over it
-							Overlay.Render(X, Y + 8, Surface);
+							Overlay.Render(X, Y + 8, Target);
 					}
 				}
 			}
