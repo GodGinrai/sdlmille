@@ -17,8 +17,39 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 (See file LICENSE for full text of license)
 */
 
+//#define	WVGA_DEVICE
+#define		PALM_PIXI
+//#define		PALM_PRE
+
+#ifdef		PALM_PIXI
 //#define	WEBOS_DEVICE
-//#define	ANDROID_DEVICE
+#define		SCALE_FACTOR 1
+#define		SCREEN_WIDTH 320
+#define		SCREEN_HEIGHT 400
+#define		TABLEAU_HEIGHT 140
+#define		FIRST_ROW_Y 280
+#else
+#define		TABLEAU_HEIGHT 175
+#define		FIRST_ROW_Y 358
+#endif
+
+#ifdef		PALM_PRE
+//#define	WEBOS_DEVICE
+#define		SCALE_FACTOR 1
+#define		SCREEN_WIDTH 320
+#define		SCREEN_HEIGHT 480
+#endif
+
+#ifdef		WVGA_DEVICE
+#define		SCALE_FACTOR 1.5
+#define		SCREEN_WIDTH 480
+#define		SCREEN_HEIGHT 800
+#define		Y_OFFSET 40
+#else
+#define		Y_OFFSET 0
+#endif
+
+#define SECOND_ROW_Y (FIRST_ROW_Y + 62)
 
 #ifndef _SDLMILLE_SURFACE_H
 #define _SDLMILLE_SURFACE_H

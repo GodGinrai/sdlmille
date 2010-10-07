@@ -225,12 +225,12 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 			}
 
 			int	R = 0, G = 0, B = 0,
-				Y = 1, RectY = 0, W = 320, H = 174;;
+				Y = 1, RectY = 0, W = 320, H = (TABLEAU_HEIGHT - 1);
 
 			if (PlayerIndex == 0)
 			{
-				Y += 175;
-				RectY += 175;
+				Y += TABLEAU_HEIGHT;
+				RectY += TABLEAU_HEIGHT;
 			}
 
 			#ifdef	ANDROID_DEVICE
@@ -262,7 +262,7 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 			for (int i = 0; i < MILEAGE_PILES; ++i)
 			{
 				for (int j = 0; j < MAX_PILE_SIZE; ++ j)
-					PileSurfaces[i][j].Render((i * 42) + 2, Y + (j * 8), Target);
+					PileSurfaces[i][j].Render((i * 42) + 2, Y + (j * 7), Target);
 			}
 
 			BattleSurface.Render(220, Y, Target);
@@ -286,7 +286,7 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 				}
 			}
 
-			MileageTextSurface.Render(65 - MileageTextSurface.GetWidth(), Y + 150, Target);
+			MileageTextSurface.Render(65 - MileageTextSurface.GetWidth(), Y + (TABLEAU_HEIGHT - 25), Target);
 		}
 	}
 

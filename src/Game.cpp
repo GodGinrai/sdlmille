@@ -576,7 +576,7 @@ void	Game::OnClick			(int X, int Y)
 				Scene =		SCENE_LEARN_1;
 			}
 		}
-		if ((X >= 232) && (Y >= 449))		//Clicked GPL logo
+		if ((X >= (SCREEN_WIDTH - LogoSurface.GetWidth())) && (Y >= (SCREEN_HEIGHT - LogoSurface.GetHeight())))		//Clicked GPL logo
 		{
 			LastScene = Scene;
 			Scene = SCENE_LEGAL;
@@ -588,7 +588,7 @@ void	Game::OnClick			(int X, int Y)
 	{
 		if (Current == 0) // Don't respond to clicks unless it's the human's turn
 		{
-			if (Y < 175)	//Clicked within opponent's tableau
+			if (Y < TABLEAU_HEIGHT)	//Clicked within opponent's tableau
 			{
 				if ((Y < 45) && (X < 80))		//Clicked Menu button
 					ShowModal(MODAL_GAME_MENU);
@@ -599,16 +599,16 @@ void	Game::OnClick			(int X, int Y)
 						Pop(FindPopped());
 				}
 			}
-			else if ((Y > 175) && (Y < 350))	//Clicked within own tableau
+			else if ((Y > TABLEAU_HEIGHT) && (Y < (TABLEAU_HEIGHT * 2)))	//Clicked within own tableau
 				Pop(FindPopped());	//Play selected card, if any
-			else if ((Y >= 358) && (Y <= 476))	//Clicked within the two rows at the bottom of the screen
+			else if ((Y >= FIRST_ROW_Y) && (Y <= (SECOND_ROW_Y + 57)))	//Clicked within the two rows at the bottom of the screen
 			{
 				Uint8	Add = 0,
 						Index = 0;
 
-				if (Y >= 425)	// Clicked the bottom row. Add 4 to the index
+				if (Y >= (SECOND_ROW_Y + 5))	// Clicked the bottom row. Add 4 to the index
 					Add = 4;
-				else if (Y > 410)	//Clicked in the dead zone
+				else if (Y > (FIRST_ROW_Y + 52))	//Clicked in the dead zone
 					return; 
 
 				if (X >= 86)	//Clicked within hand
@@ -626,7 +626,7 @@ void	Game::OnClick			(int X, int Y)
 						}
 					}
 				}
-				else if ((X >= 3) && (X <= 43) && (Y <= 410))	//Clicked the discard pile
+				else if ((X >= 3) && (X <= 43) && (Y <= (SECOND_ROW_Y + 57)))	//Clicked the discard pile
 					Discard();
 			}
 		}
@@ -718,6 +718,8 @@ bool	Game::OnInit			(void)
 		if(!(Window = SDL_SetVideoMode(0, 0, 0, SDL_SWSURFACE)))
 		#elif defined ANDROID_DEVICE
 		if(!(Window = SDL_SetVideoMode(480, 800, 16, SDL_SWSURFACE)))
+		#elif defined PALM_PIXI
+		if(!(Window = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 0, SDL_SWSURFACE)))
 		#else
 		if(!(Window = SDL_SetVideoMode(320, 480, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)))
 		#endif
@@ -980,12 +982,12 @@ void	Game::OnRender			(bool Force, bool Flip)
 			Background.Render(0, 0, Window);
 
 			if (Scene == SCENE_MAIN)
-				LogoSurface.Render(232, 449, Window);
+				LogoSurface.Render(SCREEN_WIDTH - 88, SCREEN_HEIGHT - 31, Window);
 			else if ((Scene == SCENE_GAME_PLAY) || IN_DEMO)
 			{
-				DiscardSurface.Render(3, 358, Window);
-				DrawCardSurface.Render(3, 420, Window);
-				DrawTextSurface.Render(23 - (DrawTextSurface.GetWidth() / 2), 440, Window);
+				DiscardSurface.Render(3, FIRST_ROW_Y, Window);
+				DrawCardSurface.Render(3, SECOND_ROW_Y, Window);
+				DrawTextSurface.Render(23 - (DrawTextSurface.GetWidth() / 2), SECOND_ROW_Y + 20, Window);
 			}
 			else if (Scene == SCENE_GAME_OVER)
 			{

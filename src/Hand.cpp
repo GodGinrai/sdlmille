@@ -113,13 +113,13 @@ bool	Hand::OnRender	(SDL_Surface * Target, bool Force)
 				if (i < 4)
 					// The first three cards get a right-shift one space. Y is set for the top row.
 					//X += 65;
-					Y = 358;
+					Y = FIRST_ROW_Y;
 				else
 				{
 					// The remaining cards get a left-shift four spaces (to account for the four spaces
 					// above). Y is set for the second row.
 					X -= (65 << 2);
-					Y = 420;
+					Y = SECOND_ROW_Y;
 				}
 
 				if (i == 0)

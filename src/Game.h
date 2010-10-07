@@ -59,7 +59,7 @@ const	char	TUTORIAL_TEXT[][MESSAGE_SIZE] = {
 					"Click it again to play.",
 					"Or click here to discard.",
 					"Enjoy the game!"	};
-const	char	VERSION_TEXT[] = "0.5.0 (beta1)";
+const	char	VERSION_TEXT[] = "0.5.0-1 (beta2 test1)";
 
 class Game
 {
