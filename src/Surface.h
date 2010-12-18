@@ -18,35 +18,35 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 //#define	WVGA_DEVICE
-#define		PALM_PIXI
+//#define		PALM_PIXI
 //#define	PALM_PRE
 
 #ifdef		PALM_PIXI
-//#define	WEBOS_DEVICE
-#define		SCALE_FACTOR 1
-#define		SCREEN_WIDTH 320
-#define		SCREEN_HEIGHT 400
-#define		TABLEAU_HEIGHT 135
-#define		MULTI_ROW_SAFETIES false
+	#define		WEBOS_DEVICE
+	#define		SCALE_FACTOR 1
+	#define		SCREEN_WIDTH 320
+	#define		SCREEN_HEIGHT 400
+	#define		TABLEAU_HEIGHT 135
+	#define		MULTI_ROW_SAFETIES false
 #else
-#define		TABLEAU_HEIGHT 175
-#define		MULTI_ROW_SAFETIES true
+	#define		TABLEAU_HEIGHT 175
+	#define		MULTI_ROW_SAFETIES true
+
+	#ifdef		WVGA_DEVICE
+		#define		SCALE_FACTOR 1.5
+		#define		SCREEN_WIDTH 480
+		#define		SCREEN_HEIGHT 800
+		#define		Y_OFFSET 40
+	#else
+		#define		Y_OFFSET 0
+		#define		SCALE_FACTOR 1
+		#define		SCREEN_WIDTH 320
+		#define		SCREEN_HEIGHT 480
+	#endif
 #endif
 
 #ifdef		PALM_PRE
-//#define	WEBOS_DEVICE
-#define		SCALE_FACTOR 1
-#define		SCREEN_WIDTH 320
-#define		SCREEN_HEIGHT 480
-#endif
-
-#ifdef		WVGA_DEVICE
-#define		SCALE_FACTOR 1.5
-#define		SCREEN_WIDTH 480
-#define		SCREEN_HEIGHT 800
-#define		Y_OFFSET 40
-#else
-#define		Y_OFFSET 0
+	#define		WEBOS_DEVICE
 #endif
 
 #define FIRST_ROW_Y ((TABLEAU_HEIGHT * 2) + 8)
