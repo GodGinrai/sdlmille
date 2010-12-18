@@ -90,8 +90,8 @@ namespace _SDLMille
 	// Clean up all of our pointers
 	if (SourceDeck)
 		delete SourceDeck;
-	if (Window)
-		SDL_FreeSurface(Window);
+	//if (Window)
+	//	SDL_FreeSurface(Window);
 	if (DrawFont)
 		TTF_CloseFont(DrawFont);
 	if (GameOverFont)
@@ -204,6 +204,9 @@ bool	Game::Discard			(void)
 
 			Players[Current].UnPop(Index);
 			ChangePlayer();
+
+			//Save after each discard
+			Save();
 		}
 	}
 
@@ -498,6 +501,8 @@ void	Game::OnClick			(int X, int Y)
 					Modal = MODAL_NONE;
 					Dirty = true;
 				}
+
+				Save();
 			}
 		}
 		else if (Modal == MODAL_GAME_MENU)
@@ -548,6 +553,8 @@ void	Game::OnClick			(int X, int Y)
 				for (int i = 0; i < PLAYER_COUNT; ++i)
 					RunningScores[i] = 0;
 
+				Save();
+
 				if (Modal == MODAL_MAIN_MENU)
 				{
 					LastScene = Scene;
@@ -569,6 +576,9 @@ void	Game::OnClick			(int X, int Y)
 				Reset();
 				LastScene = SCENE_MAIN;
 				Scene =		SCENE_GAME_PLAY;
+				Restore();
+				//for (int i = 0; i < PLAYER_COUNT; ++i)
+				//	Players[i].SetSource(SourceDeck);
 			}
 			if ((Y >= 370) && (Y <= 415))	//Clicked Learn
 			{
@@ -637,6 +647,7 @@ void	Game::OnClick			(int X, int Y)
 		Reset();
 		LastScene = Scene;
 		Scene = SCENE_GAME_PLAY;
+		Save();
 	}
 
 	else if (IN_TUTORIAL)	//Tutorial scenes
@@ -758,7 +769,11 @@ bool	Game::OnInit			(void)
 
 	else if ((Scene == SCENE_GAME_PLAY) || (Scene == SCENE_LEARN_2))
 	{
+		#ifdef PALM_PIXI
+		Background.SetImage("gfx/scenes/game-play-pixi.png");
+		#else
 		Background.SetImage("gfx/scenes/game-play.png");
+		#endif
 
 		DiscardSurface.SetImage(Card::GetFileFromValue(DiscardTop));
 
@@ -875,6 +890,8 @@ void	Game::OnLoop			(void)
 				else	//Hand ended with trip uncompleted
 					ExtensionDeclined = true;
 
+				Save();
+
 				return;
 			}
 
@@ -934,6 +951,9 @@ void	Game::OnPlay			(Uint8 Index)
 				// We immediately draw another card after playing a safety.
 				Players[Current].Draw();
 		}
+
+		//Save game after every card played
+		Save();
 	}
 }
 
@@ -999,8 +1019,15 @@ void	Game::OnRender			(bool Force, bool Flip)
 					{
 						if (ScoreSurfaces[i][j])
 						{
+							int Padding = 
+								#ifdef PALM_PIXI
+								14
+								#else
+								20
+								#endif
+								;
 							X = 12 + ((j > 0) ? 175 : 0) + ((j > 1) ? 75 : 0);
-							Y = 20 + (i * 26) + ((i > 0) ? 20 : 0) + ((i > (SCORE_CATEGORY_COUNT - 3)) ? 20 : 0) + ((i > (SCORE_CATEGORY_COUNT - 1)) ? 20 : 0);
+							Y = Padding + (i * 26) + ((i > 0) ? Padding : 0) + ((i > (SCORE_CATEGORY_COUNT - 3)) ? Padding : 0) + ((i > (SCORE_CATEGORY_COUNT - 1)) ? Padding : 0);
 							ScoreSurfaces[i][j].Render(X, Y, Window);
 						}
 					}
@@ -1122,6 +1149,77 @@ void	Game::Reset				(void)
 	//Odds and ends
 	if (SourceDeck)
 		OldDeckCount = DeckCount = SourceDeck->CardsLeft();
+}
+
+bool	Game::Restore			(void)
+{
+	using namespace std;
+
+	bool Success = false;
+	ifstream SaveFile ("game.sav", ios::in | ios::binary);
+
+	if (SaveFile.is_open())
+	{
+		SaveFile.seekg(0);
+
+		int SaveVersion = 0;
+		SaveFile.read((char *) &SaveVersion, sizeof(int));
+
+		if (SaveVersion == INT_VERSION)
+		{
+			SaveFile.read((char *) &Current, sizeof(Uint8));
+			SaveFile.read((char *) &RunningScores, sizeof(int) * 2);
+			SaveFile.read((char *) &DiscardTop, sizeof(Uint8));
+			SaveFile.read((char *) &Extended, sizeof(bool));
+			SaveFile.read((char *) &ExtensionDeclined, sizeof(bool));
+
+			SourceDeck->Restore(SaveFile);
+
+			for (int i = 0; i < PLAYER_COUNT; ++i)
+				Players[i].Restore(SaveFile);
+			
+			//for (int i = 0; i < PLAYER_COUNT; ++i)
+			//	Players[i].ClobberSurfaces();
+
+			Success = SaveFile.good();
+		}
+		else
+			Success = false;
+
+		SaveFile.close();
+	}
+
+	return Success;	
+}
+
+bool	Game::Save				(void)
+{
+	using namespace std;
+
+	bool Success = false;
+	ofstream SaveFile ("game.sav", ios::out | ios::binary);
+
+	if (SaveFile.is_open())
+	{
+		SaveFile.seekp(0);
+		SaveFile.write((char *) &INT_VERSION, sizeof(int));
+		SaveFile.write((char *) &Current, sizeof(Uint8));
+		SaveFile.write((char *) &RunningScores, sizeof(int) * PLAYER_COUNT);
+		SaveFile.write((char *) &DiscardTop, sizeof(Uint8));
+		SaveFile.write((char *) &Extended, sizeof(bool));
+		SaveFile.write((char *) &ExtensionDeclined, sizeof(bool));
+		
+		SourceDeck->Save(SaveFile);
+
+		for (int i = 0; i < PLAYER_COUNT; ++i)
+			Players[i].Save(SaveFile);
+
+		Success = SaveFile.good();
+		SaveFile.close();
+	}
+
+	return Success;	
+
 }
 
 void	Game::ShowMessage		(const char * Msg, bool SetDirty)

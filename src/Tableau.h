@@ -27,10 +27,11 @@ namespace _SDLMille
 
 const Uint8	SAFETY_COUNT = 4,
 			MILEAGE_PILES =	5,	// Number of mileage stacks
-			MAX_PILE_SIZE =	12, // Max size of any pile
-			MAX_CARD_COUNT[MILEAGE_PILES] = {10, 10, 10, 12, 2};	/* Max size of each pile, broken down
+			MAX_PILE_SIZE =	10, // Max size of any pile
+			MAX_CARD_COUNT[MILEAGE_PILES] = {10, 10, 10, 10, 2};	/* Max size of each pile, broken down
 				individually. This represents the total number of each card in the entire deck, with the
-				exception of 200's. Each player is limited to playing a maximum of two 200-mile cards	*/
+				exception of 100's and 200's. Each player is limited to playing a maximum of two 200-mile cards.
+				There are 12 cards with a value of 100, but it is impossible to play more than 10 (1,000 miles) */
 
 const int	TABLEAU_TOO_MANY_CARDS = 5000;
 
@@ -50,6 +51,8 @@ public:
 	bool		OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force = false);
 	void		OnPlay			(Uint8 Value, bool CoupFourre, bool SpeedLimit);
 	void		Reset			(void);
+	bool		Restore			(std::ifstream &SaveFile);
+	bool		Save			(std::ofstream &SaveFile);
 private:
 	/* Methods */
 	void		SetTopCard		(Uint8 Value);

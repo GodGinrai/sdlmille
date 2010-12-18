@@ -42,6 +42,8 @@ public:
 	bool		OnRender	(SDL_Surface * Target, bool Force = false);
 	void		Pop			(Uint8 Index);
 	void		Reset		(void);
+	bool		Restore		(std::ifstream &SaveFile);
+	bool		Save		(std::ofstream &SaveFile);
 	void		UnPop		(Uint8 Index);
 private:
 	Card		ThisHand[HAND_SIZE];

@@ -52,6 +52,8 @@ public:
 	void		Pop				(Uint8 Index);
 	bool		ReceiveHazard	(Uint8 Value);
 	void		Reset			(void);
+	bool		Restore			(std::ifstream &SaveFile);
+	bool		Save			(std::ofstream &SaveFile);
 	void		SetSource		(Deck * ArgSource);
 	void		UnPop			(Uint8 Index);
 private:

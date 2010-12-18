@@ -48,6 +48,34 @@ bool	Deck::Empty		(void)	const
 	return !(Marker < DECK_SIZE);
 }
 
+bool	Deck::Restore	(std::ifstream &SaveFile)
+{
+	if (SaveFile.is_open())
+	{
+		SaveFile.read((char *) &Marker, sizeof(Uint8));
+		for (int i = Marker; i < DECK_SIZE; ++i)
+			SaveFile.read((char *) &Order[i], sizeof(Uint8));
+
+		return SaveFile.good();
+	}
+
+	return false;
+}
+
+bool	Deck::Save		(std::ofstream &SaveFile)
+{
+	if (SaveFile.is_open())
+	{
+		SaveFile.write((char *) &Marker, sizeof(Uint8));
+		for (int i = Marker; i < DECK_SIZE; ++i)
+			SaveFile.write((char *) &Order[i], sizeof(Uint8));
+
+		return SaveFile.good();
+	}
+
+	return false;
+}
+
 void		Deck::Shuffle	(void)
 {
 	//TODO: Benchmark this vs. using a vector with its built-in shuffling method.

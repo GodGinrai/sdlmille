@@ -69,6 +69,8 @@ public:
 	int		CardsLeft	(void)	const;
 	Uint8	Draw		(void);
 	bool	Empty		(void)	const;
+	bool	Restore		(std::ifstream &SaveFile);
+	bool	Save		(std::ofstream &SaveFile);
 	void	Shuffle		(void);
 private:
 	Uint8	Marker;

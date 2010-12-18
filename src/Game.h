@@ -59,7 +59,8 @@ const	char	TUTORIAL_TEXT[][MESSAGE_SIZE] = {
 					"Click it again to play.",
 					"Or click here to discard.",
 					"Enjoy the game!"	};
-const	char	VERSION_TEXT[] = "0.5.0-1 (beta2 test1)";
+const	char	VERSION_TEXT[] = "0.5.0-2 (beta2 test2)";
+const	int		INT_VERSION = 7;
 
 class Game
 {
@@ -86,6 +87,8 @@ private:
 	void		OnRender		(bool Force = false, bool Flip = true);
 	void		Pop				(Uint8 Index);
 	void		Reset			(void);
+	bool		Restore			(void);
+	bool		Save			(void);
 	void		ShowMessage		(const char * Msg, bool SetDirty = true);
 	bool		ShowModal		(Uint8 ModalName);
 

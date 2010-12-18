@@ -19,18 +19,18 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 
 //#define	WVGA_DEVICE
 #define		PALM_PIXI
-//#define		PALM_PRE
+//#define	PALM_PRE
 
 #ifdef		PALM_PIXI
 //#define	WEBOS_DEVICE
 #define		SCALE_FACTOR 1
 #define		SCREEN_WIDTH 320
 #define		SCREEN_HEIGHT 400
-#define		TABLEAU_HEIGHT 140
-#define		FIRST_ROW_Y 280
+#define		TABLEAU_HEIGHT 135
+#define		MULTI_ROW_SAFETIES false
 #else
 #define		TABLEAU_HEIGHT 175
-#define		FIRST_ROW_Y 358
+#define		MULTI_ROW_SAFETIES true
 #endif
 
 #ifdef		PALM_PRE
@@ -49,6 +49,7 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 #define		Y_OFFSET 0
 #endif
 
+#define FIRST_ROW_Y ((TABLEAU_HEIGHT * 2) + 8)
 #define SECOND_ROW_Y (FIRST_ROW_Y + 62)
 
 #ifndef _SDLMILLE_SURFACE_H
@@ -59,6 +60,7 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 #include <cmath>
+#include <fstream>
 
 namespace _SDLMille
 {

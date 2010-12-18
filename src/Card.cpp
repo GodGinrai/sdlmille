@@ -177,6 +177,32 @@ Uint8			Card::GetTypeFromValue	(Uint8 V)
 	return CARD_NULL;
 }
 
+bool			Card::Restore			(std::ifstream &SaveFile)
+{
+	if (SaveFile.is_open())
+	{
+		SaveFile.read((char *) &Value, sizeof(Uint8));
+		SaveFile.read((char *) &Type, sizeof(Uint8));
+
+		return SaveFile.good();
+	}
+
+	return false;
+}
+
+bool			Card::Save				(std::ofstream &SaveFile)
+{
+	if (SaveFile.is_open())
+	{
+		SaveFile.write((char *) &Value, sizeof(Uint8));
+		SaveFile.write((char *) &Type, sizeof(Uint8));
+
+		return SaveFile.good();
+	}
+
+	return false;
+}
+
 
 /* Private methods */
 

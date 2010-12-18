@@ -56,7 +56,6 @@ namespace _SDLMille
 		TTF_CloseFont(MyFont);
 }
 
-
 Uint8	Tableau::GetTopCard		(bool SpeedPile)								const
 {
 	if (SpeedPile)
@@ -262,7 +261,7 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 			for (int i = 0; i < MILEAGE_PILES; ++i)
 			{
 				for (int j = 0; j < MAX_PILE_SIZE; ++ j)
-					PileSurfaces[i][j].Render((i * 42) + 2, Y + (j * 7), Target);
+					PileSurfaces[i][j].Render((i * 42) + 2, Y + (j * 8), Target);
 			}
 
 			BattleSurface.Render(220, Y, Target);
@@ -273,8 +272,19 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 			{
 				if (SafetySurfaces[i])
 				{
-					int YOffset = 58 + ((i < 2) ? 0 : 58);
-					int X = 213 + ((i % 2) ? 0 : 58);
+					int YOffset = 0;
+					int X = 0;
+
+					if (MULTI_ROW_SAFETIES)
+					{
+						YOffset = ((i < 2) ? 58 : 116);
+						X = 213 + ((i % 2) ? 0 : 58);
+					}
+					else
+					{
+						YOffset = 75;
+						X = 97 + (i * 58);
+					}
 
 					if (CoupFourres[i])
 					{
@@ -314,6 +324,48 @@ void	Tableau::Reset			(void)
 	Dirty = true;
 
 	Mileage = 0;
+}
+
+bool	Tableau::Restore		(std::ifstream &SaveFile)
+{
+	if (SaveFile.is_open())
+	{
+		SaveFile.read((char *) CardCount, sizeof(Uint8) * MILEAGE_PILES);
+		SaveFile.read((char *) &LimitCard, sizeof(Uint8));
+		SaveFile.read((char *) &OldLimitCard, sizeof(Uint8));
+		SaveFile.read((char *) &TopCard, sizeof(Uint8));
+		SaveFile.read((char *) &OldTopCard, sizeof(Uint8));
+
+		SaveFile.read((char *) CoupFourres, sizeof(bool) * SAFETY_COUNT);
+		SaveFile.read((char *) Safeties, sizeof(bool) * SAFETY_COUNT);
+
+		SaveFile.read((char *) &Mileage, sizeof(Uint32));
+
+		return SaveFile.good();
+	}
+
+	return false;
+}
+
+bool	Tableau::Save			(std::ofstream &SaveFile)
+{
+	if (SaveFile.is_open())
+	{
+		SaveFile.write((char *) CardCount, sizeof(Uint8) * MILEAGE_PILES);
+		SaveFile.write((char *) &LimitCard, sizeof(Uint8));
+		SaveFile.write((char *) &OldLimitCard, sizeof(Uint8));
+		SaveFile.write((char *) &TopCard, sizeof(Uint8));
+		SaveFile.write((char *) &OldTopCard, sizeof(Uint8));
+
+		SaveFile.write((char *) CoupFourres, sizeof(bool) * SAFETY_COUNT);
+		SaveFile.write((char *) Safeties, sizeof(bool) * SAFETY_COUNT);
+
+		SaveFile.write((char *) &Mileage, sizeof(Uint32));
+
+		return SaveFile.good();
+	}
+
+	return false;
 }
 
 /* Private Methods */

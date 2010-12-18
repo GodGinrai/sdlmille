@@ -146,6 +146,34 @@ void	Player::Reset			(void)
 	MyTableau.Reset();
 }
 
+bool	Player::Restore			(std::ifstream &SaveFile)
+{
+	if (SaveFile.is_open())
+	{
+		SaveFile.read((char *) &QualifiedCoupFourre, sizeof(Uint8));
+		MyTableau.Restore(SaveFile);
+		PlayerHand.Restore(SaveFile);
+
+		return SaveFile.good();
+	}
+
+	return false;
+}
+
+bool	Player::Save			(std::ofstream &SaveFile)
+{
+	if (SaveFile.is_open())
+	{
+		SaveFile.write((char *) &QualifiedCoupFourre, sizeof(Uint8));
+		MyTableau.Save(SaveFile);
+		PlayerHand.Save(SaveFile);
+
+		return SaveFile.good();
+	}
+
+	return false;
+}
+
 void	Player::SetSource		(Deck * ArgSource)
 {
 	if ((SourceDeck == 0) && (ArgSource != 0))	//SourceDeck isn't set, and ArgSource is set
