@@ -33,7 +33,7 @@ const Uint8 MENU_ITEM_COUNT = 2,
 			PLAYER_COUNT = 2,
 			SCORE_CATEGORY_COUNT = 12,
 			SCORE_COLUMN_COUNT = 3,
-			MESSAGE_SIZE = 31;
+			MESSAGE_SIZE = 40;
 
 const	char	CARD_CAPTIONS[CARD_SAFETY_RIGHT_OF_WAY + 1][20] = {
 					"Crash HAZARD", "Fuel HAZARD", "Tire HAZARD", "Speed HAZARD", "Stop HAZARD",
@@ -127,7 +127,7 @@ private:
 				DeckCount, OldDeckCount,
 				DiscardTop, OldDiscardTop;
 	char		Message[MESSAGE_SIZE];
-	TTF_Font	*DrawFont, *GameOverFont;
+	TTF_Font	*DrawFont, *GameOverBig, *GameOverSmall;
 
 
 	enum {	SCENE_MAIN = 0, SCENE_GAME_PLAY, SCENE_GAME_MENU, SCENE_GAME_OVER,

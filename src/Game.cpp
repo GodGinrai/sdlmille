@@ -33,7 +33,7 @@ namespace _SDLMille
 
 	// Initialize remaining pointers to zero
 	Window = 0;
-	GameOverFont = DrawFont = 0;
+	GameOverSmall = GameOverBig = DrawFont = 0;
 
 	Modal = MODAL_NONE;
 	Scene = SCENE_MAIN;
@@ -80,7 +80,8 @@ namespace _SDLMille
 	Message[0] = '\0';
 
 	DrawFont = TTF_OpenFont("LiberationMono-Regular.ttf", 16);
-	GameOverFont = TTF_OpenFont("LiberationMono-Regular.ttf", 18);
+	GameOverBig = TTF_OpenFont("LiberationMono-Regular.ttf", 18);
+	GameOverSmall = TTF_OpenFont("LiberationMono-Regular.ttf", 14);
 }
 
 		Game::~Game				(void)
@@ -94,8 +95,10 @@ namespace _SDLMille
 	//	SDL_FreeSurface(Window);
 	if (DrawFont)
 		TTF_CloseFont(DrawFont);
-	if (GameOverFont)
-		TTF_CloseFont(GameOverFont);
+	if (GameOverBig)
+		TTF_CloseFont(GameOverBig);
+	if (GameOverSmall)
+		TTF_CloseFont(GameOverSmall);
 
 	// SDL_ttf cleanup
 	if (TTF_WasInit())
@@ -710,7 +713,7 @@ void	Game::OnEvent			(SDL_Event * Event)
 		}
 		else if (Event->type == SDL_KEYUP)	//Debugging purposes
 		{
-			//Players[1].ReceiveHazard(rand() % 5);
+			ShowMessage("TEST MESSAGE");
 		}
 	}
 }
@@ -752,8 +755,16 @@ bool	Game::OnInit			(void)
 
 	if (Message[0] != '\0')
 	{
-		if (GameOverFont)
-			MessageSurface.SetText(Message, GameOverFont);
+		if (Scene == SCENE_GAME_OVER)
+		{
+			if (GameOverSmall)
+				MessageSurface.SetText(Message, GameOverSmall, 255, 255, 255);
+		}
+		else
+		{
+			if (GameOverBig)
+				MessageSurface.SetText(Message, GameOverBig);
+		}
 	}
 
 	if (Scene == SCENE_MAIN)
@@ -816,19 +827,19 @@ bool	Game::OnInit			(void)
 	{
 		Background.SetImage("gfx/scenes/game_over.png");
 
-		if (GameOverFont)
+		if (GameOverBig)
 		{
-			ScoreSurfaces[0][1].SetText("Human", GameOverFont);
-			ScoreSurfaces[0][2].SetText("CPU", GameOverFont);
+			ScoreSurfaces[0][1].SetText("Human", GameOverBig);
+			ScoreSurfaces[0][2].SetText("CPU", GameOverBig);
 
 			for (int i = 1; i < (SCORE_CATEGORY_COUNT + 1); ++i)
 			{
 				for (int j = 0; j < SCORE_COLUMN_COUNT; ++j)
 				{
 					if (j == 0)
-						ScoreSurfaces[i][j].SetText(SCORE_CAT_NAMES[i - 1], GameOverFont);
+						ScoreSurfaces[i][j].SetText(SCORE_CAT_NAMES[i - 1], GameOverBig);
 					else
-						ScoreSurfaces[i][j].SetInteger(ScoreBreakdown[j - 1][i - 1], GameOverFont, (i >= (SCORE_CATEGORY_COUNT - 2)));
+						ScoreSurfaces[i][j].SetInteger(ScoreBreakdown[j - 1][i - 1], GameOverBig, (i >= (SCORE_CATEGORY_COUNT - 2)));
 				}
 			}
 		}
@@ -854,7 +865,7 @@ void	Game::OnLoop			(void)
 {
 	if (Message[0] != '\0')	//Clear message if necessary
 	{
-		if (((SDL_GetTicks() - 2500) > MessagedAt) && !IN_DEMO)
+		if (((SDL_GetTicks() - 4000) > MessagedAt) && !IN_DEMO && (Scene != SCENE_GAME_OVER))
 		{
 			ClearMessage();
 			Dirty = true;
@@ -899,6 +910,51 @@ void	Game::OnLoop			(void)
 			FrozenAt = SDL_GetTicks();
 
 			GetScores();
+
+			/* Do the captioning here */
+			if (ScoreBreakdown[0][SCORE_CATEGORY_COUNT - 1] >= 5000)
+			{
+				bool Won = true;
+				bool Tied = false;
+
+				for (int i = 1; i < PLAYER_COUNT; ++i)
+				{
+					if (ScoreBreakdown[i][SCORE_CATEGORY_COUNT - 1] >= ScoreBreakdown[0][SCORE_CATEGORY_COUNT - 1])
+					{
+						if (ScoreBreakdown[i][SCORE_CATEGORY_COUNT - 1] > ScoreBreakdown[0][SCORE_CATEGORY_COUNT - 1])
+						{
+							Won = false;
+							Tied = false;
+							break;
+						}
+						else
+							Tied = true;
+					}
+				}
+
+				if (Tied)
+					strcpy(Message, "It's a draw! Click to start next game.");
+				else if (Won)
+					strcpy(Message, "Congrats! Click to start next game.");
+			}
+			else
+			{
+				bool ComputerWon = false;
+
+				for (int i = 1; i < PLAYER_COUNT; ++i)
+				{
+					if (ScoreBreakdown[i][SCORE_CATEGORY_COUNT - 1] >= 5000)
+					{
+						ComputerWon = true;
+						break;
+					}
+				}
+
+				if (ComputerWon)
+					strcpy(Message, "Aw, shucks! Click to start next game.");
+				else
+					strcpy(Message, "Click to start next hand!");
+			}
 
 			LastScene = Scene;
 			Scene = SCENE_GAME_OVER;	//Switch to score screen
@@ -1021,9 +1077,9 @@ void	Game::OnRender			(bool Force, bool Flip)
 						{
 							int Padding = 
 								#ifdef PALM_PIXI
-								14
+								10
 								#else
-								20
+								25
 								#endif
 								;
 							X = 12 + ((j > 0) ? 175 : 0) + ((j > 1) ? 75 : 0);
@@ -1076,7 +1132,10 @@ void	Game::OnRender			(bool Force, bool Flip)
 			}
 		}
 
-		MessageSurface.Render(((320 - MessageSurface.GetWidth()) / 2), 125, Window); //Render the message last.
+		if (Scene == SCENE_GAME_OVER)
+			MessageSurface.Render((SCREEN_WIDTH - MessageSurface.GetWidth()) / 2, SCREEN_HEIGHT - MessageSurface.GetHeight() - 12, Window);
+		else
+			MessageSurface.Render((SCREEN_WIDTH - MessageSurface.GetWidth()) / 2, TABLEAU_HEIGHT - 50, Window); //Render the message last.
 
 		if (RefreshedSomething && Flip)
 			SDL_Flip(Window);
@@ -1258,12 +1317,12 @@ bool	Game::ShowModal			(Uint8 ModalName)
 			{
 				if (i < OPTION_COUNT)
 				{
-					MenuSurfaces[i][0].SetText(OPTION_NAMES[i], GameOverFont, R, G, B);
-					MenuSurfaces[i][1].SetText((GameOptions.GetOpt(i)) ? "ON" : "OFF", GameOverFont, R, G, B);
+					MenuSurfaces[i][0].SetText(OPTION_NAMES[i], GameOverBig, R, G, B);
+					MenuSurfaces[i][1].SetText((GameOptions.GetOpt(i)) ? "ON" : "OFF", GameOverBig, R, G, B);
 					MenuSurfaces[i][1].Render(240, 120 + (i * 40), Window);
 				}
 				else
-					MenuSurfaces[i][0].SetText(MENU_ITEM_NAMES[i - OPTION_COUNT], GameOverFont, R, G, B);
+					MenuSurfaces[i][0].SetText(MENU_ITEM_NAMES[i - OPTION_COUNT], GameOverBig, R, G, B);
 
 				MenuSurfaces[i][0].Render(50, 120 + (i * 40), Window);
 			}

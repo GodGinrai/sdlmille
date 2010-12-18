@@ -18,11 +18,11 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 //#define	WVGA_DEVICE
-//#define		PALM_PIXI
+#define		PALM_PIXI
 //#define	PALM_PRE
 
 #ifdef		PALM_PIXI
-	#define		WEBOS_DEVICE
+//	#define		WEBOS_DEVICE
 	#define		SCALE_FACTOR 1
 	#define		SCREEN_WIDTH 320
 	#define		SCREEN_HEIGHT 400
