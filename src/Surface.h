@@ -74,6 +74,7 @@ public:
 			int				GetHeight		(void)																			const;
 			int				GetWidth		(void)																			const;
 			void			Render			(int X, int Y, SDL_Surface * Destination)										const;
+			void			SetAlpha		(int AlphaValue);
 			void			SetImage		(const char * File);
 			void			SetInteger		(int Value, TTF_Font * Font, bool ShowZero = true);
 			void			SetText			(const char * Text, TTF_Font * Font, int R = 0, int G = 0, int B = 0);

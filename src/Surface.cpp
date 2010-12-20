@@ -120,7 +120,11 @@ SDL_Surface *	Surface::Load			(const char * File)
 		if (Loaded == 0)
 			return 0;
 
-		Formatted = SDL_DisplayFormatAlpha(Loaded);
+		//SDL_SetColorKey(Loaded, SDL_SRCCOLORKEY, SDL_MapRGB(Loaded->format, 255, 0, 255));
+		//if (Alpha)
+			Formatted = SDL_DisplayFormatAlpha(Loaded);
+		//else
+		//	Formatted = SDL_DisplayFormat(Loaded);
 		
 		SDL_FreeSurface(Loaded);
 
@@ -148,6 +152,22 @@ SDL_Surface *	Surface::RenderText		(const char *Text, TTF_Font *Font, int R, int
 	}
 
 	return 0;
+}
+
+void			Surface::SetAlpha		(int AlphaValue)
+{
+	SDL_Surface *Temp = 0;
+
+	if (MySurface)
+	{
+		SDL_SetAlpha(MySurface, SDL_SRCALPHA, AlphaValue);
+		Temp = SDL_DisplayFormat(MySurface);
+		if (Temp)
+		{
+			SDL_FreeSurface(MySurface);
+			MySurface = Temp;
+		}
+	}
 }
 
 void			Surface::SetImage		(const char * File)

@@ -100,7 +100,7 @@ inline	bool	Player::HasSafety		(Uint8 Value)		const
 
 inline	bool	Player::IsDirty			(void)				const
 {
-	return PlayerHand.IsDirty();
+	return (PlayerHand.IsDirty() || MyTableau.IsDirty());
 }
 
 inline	bool	Player::IsLimited		(void)				const

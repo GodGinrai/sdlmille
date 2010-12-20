@@ -40,12 +40,14 @@ class Tableau
 public:
 				Tableau			(void);
 				~Tableau		(void);
+	void		FadeIn			(Uint8 PlayerIndex, SDL_Surface *Target);
 	Uint8		Get200Count		(void)															const;
 	int			GetMileage		(void)															const;
 	Uint8		GetTopCard		(bool SpeedPile = false)										const;
 	bool		HasCoupFourre	(Uint8 Value)													const;
 	bool		HasSafety		(Uint8 Value)													const;
 	bool		HasSpeedLimit	(void)															const;
+	bool		IsDirty			(void)															const;
 	bool		IsRolling		(void)															const;
 	void		OnInit			(void);
 	bool		OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force = false);
@@ -63,11 +65,13 @@ private:
 				MileageTextSurface,
 				PileSurfaces[MILEAGE_PILES][MAX_PILE_SIZE],
 				SafetySurfaces[SAFETY_COUNT];
-	Uint8		CardCount[MILEAGE_PILES],
+	Uint8		FadeAlpha,
+				CardCount[MILEAGE_PILES],
 				LimitCard, OldLimitCard,
 				TopCard, OldTopCard;
 	bool		CoupFourres[SAFETY_COUNT],
 				Dirty,
+				FadeRunning,
 				Safeties[SAFETY_COUNT];
 	Uint32		Mileage;
 	TTF_Font	*MyFont;

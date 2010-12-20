@@ -36,6 +36,8 @@ namespace _SDLMille
 	}
 	
 	Dirty = true;
+	FadeAlpha = 4;
+	FadeRunning = false;
 	Mileage = 0;
 	OldTopCard = TopCard = CARD_NULL_NULL;
 	OldLimitCard = LimitCard = CARD_NULL_NULL;
@@ -54,6 +56,76 @@ namespace _SDLMille
 			I think SDL_ttf handles this gracefully, but it does cause an access violation
 			when run on Visual Studio in debug mode	*/
 		TTF_CloseFont(MyFont);
+}
+
+void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
+{
+	static	bool	BattleArea = false,
+					LimitArea = false;
+
+	static	Surface	RollCard,
+					EndLimit;
+
+	if (!FadeRunning)
+	{
+		FadeRunning = true;
+
+		if ((Card::GetTypeFromValue(TopCard) == CARD_REMEDY) && (TopCard != CARD_REMEDY_ROLL))
+			BattleArea = true;
+		if (LimitCard == CARD_HAZARD_SPEED_LIMIT)
+			LimitArea = true;
+
+		RollCard.SetImage("gfx/remedy_roll_fade_in.png");
+		EndLimit.SetImage("gfx/remedy_end_limit_fade_in.png");
+	}
+
+	if (FadeAlpha < 250)
+	{		
+		int	Y = 1;
+
+		if (PlayerIndex == 0)
+			Y += TABLEAU_HEIGHT;
+
+		//if (!BattleArea)
+		//	X = 263;
+
+		if (BattleArea)
+		{
+			RollCard.SetAlpha(FadeAlpha);
+			RollCard.Render(220, Y, Target);
+		}
+		if (LimitArea)
+		{
+			EndLimit.SetAlpha(FadeAlpha);
+			EndLimit.Render(263, Y, Target);
+		}
+
+		FadeAlpha += 5;
+
+		char	BitmapFile[21];
+		sprintf(BitmapFile, "%u%s", SDL_GetTicks(), ".bmp");
+		SDL_SaveBMP(Target, BitmapFile);
+
+		SDL_Delay(15);
+	}
+	else
+	{
+		if (BattleArea)
+		{
+			BattleArea = false;
+			SetTopCard(CARD_REMEDY_ROLL);
+		}
+		if (LimitArea)
+		{
+			LimitArea = false;
+			LimitCard = CARD_REMEDY_END_LIMIT;
+		}
+
+		FadeRunning = false;
+		FadeAlpha = 4;
+	}
+
+	Dirty = true;
 }
 
 Uint8	Tableau::GetTopCard		(bool SpeedPile)								const
@@ -87,6 +159,11 @@ bool	Tableau::HasSpeedLimit	(void)											const
 		return false;
 
 	return (LimitCard == CARD_HAZARD_SPEED_LIMIT);
+}
+
+bool	Tableau::IsDirty		(void)											const
+{
+	return Dirty;
 }
 
 bool	Tableau::IsRolling		(void)											const
@@ -139,6 +216,8 @@ void	Tableau::OnPlay			(Uint8 Value, bool CoupFourre, bool SpeedLimit)
 	Uint8	Type =	Card::GetTypeFromValue(Value),
 			Index =	0xFF;
 
+	bool	FadeWasRunning = FadeRunning;
+
 	Dirty = true;
 
 	switch (Type)
@@ -157,6 +236,8 @@ void	Tableau::OnPlay			(Uint8 Value, bool CoupFourre, bool SpeedLimit)
 		}
 		break;
 	case CARD_HAZARD:
+		FadeRunning = false;
+		FadeAlpha = 4;
 		if (Value == CARD_HAZARD_SPEED_LIMIT)
 		{
 			if (!HasSpeedLimit())
@@ -169,6 +250,11 @@ void	Tableau::OnPlay			(Uint8 Value, bool CoupFourre, bool SpeedLimit)
 		{
 			if (IsRolling())
 				SetTopCard(Value);
+			if (FadeWasRunning && (LimitCard == CARD_HAZARD_SPEED_LIMIT))
+			{
+				OldLimitCard = LimitCard;
+				LimitCard = CARD_REMEDY_END_LIMIT;
+			}
 		}
 		break;
 	case CARD_REMEDY:
@@ -299,6 +385,13 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 			MileageTextSurface.Render(65 - MileageTextSurface.GetWidth(), Y + (TABLEAU_HEIGHT - 25), Target);
 		}
 	}
+
+	if (FadeRunning)
+		FadeIn(PlayerIndex, Target);
+	else if ((((Card::GetTypeFromValue(TopCard) == CARD_REMEDY) && TopCard != CARD_REMEDY_ROLL) || TopCard == CARD_HAZARD_STOP) && (HasSafety(CARD_SAFETY_RIGHT_OF_WAY)) && !FadeRunning)
+		FadeIn(PlayerIndex, Target);
+	else if ((LimitCard == CARD_HAZARD_SPEED_LIMIT) && (HasSafety(CARD_SAFETY_RIGHT_OF_WAY)) && !FadeRunning)
+		FadeIn(PlayerIndex, Target);
 
 	return WasDirty;
 }
