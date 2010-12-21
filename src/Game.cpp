@@ -1135,6 +1135,17 @@ void	Game::OnRender			(bool Force, bool Flip)
 		else
 			MessageSurface.Render((SCREEN_WIDTH - MessageSurface.GetWidth()) / 2, TABLEAU_HEIGHT - 50, Window); //Render the message last.
 
+		//if (Players[0].HasSafety(CARD_SAFETY_RIGHT_OF_WAY))
+		//{
+		//	if (Players[0].GetTopCard() == CARD_HAZARD_STOP)
+		//	{
+		//		char	BitmapFile[21];
+		//		sprintf(BitmapFile, "%u%s", SDL_GetTicks(), ".bmp");
+		//		SDL_SaveBMP(Window, BitmapFile);
+
+		//	}
+		//}
+
 		if (RefreshedSomething && Flip)
 			SDL_Flip(Window);
 	}

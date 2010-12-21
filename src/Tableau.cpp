@@ -66,28 +66,53 @@ void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 	static	Surface	RollCard,
 					EndLimit;
 
+			int		AreaTop = 1;
+
+	static	int		i = 0;
+	static	int		BattleX = 220,
+					LimitX = 263,
+					SafetyX,
+					SafetyY,
+					RollX,
+					RollY,
+					EndLimitX,
+					EndLimitY;
+
+	if (PlayerIndex == 0)
+		AreaTop += TABLEAU_HEIGHT;
+
 	if (!FadeRunning)
 	{
+		printf("%u\n", SDL_GetTicks());
 		FadeRunning = true;
+		i = 0;
 
-		if ((Card::GetTypeFromValue(TopCard) == CARD_REMEDY) && (TopCard != CARD_REMEDY_ROLL))
+		if (((Card::GetTypeFromValue(TopCard) == CARD_REMEDY) && (TopCard != CARD_REMEDY_ROLL)) || TopCard == CARD_HAZARD_STOP)
 			BattleArea = true;
 		if (LimitCard == CARD_HAZARD_SPEED_LIMIT)
 			LimitArea = true;
 
-		RollCard.SetImage("gfx/remedy_roll_fade_in.png");
-		EndLimit.SetImage("gfx/remedy_end_limit_fade_in.png");
+		RollCard.SetImage("gfx/remedy_roll.png");
+		EndLimit.SetImage("gfx/remedy_end_limit.png");
+
+		SafetyX = (MULTI_ROW_SAFETIES) ? 213 : 271;
+		SafetyY = (MULTI_ROW_SAFETIES) ? 117 : 76;
+		if (PlayerIndex == 0)
+			SafetyY += TABLEAU_HEIGHT;
+
+		EndLimitX = RollX = SafetyX;
+		EndLimitY = RollY = SafetyY;
 	}
 	else
 	{
-		if (Card::GetTypeFromValue(TopCard) != CARD_REMEDY)
+		if ((Card::GetTypeFromValue(TopCard) != CARD_REMEDY) && (TopCard != CARD_HAZARD_STOP))
 		{
 			BattleArea = false;
-			FadeAlpha = 255;
+			RollX = BattleX;
 		}
 	}
 
-	if (FadeAlpha < 250)
+	if (RollY >= AreaTop)
 	{		
 		int	Y = 1;
 
@@ -99,20 +124,21 @@ void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 
 		if (BattleArea)
 		{
-			RollCard.SetAlpha(FadeAlpha);
-			RollCard.Render(220, Y, Target);
+			//RollCard.SetAlpha(FadeAlpha);
+			RollCard.Render(RollX, RollY, Target);
 		}
 		if (LimitArea)
 		{
-			EndLimit.SetAlpha(FadeAlpha);
-			EndLimit.Render(263, Y, Target);
+			//EndLimit.SetAlpha(FadeAlpha);
+			EndLimit.Render(EndLimitX, EndLimitY, Target);
 		}
 
-		FadeAlpha += 5;
+		RollX = SafetyX - (((SafetyX - BattleX) * i) / 70);
+		RollY = SafetyY - (((SafetyY - AreaTop) * i) / 70);
+		EndLimitX = SafetyX - (((SafetyX - LimitX) * i) / 70);
+		EndLimitY = RollY;
 
-		//char	BitmapFile[21];
-		//sprintf(BitmapFile, "%u%s", SDL_GetTicks(), ".bmp");
-		//SDL_SaveBMP(Target, BitmapFile);
+		++i;
 
 		SDL_Delay(15);
 	}
@@ -122,15 +148,18 @@ void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 		{
 			BattleArea = false;
 			SetTopCard(CARD_REMEDY_ROLL);
+			RollCard.Render(BattleX, AreaTop, Target);
 		}
 		if (LimitArea)
 		{
 			LimitArea = false;
 			LimitCard = CARD_REMEDY_END_LIMIT;
+			EndLimit.Render(LimitX, AreaTop, Target);
 		}
 
 		FadeRunning = false;
-		FadeAlpha = 4;
+		
+		printf("%u\n", SDL_GetTicks());
 	}
 
 	Dirty = true;
