@@ -65,8 +65,7 @@ private:
 				MileageTextSurface,
 				PileSurfaces[MILEAGE_PILES][MAX_PILE_SIZE],
 				SafetySurfaces[SAFETY_COUNT];
-	Uint8		FadeAlpha,
-				CardCount[MILEAGE_PILES],
+	Uint8		CardCount[MILEAGE_PILES],
 				LimitCard, OldLimitCard,
 				TopCard, OldTopCard;
 	bool		CoupFourres[SAFETY_COUNT],

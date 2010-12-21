@@ -18,7 +18,7 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 //#define	WVGA_DEVICE
-#define		PALM_PIXI
+//#define		PALM_PIXI
 //#define	PALM_PRE
 
 #ifdef		PALM_PIXI

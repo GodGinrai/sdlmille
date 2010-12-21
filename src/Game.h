@@ -40,15 +40,15 @@ const	char	CARD_CAPTIONS[CARD_SAFETY_RIGHT_OF_WAY + 1][20] = {
 					"Crash REMEDY", "Fuel REMEDY", "Tire REMEDY", "Speed REMEDY", "Roll REMEDY",
 					"Crash SAFETY", "Fuel SAFETY", "Tire SAFETY", "Right-of-way SAFETY"	};
 const	int		HAND_COORDS[][2] =	{
-					{146, 388},
-					{146, 388},
-					{3, 388}	};
+					{146,	FIRST_ROW_Y + 32},
+					{146,	FIRST_ROW_Y + 32},
+					{3,		FIRST_ROW_Y + 32}	};
 const	char	MENU_ITEM_NAMES[MENU_ITEM_COUNT][10] = {"New game", "Main menu"};
 const	int		ORB_COORDS[][2] =	{
-					{136,	45},
-					{136,	245},
-					{146,	364},
-					{146,	364}	};
+					{(SCREEN_WIDTH / 2) - 20,	(TABLEAU_HEIGHT / 2) - 20},
+					{(SCREEN_WIDTH / 2) - 20,	(TABLEAU_HEIGHT * 1.5) - 20},
+					{146,	FIRST_ROW_Y + 8},
+					{146,	FIRST_ROW_Y + 8}	};
 const	char	SCORE_CAT_NAMES[SCORE_CATEGORY_COUNT][15] = {
 					"Mileage", "Safeties", "All 4", "Coup Fourres", "Completed Trip", "Delayed Action", "Safe Trip",
 					"Extension", "Shutout", "Subtotal", "Previous", "Total"	};
@@ -60,7 +60,7 @@ const	char	TUTORIAL_TEXT[][MESSAGE_SIZE] = {
 					"Or click here to discard.",
 					"Enjoy the game!"	};
 const	char	VERSION_TEXT[] = "0.5.0-2 (beta2 test2)";
-const	int		INT_VERSION = 7;
+const	int		SAVE_FORMAT_VER = 7;
 
 class Game
 {
@@ -133,7 +133,7 @@ private:
 	enum {	SCENE_MAIN = 0, SCENE_GAME_PLAY, SCENE_GAME_MENU, SCENE_GAME_OVER,
 			SCENE_LEARN_1, SCENE_LEARN_2, SCENE_LEARN_3, SCENE_LEARN_4, SCENE_LEARN_5, SCENE_LEARN_6, SCENE_LEARN_7,
 			SCENE_LEGAL, SCENE_INVALID };
-	enum {	MODAL_EXTENSION = 0, MODAL_GAME_MENU, MODAL_NEW_GAME, MODAL_MAIN_MENU, MODAL_NONE };
+	enum {	MODAL_EXTENSION = 0, MODAL_GAME_MENU, MODAL_NEW_GAME, MODAL_NONE };
 };
 
 }

@@ -530,7 +530,10 @@ void	Game::OnClick			(int X, int Y)
 							ShowModal(MODAL_NEW_GAME);
 							break;
 						case 1:
-							ShowModal(MODAL_MAIN_MENU);
+							LastScene = Scene;
+							Scene = SCENE_MAIN;
+							Modal = MODAL_NONE;
+							Dirty = true;
 							break;
 						}
 					}
@@ -546,7 +549,7 @@ void	Game::OnClick			(int X, int Y)
 				}
 			}
 		}
-		else if ((Modal == MODAL_NEW_GAME) || (Modal == MODAL_MAIN_MENU))
+		else if (Modal == MODAL_NEW_GAME)
 		{
 			if ((X >= 65) && (X <= 255) && (Y >= 220) && (Y <= 265))	// Clicked Cancel
 				ShowModal(MODAL_GAME_MENU);
@@ -557,12 +560,6 @@ void	Game::OnClick			(int X, int Y)
 					RunningScores[i] = 0;
 
 				Save();
-
-				if (Modal == MODAL_MAIN_MENU)
-				{
-					LastScene = Scene;
-					Scene = SCENE_MAIN;
-				}
 
 				Modal = MODAL_NONE;
 			}
@@ -585,6 +582,7 @@ void	Game::OnClick			(int X, int Y)
 			}
 			if ((Y >= 370) && (Y <= 415))	//Clicked Learn
 			{
+				Reset();
 				LastScene = SCENE_MAIN;
 				Scene =		SCENE_LEARN_1;
 			}
@@ -1107,7 +1105,7 @@ void	Game::OnRender			(bool Force, bool Flip)
 
 			//Render caption over hand
 			if (GameOptions.GetOpt(OPTION_CARD_CAPTIONS))
-				CaptionSurface.Render((320 - CaptionSurface.GetWidth()) / 2, (350 - CaptionSurface.GetHeight()) - 10, Window);
+				CaptionSurface.Render((320 - CaptionSurface.GetWidth()) / 2, ((TABLEAU_HEIGHT * 2) - CaptionSurface.GetHeight()) - 10, Window);
 			if (Scene == SCENE_GAME_PLAY)
 				MenuSurface.Render(2, 5, Window);
 		}
@@ -1224,7 +1222,7 @@ bool	Game::Restore			(void)
 		int SaveVersion = 0;
 		SaveFile.read((char *) &SaveVersion, sizeof(int));
 
-		if (SaveVersion == INT_VERSION)
+		if (SaveVersion == SAVE_FORMAT_VER)
 		{
 			SaveFile.read((char *) &Current, sizeof(Uint8));
 			SaveFile.read((char *) &RunningScores, sizeof(int) * 2);
@@ -1261,7 +1259,7 @@ bool	Game::Save				(void)
 	if (SaveFile.is_open())
 	{
 		SaveFile.seekp(0);
-		SaveFile.write((char *) &INT_VERSION, sizeof(int));
+		SaveFile.write((char *) &SAVE_FORMAT_VER, sizeof(int));
 		SaveFile.write((char *) &Current, sizeof(Uint8));
 		SaveFile.write((char *) &RunningScores, sizeof(int) * PLAYER_COUNT);
 		SaveFile.write((char *) &DiscardTop, sizeof(Uint8));
@@ -1328,7 +1326,6 @@ bool	Game::ShowModal			(Uint8 ModalName)
 			}
 			break;
 		case MODAL_NEW_GAME:
-		case MODAL_MAIN_MENU:
 			ModalSurface.SetImage("gfx/modals/quit.png");
 			ModalSurface.Render(60, 165, Window);
 			break;

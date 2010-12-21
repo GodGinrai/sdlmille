@@ -36,7 +36,6 @@ namespace _SDLMille
 	}
 	
 	Dirty = true;
-	FadeAlpha = 4;
 	FadeRunning = false;
 	Mileage = 0;
 	OldTopCard = TopCard = CARD_NULL_NULL;
@@ -60,6 +59,7 @@ namespace _SDLMille
 
 void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 {
+	static	Uint8	FadeAlpha = 4;
 	static	bool	BattleArea = false,
 					LimitArea = false;
 
@@ -77,6 +77,14 @@ void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 
 		RollCard.SetImage("gfx/remedy_roll_fade_in.png");
 		EndLimit.SetImage("gfx/remedy_end_limit_fade_in.png");
+	}
+	else
+	{
+		if (Card::GetTypeFromValue(TopCard) != CARD_REMEDY)
+		{
+			BattleArea = false;
+			FadeAlpha = 255;
+		}
 	}
 
 	if (FadeAlpha < 250)
@@ -102,9 +110,9 @@ void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 
 		FadeAlpha += 5;
 
-		char	BitmapFile[21];
-		sprintf(BitmapFile, "%u%s", SDL_GetTicks(), ".bmp");
-		SDL_SaveBMP(Target, BitmapFile);
+		//char	BitmapFile[21];
+		//sprintf(BitmapFile, "%u%s", SDL_GetTicks(), ".bmp");
+		//SDL_SaveBMP(Target, BitmapFile);
 
 		SDL_Delay(15);
 	}
@@ -216,7 +224,7 @@ void	Tableau::OnPlay			(Uint8 Value, bool CoupFourre, bool SpeedLimit)
 	Uint8	Type =	Card::GetTypeFromValue(Value),
 			Index =	0xFF;
 
-	bool	FadeWasRunning = FadeRunning;
+	//bool	FadeWasRunning = FadeRunning;
 
 	Dirty = true;
 
@@ -236,8 +244,8 @@ void	Tableau::OnPlay			(Uint8 Value, bool CoupFourre, bool SpeedLimit)
 		}
 		break;
 	case CARD_HAZARD:
-		FadeRunning = false;
-		FadeAlpha = 4;
+		//FadeRunning = false;
+		//FadeAlpha = 4;
 		if (Value == CARD_HAZARD_SPEED_LIMIT)
 		{
 			if (!HasSpeedLimit())
@@ -250,11 +258,11 @@ void	Tableau::OnPlay			(Uint8 Value, bool CoupFourre, bool SpeedLimit)
 		{
 			if (IsRolling())
 				SetTopCard(Value);
-			if (FadeWasRunning && (LimitCard == CARD_HAZARD_SPEED_LIMIT))
-			{
-				OldLimitCard = LimitCard;
-				LimitCard = CARD_REMEDY_END_LIMIT;
-			}
+			//if (FadeWasRunning && (LimitCard == CARD_HAZARD_SPEED_LIMIT))
+			//{
+			//	OldLimitCard = LimitCard;
+			//	LimitCard = CARD_REMEDY_END_LIMIT;
+			//}
 		}
 		break;
 	case CARD_REMEDY:
