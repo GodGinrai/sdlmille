@@ -184,7 +184,7 @@ void			Surface::SetImage		(const char * File)
 	}
 }
 
-void			Surface::SetInteger		(int Value, TTF_Font * Font, bool ShowZero)
+void			Surface::SetInteger		(int Value, TTF_Font * Font, bool ShowZero, int R, int G, int B)
 {
 	if ((Value < 0) || (Font == 0))
 		return;
@@ -202,9 +202,9 @@ void			Surface::SetInteger		(int Value, TTF_Font * Font, bool ShowZero)
 		if (Value == 0)
 		{
 			if (ShowZero)
-				MySurface = RenderText("0", Font, 0, 0, 0);
+				MySurface = RenderText("0", Font, R, G, B);
 			else
-				MySurface = RenderText("-", Font, 0, 0, 0);
+				MySurface = RenderText("-", Font, R, G, B);
 		}
 		else
 		{
@@ -223,7 +223,7 @@ void			Surface::SetInteger		(int Value, TTF_Font * Font, bool ShowZero)
 			if ((MyText != 0) && (Value <= pow((double)10, NumDigits))) //Sanity check
 			{
 				sprintf(MyText, "%u", Value);
-				MySurface = RenderText(MyText, Font, 0, 0, 0);
+				MySurface = RenderText(MyText, Font, R, G, B);
 			}
 		}
 	}

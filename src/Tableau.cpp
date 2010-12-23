@@ -78,6 +78,12 @@ void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 					EndLimitX,
 					EndLimitY;
 
+	#ifdef	WEBOS_DEVICE
+			int		Divisor = 35;
+	#else
+			int		Divisor = 70;
+	#endif
+
 	if (PlayerIndex == 0)
 		AreaTop += TABLEAU_HEIGHT;
 
@@ -133,9 +139,9 @@ void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 			EndLimit.Render(EndLimitX, EndLimitY, Target);
 		}
 
-		RollX = SafetyX - (((SafetyX - BattleX) * i) / 70);
-		RollY = SafetyY - (((SafetyY - AreaTop) * i) / 70);
-		EndLimitX = SafetyX - (((SafetyX - LimitX) * i) / 70);
+		RollX = SafetyX - (((SafetyX - BattleX) * i) / Divisor);
+		RollY = SafetyY - (((SafetyY - AreaTop) * i) / Divisor);
+		EndLimitX = SafetyX - (((SafetyX - LimitX) * i) / Divisor);
 		EndLimitY = RollY;
 
 		++i;
@@ -156,6 +162,7 @@ void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 			LimitCard = CARD_REMEDY_END_LIMIT;
 			EndLimit.Render(LimitX, AreaTop, Target);
 		}
+
 
 		FadeRunning = false;
 		

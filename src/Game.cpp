@@ -786,11 +786,11 @@ bool	Game::OnInit			(void)
 
 		DiscardSurface.SetImage(Card::GetFileFromValue(DiscardTop));
 
-		DrawCardSurface.SetImage(Card::GetFileFromValue(CARD_NULL_NULL));
+		DrawCardSurface.SetImage("gfx/card_bg.png");
 
 		if (DrawFont)
 		{
-			DrawTextSurface.SetInteger(DeckCount, DrawFont);
+			DrawTextSurface.SetInteger(DeckCount, DrawFont, true, 255, 255, 255);
 			if (FindPopped() < HAND_SIZE)
 			{
 				Uint8	Value = Players[Current].GetValue(FindPopped());
@@ -851,7 +851,8 @@ bool	Game::OnInit			(void)
 		if (!Background)
 			return false;
 
-		VersionSurface.SetText(VERSION_TEXT, DrawFont, 230, 0, 11);
+		if (GameOverSmall)
+			VersionSurface.SetText(VERSION_TEXT, GameOverSmall, 230, 0, 11);
 
 		return true;
 	}
@@ -1061,7 +1062,7 @@ void	Game::OnRender			(bool Force, bool Flip)
 			{
 				DiscardSurface.Render(3, FIRST_ROW_Y, Window);
 				DrawCardSurface.Render(3, SECOND_ROW_Y, Window);
-				DrawTextSurface.Render(23 - (DrawTextSurface.GetWidth() / 2), SECOND_ROW_Y + 20, Window);
+				DrawTextSurface.Render(23 - (DrawTextSurface.GetWidth() / 2), SECOND_ROW_Y + 33, Window);
 			}
 			else if (Scene == SCENE_GAME_OVER)
 			{
