@@ -57,6 +57,19 @@ namespace _SDLMille
 		TTF_CloseFont(MyFont);
 }
 
+void		Tableau::BlitWithShadow	(Surface &CardSurface, int X, int Y, SDL_Surface *Target, bool CoupFourre)
+{
+	if (CardSurface)
+	{
+		if (CoupFourre)
+			ShadowSurfaceCF.Render(X, Y, Target);
+		else
+			ShadowSurface.Render(X, Y, Target);
+
+		CardSurface.Render(X, Y, Target);
+	}
+}
+
 void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 {
 	static	Uint8	FadeAlpha = 4;
@@ -69,9 +82,7 @@ void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 			int		AreaTop = 1;
 
 	static	int		i = 0;
-	static	int		BattleX = 220,
-					LimitX = 263,
-					SafetyX,
+	static	int		SafetyX,
 					SafetyY,
 					RollX,
 					RollY,
@@ -230,6 +241,9 @@ void	Tableau::OnInit			(void)
 	BattleSurface.SetImage(Card::GetFileFromValue(TopCard));
 	LimitSurface.SetImage(Card::GetFileFromValue(LimitCard));
 
+	ShadowSurface.SetImage("gfx/card_shadow.png");
+	ShadowSurfaceCF.SetImage("gfx/card_shadow_cf.png");
+
 	for (int i = 0; i < MILEAGE_PILES; ++i)
 	{
 		if (CardCount[i])
@@ -341,7 +355,10 @@ void	Tableau::OnPlay			(Uint8 Value, bool CoupFourre, bool SpeedLimit)
 
 bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 {
-	bool	WasDirty = Dirty;
+			SDL_Rect	PlayerRect =	{0, Y_OFFSET, SCREEN_WIDTH, TABLEAU_HEIGHT - 1};
+	static	bool		RectSetUp =		false;
+	static	Uint8		LastStatus =	0xFF;
+			bool		WasDirty =		Dirty;
 
 	if (Target != 0)
 	{
@@ -353,50 +370,51 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 				Dirty = false;
 			}
 
-			int	R = 0, G = 0, B = 0,
-				Y = 1, RectY = 0, W = 320, H = (TABLEAU_HEIGHT - 1);
+			int	R, G = 0, B = 0,
+				Y = 1;
 
 			if (PlayerIndex == 0)
 			{
 				Y += TABLEAU_HEIGHT;
-				RectY += TABLEAU_HEIGHT;
+				PlayerRect.y += TABLEAU_HEIGHT;
 			}
+			
+			/* Color-coding */
+			Uint8	Status = STATUS_STOPPED;
 
-			#ifdef	ANDROID_DEVICE
-				RectY *= 1.5;
-				RectY += 40;
-				W = 480;
-				H = 261;
-			#endif
-
-			SDL_Rect	PlayerRect = {0, RectY, W, H}; // Tableau background
-
-			// Color coding
-			//TODO: Pre-fill rectangles because FillRect is slow.
 			if (IsRolling())
 			{
-				if ((LimitCard == CARD_HAZARD_SPEED_LIMIT) && !HasSafety(CARD_SAFETY_RIGHT_OF_WAY))
-					R = G = 191;
+				if (HasSpeedLimit())
+					Status = STATUS_LIMITED;
 				else
-				{
-					R = 120; G = 192; B = 86;
-				}
+					Status = STATUS_ROLLING;
 			}
-			else
-				R = 191;
 
-			SDL_FillRect(Target, &PlayerRect, SDL_MapRGB(Target->format, R, G, B));
+			if (Status != LastStatus)
+			{
+				switch(Status)
+				{
+				case	STATUS_ROLLING:
+					R = 120; G = 192; B = 86; break;
+				case	STATUS_LIMITED:
+					R = G = 191; break;
+				default:
+					R = 191;
+				}
+
+				SDL_FillRect(Target, &PlayerRect, SDL_MapRGB(Target->format, R, G, B));
+			}
 
 			// Draw our stuff
 			for (int i = 0; i < MILEAGE_PILES; ++i)
 			{
 				for (int j = 0; j < MAX_PILE_SIZE; ++ j)
-					PileSurfaces[i][j].Render((i * 42) + 2, Y + (j * 8), Target);
+					BlitWithShadow(PileSurfaces[i][j], (i * 42) + 2, Y + (j * 8), Target);
 			}
 
-			BattleSurface.Render(220, Y, Target);
+			BlitWithShadow(BattleSurface, BattleX, Y, Target);
 
-			LimitSurface.Render(263, Y, Target);
+			BlitWithShadow(LimitSurface, LimitX, Y, Target);
 
 			for (int i = 0; i < SAFETY_COUNT; ++i)
 			{
@@ -416,13 +434,15 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 						X = 97 + (i * 58);
 					}
 
-					if (CoupFourres[i])
+					bool CoupFourre = CoupFourres[i];
+
+					if (CoupFourre)
 					{
 						YOffset += 8;
 						X -= 8;
 					}
 
-					SafetySurfaces[i].Render(X, Y + YOffset, Target);
+					BlitWithShadow(SafetySurfaces[i], X, Y + YOffset, Target, CoupFourre);
 				}
 			}
 

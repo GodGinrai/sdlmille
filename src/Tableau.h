@@ -33,13 +33,18 @@ const Uint8	SAFETY_COUNT = 4,
 				exception of 100's and 200's. Each player is limited to playing a maximum of two 200-mile cards.
 				There are 12 cards with a value of 100, but it is impossible to play more than 10 (1,000 miles) */
 
-const int	TABLEAU_TOO_MANY_CARDS = 5000;
+const int	BattleX = 220,
+			LimitX = 265,
+			TABLEAU_TOO_MANY_CARDS = 5000;
+
+enum		{STATUS_ROLLING, STATUS_LIMITED, STATUS_STOPPED};
 
 class Tableau
 {
 public:
 				Tableau			(void);
 				~Tableau		(void);
+	void		BlitWithShadow	(Surface &CardSurface, int X, int Y, SDL_Surface *Target, bool CoupFourre = false);
 	void		FadeIn			(Uint8 PlayerIndex, SDL_Surface *Target);
 	Uint8		Get200Count		(void)															const;
 	int			GetMileage		(void)															const;
@@ -64,7 +69,10 @@ private:
 				LimitSurface,
 				MileageTextSurface,
 				PileSurfaces[MILEAGE_PILES][MAX_PILE_SIZE],
-				SafetySurfaces[SAFETY_COUNT];
+				SafetySurfaces[SAFETY_COUNT],
+
+				ShadowSurface,
+				ShadowSurfaceCF;
 	Uint8		CardCount[MILEAGE_PILES],
 				LimitCard, OldLimitCard,
 				TopCard, OldTopCard;

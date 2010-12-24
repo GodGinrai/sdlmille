@@ -51,6 +51,7 @@ private:
 				Popped[HAND_SIZE];
 	Surface		CancelSurface,
 				CardSurfaces[HAND_SIZE],				
+				OrbSurface,
 				Overlay;
 };
 

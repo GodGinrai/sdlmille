@@ -22,7 +22,8 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 //#define	PALM_PRE
 
 #ifdef		PALM_PIXI
-	#define		WEBOS_DEVICE
+	//#define		WEBOS_DEVICE
+	#define		Y_OFFSET 0
 	#define		SCALE_FACTOR 1
 	#define		SCREEN_WIDTH 320
 	#define		SCREEN_HEIGHT 400
@@ -76,13 +77,13 @@ public:
 			void			Render			(int X, int Y, SDL_Surface * Destination)										const;
 			void			SetAlpha		(int AlphaValue);
 			void			SetImage		(const char * File);
-			void			SetInteger		(int Value, TTF_Font * Font, bool ShowZero = true, int R = 0, int G = 0, int B = 0);
-			void			SetText			(const char * Text, TTF_Font * Font, int R = 0, int G = 0, int B = 0);
+			void			SetInteger		(int Value, TTF_Font * Font, bool ShowZero = true, int R = 0, int G = 0, int B = 0, SDL_Color *bgColor = 0);
+			void			SetText			(const char * Text, TTF_Font * Font, int R = 0, int G = 0, int B = 0, SDL_Color *bgColor = 0);
 							operator bool	(void)																			const;
 
 	static	bool			Draw			(SDL_Surface * Destination, SDL_Surface * Source, int X, int Y, bool Free = false);
 	static	SDL_Surface *	Load			(const char * File);
-	static	SDL_Surface *	RenderText		(const char * Text, TTF_Font *Font, int R, int G, int B);
+	static	SDL_Surface *	RenderText		(const char * Text, TTF_Font *Font, int R, int G, int B, SDL_Color *bgColor = 0);
 private:
 			bool			CheckCache		(const char * Text);
 

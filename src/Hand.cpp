@@ -81,8 +81,9 @@ bool	Hand::IsPopped	(Uint8 Index)						const
 
 void	Hand::OnInit	(void)
 {
-	Overlay.SetImage("gfx/orb.png");
+	OrbSurface.SetImage("gfx/orb.png");
 	CancelSurface.SetImage("gfx/cancel.png");
+	Overlay.SetImage("gfx/overlays/game_play_2.png");
 
 	for (int i = 0; i < HAND_SIZE; ++i)
 		CardSurfaces[i].SetImage(Card::GetFileFromValue(ThisHand[i].GetValue()));
@@ -101,6 +102,8 @@ bool	Hand::OnRender	(SDL_Surface * Target, bool Force)
 				OnInit();
 				Dirty = false;
 			}
+
+			Overlay.Render(0, TABLEAU_HEIGHT * 2, Target);
 
 			for (int i = 0; i < (HAND_SIZE + 1); ++i)
 			{
@@ -131,8 +134,8 @@ bool	Hand::OnRender	(SDL_Surface * Target, bool Force)
 					{
 						CardSurfaces[Index].Render(X, Y, Target);	//Draw the cards
 
-						if (Popped[Index] && Overlay)	//If this card is popped, render the orb over it
-							Overlay.Render(X, Y + 8, Target);
+						if (Popped[Index] && OrbSurface)	//If this card is popped, render the orb over it
+							OrbSurface.Render(X, Y + 8, Target);
 					}
 				}
 			}

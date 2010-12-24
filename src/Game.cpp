@@ -43,6 +43,7 @@ namespace _SDLMille
 	Extended = false;
 	ExtensionDeclined = false;
 	Frozen = false;
+	HumanWon = false;
 	Running = true;
 
 	OldDiscardTop = DiscardTop = CARD_NULL_NULL;
@@ -752,18 +753,7 @@ bool	Game::OnInit			(void)
 	}
 
 	if (Message[0] != '\0')
-	{
-		if (Scene == SCENE_GAME_OVER)
-		{
-			if (GameOverSmall)
-				MessageSurface.SetText(Message, GameOverSmall, 255, 255, 255);
-		}
-		else
-		{
-			if (GameOverBig)
-				MessageSurface.SetText(Message, GameOverBig);
-		}
-	}
+		MessageSurface.SetText(Message, GameOverBig);
 
 	if (Scene == SCENE_MAIN)
 	{
@@ -778,15 +768,22 @@ bool	Game::OnInit			(void)
 
 	else if ((Scene == SCENE_GAME_PLAY) || (Scene == SCENE_LEARN_2))
 	{
-		#ifdef PALM_PIXI
-		Background.SetImage("gfx/scenes/game-play-pixi.png");
-		#else
-		Background.SetImage("gfx/scenes/game-play.png");
-		#endif
+		//#ifdef PALM_PIXI
+		//Background.SetImage("gfx/scenes/game-play-pixi.png");
+		//#else
+		//Background.SetImage("gfx/scenes/game-play.png");
+		//#endif
+
+		Background.Clear();
+
+		Overlay[0].SetImage("gfx/overlays/game_play_1.png");
 
 		DiscardSurface.SetImage(Card::GetFileFromValue(DiscardTop));
 
-		DrawCardSurface.SetImage("gfx/card_bg.png");
+		if ((SourceDeck != 0) && (SourceDeck->Empty()))
+			DrawCardSurface.SetImage(Card::GetFileFromValue(CARD_NULL_NULL));
+		else
+			DrawCardSurface.SetImage("gfx/card_bg.png");
 
 		if (DrawFont)
 		{
@@ -823,21 +820,55 @@ bool	Game::OnInit			(void)
 
 	else if (Scene == SCENE_GAME_OVER)
 	{
-		Background.SetImage("gfx/scenes/game_over.png");
+		Background.SetImage("gfx/scenes/green_bg.png");
+		if (HumanWon)
+			Overlay[0].SetImage("gfx/overlays/game_over_won.png");
+		else
+			Overlay[0].SetImage("gfx/overlays/game_over.png");
 
 		if (GameOverBig)
 		{
-			ScoreSurfaces[0][1].SetText("Human", GameOverBig);
-			ScoreSurfaces[0][2].SetText("CPU", GameOverBig);
+			SDL_Color bgColor = {0, 0, 0, 0};
+
+			ScoreSurfaces[0][1].Clear();
+			ScoreSurfaces[0][2].Clear();
+
+			if (HumanWon)
+			{
+				ScoreSurfaces[0][1].SetText("Human", GameOverBig, 255, 255, 255, &bgColor);
+				ScoreSurfaces[0][2].SetText("CPU", GameOverBig, 255, 255, 255, &bgColor);
+			}
+			else
+			{
+				ScoreSurfaces[0][1].SetText("Human", GameOverBig);
+				ScoreSurfaces[0][2].SetText("CPU", GameOverBig);
+			}
 
 			for (int i = 1; i < (SCORE_CATEGORY_COUNT + 1); ++i)
 			{
 				for (int j = 0; j < SCORE_COLUMN_COUNT; ++j)
 				{
+					ScoreSurfaces[i][j].Clear();
+
 					if (j == 0)
-						ScoreSurfaces[i][j].SetText(SCORE_CAT_NAMES[i - 1], GameOverBig);
+					{
+						if (HumanWon)
+							ScoreSurfaces[i][j].SetText(SCORE_CAT_NAMES[i - 1], GameOverBig, 255, 255, 255, &bgColor);
+						else
+							ScoreSurfaces[i][j].SetText(SCORE_CAT_NAMES[i - 1], GameOverBig);
+					}
 					else
-						ScoreSurfaces[i][j].SetInteger(ScoreBreakdown[j - 1][i - 1], GameOverBig, (i >= (SCORE_CATEGORY_COUNT - 2)));
+					{
+						int Score = ScoreBreakdown[j - 1][i - 1];
+
+						if (HumanWon)
+						{
+							if (Score != 0)
+								ScoreSurfaces[i][j].SetInteger(Score, GameOverBig, (i >= (SCORE_CATEGORY_COUNT - 2)), 255, 255, 255, &bgColor);
+						}
+						else
+							ScoreSurfaces[i][j].SetInteger(Score, GameOverBig, (i >= (SCORE_CATEGORY_COUNT - 2)));
+					}
 				}
 			}
 		}
@@ -932,9 +963,13 @@ void	Game::OnLoop			(void)
 				}
 
 				if (Tied)
-					strcpy(Message, "It's a draw! Click to start next game.");
+					Overlay[1].SetText("It's a draw! Click to start next game.", GameOverSmall, 255, 255, 255);
 				else if (Won)
-					strcpy(Message, "Congrats! Click to start next game.");
+				{
+					SDL_Color bgColor = {0, 0, 0, 0};
+					Overlay[1].SetText("Congrats! Click to start next game.", GameOverSmall, 255, 255, 255, &bgColor);
+					HumanWon = true;
+				}
 			}
 			else
 			{
@@ -950,9 +985,9 @@ void	Game::OnLoop			(void)
 				}
 
 				if (ComputerWon)
-					strcpy(Message, "Aw, shucks! Click to start next game.");
+					Overlay[1].SetText("Aw, shucks! Click to start next game.", GameOverSmall, 255, 255, 255);
 				else
-					strcpy(Message, "Click to start next hand!");
+					Overlay[1].SetText("Click to start next hand!", GameOverSmall, 255, 255, 255);
 			}
 
 			LastScene = Scene;
@@ -1040,7 +1075,17 @@ void	Game::OnRender			(bool Force, bool Flip)
 				Force = true;
 		}
 
-		if (SceneChanged || Force)
+		if (SceneChanged)
+			Force = true;
+
+		if ((Scene == SCENE_GAME_PLAY) || IN_DEMO)
+		{
+			for (int i = (PLAYER_COUNT - 1); i >= 0; --i)
+				RefreshedSomething |= Players[i].OnRender(Window, i, Force);
+		}
+
+
+		if (Force)
 		{
 			if (SceneChanged)
 				OnInit(); //Refresh our surfaces
@@ -1060,6 +1105,9 @@ void	Game::OnRender			(bool Force, bool Flip)
 				LogoSurface.Render(SCREEN_WIDTH - 88, SCREEN_HEIGHT - 31, Window);
 			else if ((Scene == SCENE_GAME_PLAY) || IN_DEMO)
 			{
+				Overlay[0].Render(0, TABLEAU_HEIGHT - 1, Window);
+				Overlay[0].Render(0, (TABLEAU_HEIGHT * 2) - 1, Window);
+
 				DiscardSurface.Render(3, FIRST_ROW_Y, Window);
 				DrawCardSurface.Render(3, SECOND_ROW_Y, Window);
 				DrawTextSurface.Render(23 - (DrawTextSurface.GetWidth() / 2), SECOND_ROW_Y + 33, Window);
@@ -1067,6 +1115,9 @@ void	Game::OnRender			(bool Force, bool Flip)
 			else if (Scene == SCENE_GAME_OVER)
 			{
 				int X = 0, Y = 0;
+
+				Overlay[0].Render(0, (SCREEN_HEIGHT - Overlay[0].GetHeight()) / 2, Window);
+				Overlay[1].Render((SCREEN_WIDTH - Overlay[1].GetWidth()) / 2, SCREEN_HEIGHT - Overlay[1].GetHeight() - 12, Window);
 
 				for (int i = 0; i < (SCORE_CATEGORY_COUNT + 1); ++i)
 				{
@@ -1101,8 +1152,8 @@ void	Game::OnRender			(bool Force, bool Flip)
 		if ((Scene == SCENE_GAME_PLAY) || IN_DEMO) // During play, we also need to render our players
 		{
 			//Force compels players to re-render if this function re-rendered
-			RefreshedSomething |= Players[0].OnRender(Window, 0, Force);
-			RefreshedSomething |= Players[1].OnRender(Window, 1, Force);
+			//RefreshedSomething |= Players[0].OnRender(Window, 0, Force);
+			//RefreshedSomething |= Players[1].OnRender(Window, 1, Force);
 
 			//Render caption over hand
 			if (GameOptions.GetOpt(OPTION_CARD_CAPTIONS))
@@ -1131,9 +1182,7 @@ void	Game::OnRender			(bool Force, bool Flip)
 			}
 		}
 
-		if (Scene == SCENE_GAME_OVER)
-			MessageSurface.Render((SCREEN_WIDTH - MessageSurface.GetWidth()) / 2, SCREEN_HEIGHT - MessageSurface.GetHeight() - 12, Window);
-		else
+		if (MessageSurface)
 			MessageSurface.Render((SCREEN_WIDTH - MessageSurface.GetWidth()) / 2, TABLEAU_HEIGHT - 50, Window); //Render the message last.
 
 		//if (Players[0].HasSafety(CARD_SAFETY_RIGHT_OF_WAY))
@@ -1199,6 +1248,7 @@ void	Game::Reset				(void)
 	Dirty = true;
 	Extended = false;
 	ExtensionDeclined = false;
+	HumanWon = false;
 
 	Current = 0;
 

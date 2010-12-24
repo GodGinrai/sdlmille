@@ -111,10 +111,10 @@ bool	Player::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 		the top-level function will not flip the screen. */
 	bool DidSomething =		false;
 
+	DidSomething |= MyTableau.OnRender(Target, PlayerIndex, Force);
+
 	if (PlayerIndex == 0)		//Render the human player's hand
 		DidSomething = PlayerHand.OnRender(Target, Force);
-
-	DidSomething |= MyTableau.OnRender(Target, PlayerIndex, Force);
 
 	return DidSomething;
 }

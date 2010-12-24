@@ -106,6 +106,7 @@ private:
 				MenuSurfaces[OPTION_COUNT + MENU_ITEM_COUNT][2],
 				ModalSurface,
 				OrbSurface,
+				Overlay[2],
 				ResultTextSurface,
 				ScoreSurfaces[SCORE_CATEGORY_COUNT + 1][SCORE_COLUMN_COUNT],
 				VersionSurface;
@@ -120,6 +121,7 @@ private:
 	bool		Dirty,
 				Extended, ExtensionDeclined,
 				Frozen,
+				HumanWon,
 				Running;
 	Uint8		Current,				// Index of current player
 				Modal,

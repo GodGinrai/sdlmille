@@ -140,14 +140,18 @@ void			Surface::Render			(int X, int Y, SDL_Surface * Destination)								const
 		Draw(Destination, MySurface, X, Y);
 }
 
-SDL_Surface *	Surface::RenderText		(const char *Text, TTF_Font *Font, int R, int G, int B)
+SDL_Surface *	Surface::RenderText		(const char *Text, TTF_Font *Font, int R, int G, int B, SDL_Color *bgColor)
 {
 	SDL_Color	TextColor = {R, G, B, 0};
 	SDL_Surface	*TextSurface = 0;
 
 	if (Font != 0)
 	{
-		TextSurface = TTF_RenderText_Blended(Font, Text, TextColor);
+		if (bgColor == 0)
+			TextSurface = TTF_RenderText_Blended(Font, Text, TextColor);
+		else
+			TextSurface = TTF_RenderText_Shaded(Font, Text, TextColor, (*bgColor));
+
 		return TextSurface;
 	}
 
@@ -184,8 +188,10 @@ void			Surface::SetImage		(const char * File)
 	}
 }
 
-void			Surface::SetInteger		(int Value, TTF_Font * Font, bool ShowZero, int R, int G, int B)
+void			Surface::SetInteger		(int Value, TTF_Font * Font, bool ShowZero, int R, int G, int B, SDL_Color *bgColor)
 {
+	char	Text[21];
+
 	if ((Value < 0) || (Font == 0))
 		return;
 
@@ -202,15 +208,14 @@ void			Surface::SetInteger		(int Value, TTF_Font * Font, bool ShowZero, int R, i
 		if (Value == 0)
 		{
 			if (ShowZero)
-				MySurface = RenderText("0", Font, R, G, B);
+				strcpy(Text, "0");
 			else
-				MySurface = RenderText("-", Font, R, G, B);
+				strcpy(Text, "-");
 		}
 		else
 		{
 			int		NumDigits = 0,
 					TempNum = Value;
-			char	*MyText = 0;
 
 			while (TempNum > 0)
 			{
@@ -218,18 +223,17 @@ void			Surface::SetInteger		(int Value, TTF_Font * Font, bool ShowZero, int R, i
 				TempNum /= 10;
 			}
 
-			MyText = new char[NumDigits + 1];
-
-			if ((MyText != 0) && (Value <= pow((double)10, NumDigits))) //Sanity check
+			if ((NumDigits < 21) && (Value <= pow((double)10, NumDigits))) //Sanity check
 			{
-				sprintf(MyText, "%u", Value);
-				MySurface = RenderText(MyText, Font, R, G, B);
+				sprintf(Text, "%u", Value);
 			}
 		}
+
+		MySurface = RenderText(Text, Font, R, G, B, bgColor);
 	}
 }
 
-void			Surface::SetText		(const char * Text, TTF_Font * Font, int R, int G, int B)
+void			Surface::SetText		(const char * Text, TTF_Font * Font, int R, int G, int B, SDL_Color *bgColor)
 {
 	if (Font == 0)
 		return;
@@ -242,7 +246,7 @@ void			Surface::SetText		(const char * Text, TTF_Font * Font, int R, int G, int 
 			MySurface = 0;
 		}
 
-		MySurface = RenderText(Text, Font, R, G, B);
+		MySurface = RenderText(Text, Font, R, G, B, bgColor);
 	}
 }
 
