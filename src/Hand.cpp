@@ -103,7 +103,7 @@ bool	Hand::OnRender	(SDL_Surface * Target, bool Force)
 				Dirty = false;
 			}
 
-			Overlay.Render(0, TABLEAU_HEIGHT * 2, Target);
+			Overlay.Render(0, Dimensions::TableauHeight * 2, Target);
 
 			for (int i = 0; i < (HAND_SIZE + 1); ++i)
 			{
@@ -116,13 +116,13 @@ bool	Hand::OnRender	(SDL_Surface * Target, bool Force)
 				if (i < 4)
 					// The first three cards get a right-shift one space. Y is set for the top row.
 					//X += 65;
-					Y = FIRST_ROW_Y;
+					Y = Dimensions::FirstRowY;
 				else
 				{
 					// The remaining cards get a left-shift four spaces (to account for the four spaces
 					// above). Y is set for the second row.
 					X -= (65 << 2);
-					Y = SECOND_ROW_Y;
+					Y = Dimensions::SecondRowY;
 				}
 
 				if (i == 0)

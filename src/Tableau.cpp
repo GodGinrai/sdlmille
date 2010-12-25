@@ -96,7 +96,7 @@ void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 	#endif
 
 	if (PlayerIndex == 0)
-		AreaTop += TABLEAU_HEIGHT;
+		AreaTop += Dimensions::TableauHeight;
 
 	if (!FadeRunning)
 	{
@@ -112,10 +112,10 @@ void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 		RollCard.SetImage("gfx/remedy_roll.png");
 		EndLimit.SetImage("gfx/remedy_end_limit.png");
 
-		SafetyX = (MULTI_ROW_SAFETIES) ? 213 : 271;
-		SafetyY = (MULTI_ROW_SAFETIES) ? 117 : 76;
+		SafetyX = (Dimensions::MultiRowSafeties) ? 213 : 271;
+		SafetyY = (Dimensions::MultiRowSafeties) ? 117 : 76;
 		if (PlayerIndex == 0)
-			SafetyY += TABLEAU_HEIGHT;
+			SafetyY += Dimensions::TableauHeight;
 
 		EndLimitX = RollX = SafetyX;
 		EndLimitY = RollY = SafetyY;
@@ -134,7 +134,7 @@ void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 		int	Y = 1;
 
 		if (PlayerIndex == 0)
-			Y += TABLEAU_HEIGHT;
+			Y += Dimensions::TableauHeight;
 
 		//if (!BattleArea)
 		//	X = 263;
@@ -355,7 +355,7 @@ void	Tableau::OnPlay			(Uint8 Value, bool CoupFourre, bool SpeedLimit)
 
 bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 {
-			SDL_Rect	PlayerRect =	{0, Y_OFFSET, SCREEN_WIDTH, TABLEAU_HEIGHT - 1};
+			SDL_Rect	PlayerRect =	{0, 0, Dimensions::ScreenWidth, Dimensions::EffectiveTableauHeight - 1};
 	static	bool		RectSetUp =		false;
 	static	Uint8		LastStatus =	0xFF;
 			bool		WasDirty =		Dirty;
@@ -375,8 +375,8 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 
 			if (PlayerIndex == 0)
 			{
-				Y += TABLEAU_HEIGHT;
-				PlayerRect.y += TABLEAU_HEIGHT;
+				Y += Dimensions::TableauHeight;
+				PlayerRect.y += Dimensions::EffectiveTableauHeight;
 			}
 			
 			/* Color-coding */
@@ -423,7 +423,7 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 					int YOffset = 0;
 					int X = 0;
 
-					if (MULTI_ROW_SAFETIES)
+					if (Dimensions::MultiRowSafeties)
 					{
 						YOffset = ((i < 2) ? 58 : 116);
 						X = 213 + ((i % 2) ? 0 : 58);
@@ -446,7 +446,7 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 				}
 			}
 
-			MileageTextSurface.Render(65 - MileageTextSurface.GetWidth(), Y + (TABLEAU_HEIGHT - 25), Target);
+			MileageTextSurface.Render(65 - MileageTextSurface.GetWidth(), Y + (Dimensions::TableauHeight - 25), Target);
 		}
 	}
 

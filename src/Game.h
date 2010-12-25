@@ -39,16 +39,10 @@ const	char	CARD_CAPTIONS[CARD_SAFETY_RIGHT_OF_WAY + 1][20] = {
 					"Crash HAZARD", "Fuel HAZARD", "Tire HAZARD", "Speed HAZARD", "Stop HAZARD",
 					"Crash REMEDY", "Fuel REMEDY", "Tire REMEDY", "Speed REMEDY", "Roll REMEDY",
 					"Crash SAFETY", "Fuel SAFETY", "Tire SAFETY", "Right-of-way SAFETY"	};
-const	int		HAND_COORDS[][2] =	{
-					{146,	FIRST_ROW_Y + 32},
-					{146,	FIRST_ROW_Y + 32},
-					{3,		FIRST_ROW_Y + 32}	};
+const	int		HAND_COORDS[] =	{	146,
+									146,
+									3	};
 const	char	MENU_ITEM_NAMES[MENU_ITEM_COUNT][10] = {"New game", "Main menu"};
-const	int		ORB_COORDS[][2] =	{
-					{(SCREEN_WIDTH / 2) - 20,	(TABLEAU_HEIGHT / 2) - 20},
-					{(SCREEN_WIDTH / 2) - 20,	(TABLEAU_HEIGHT * 1.5) - 20},
-					{146,	FIRST_ROW_Y + 8},
-					{146,	FIRST_ROW_Y + 8}	};
 const	char	SCORE_CAT_NAMES[SCORE_CATEGORY_COUNT][15] = {
 					"Mileage", "Safeties", "All 4", "Coup Fourres", "Completed Trip", "Delayed Action", "Safe Trip",
 					"Extension", "Shutout", "Subtotal", "Previous", "Total"	};

@@ -55,16 +55,26 @@ void			Surface::Clear			(void)
 	}
 }
 
-bool			Surface::Draw			(SDL_Surface * Destination, SDL_Surface * Source, int X, int Y, bool Free)
+bool			Surface::Draw			(SDL_Surface * Destination, SDL_Surface * Source, int X, int Y, int ScaleMode, bool Free)
 {
 	if ((Destination == 0) || (Source == 0))
 		return false;
 
-	#ifdef	ANDROID_DEVICE
-		X *= 1.5;
-		Y *= 1.5;
-		Y += 40;
-	#endif
+	//#ifdef	ANDROID_DEVICE
+	//	X *= 1.5;
+	//	Y *= 1.5;
+	//	Y += 40;
+	//#endif
+
+	double Scale = Dimensions::ScaleFactor;
+
+	if (Scale != 1)
+	{
+		if (ScaleMode & SCALE_X)
+			X *= Scale;
+		if (ScaleMode & SCALE_Y)
+			Y *= Scale;
+	}
 
 	SDL_Rect	DestRect;
 	DestRect.x = X;
@@ -125,7 +135,23 @@ SDL_Surface *	Surface::Load			(const char * File)
 			Formatted = SDL_DisplayFormatAlpha(Loaded);
 		//else
 		//	Formatted = SDL_DisplayFormat(Loaded);
-		
+
+		/* TODO: Remove. For testing only. */
+		double	Scale = Dimensions::ScaleFactor;
+
+		if ((Scale != 1) && strcmp(File, "gfx/overlays/game_play_1.png"))
+		{
+
+			SDL_Surface	*Zoomed = zoomSurface(Formatted, Scale, Scale, SMOOTHING_ON);
+
+			if (Zoomed != 0)
+			{
+				SDL_FreeSurface(Formatted);
+				Formatted = Zoomed;
+			}
+		}
+		/*	End testing	*/
+
 		SDL_FreeSurface(Loaded);
 
 		return Formatted;
@@ -134,23 +160,26 @@ SDL_Surface *	Surface::Load			(const char * File)
 		return 0;
 }
 
-void			Surface::Render			(int X, int Y, SDL_Surface * Destination)								const
+void			Surface::Render			(int X, int Y, SDL_Surface * Destination, int ScaleMode)				const
 {
 	if (MySurface != 0)
-		Draw(Destination, MySurface, X, Y);
+		Draw(Destination, MySurface, X, Y, ScaleMode);
 }
 
-SDL_Surface *	Surface::RenderText		(const char *Text, TTF_Font *Font, int R, int G, int B, SDL_Color *bgColor)
+SDL_Surface *	Surface::RenderText		(const char *Text, TTF_Font *Font, SDL_Color *fgColor, SDL_Color *bgColor)
 {
-	SDL_Color	TextColor = {R, G, B, 0};
+	SDL_Color	Black = {0, 0, 0, 0};
 	SDL_Surface	*TextSurface = 0;
+
+	if (fgColor == 0)
+		fgColor = &Black;
 
 	if (Font != 0)
 	{
 		if (bgColor == 0)
-			TextSurface = TTF_RenderText_Blended(Font, Text, TextColor);
+			TextSurface = TTF_RenderText_Blended(Font, Text, (*fgColor));
 		else
-			TextSurface = TTF_RenderText_Shaded(Font, Text, TextColor, (*bgColor));
+			TextSurface = TTF_RenderText_Shaded(Font, Text, (*fgColor), (*bgColor));
 
 		return TextSurface;
 	}
@@ -188,7 +217,7 @@ void			Surface::SetImage		(const char * File)
 	}
 }
 
-void			Surface::SetInteger		(int Value, TTF_Font * Font, bool ShowZero, int R, int G, int B, SDL_Color *bgColor)
+void			Surface::SetInteger		(int Value, TTF_Font * Font, bool ShowZero, SDL_Color *fgColor, SDL_Color *bgColor)
 {
 	char	Text[21];
 
@@ -229,11 +258,11 @@ void			Surface::SetInteger		(int Value, TTF_Font * Font, bool ShowZero, int R, i
 			}
 		}
 
-		MySurface = RenderText(Text, Font, R, G, B, bgColor);
+		MySurface = RenderText(Text, Font, fgColor, bgColor);
 	}
 }
 
-void			Surface::SetText		(const char * Text, TTF_Font * Font, int R, int G, int B, SDL_Color *bgColor)
+void			Surface::SetText		(const char * Text, TTF_Font * Font, SDL_Color *fgColor, SDL_Color *bgColor)
 {
 	if (Font == 0)
 		return;
@@ -246,7 +275,7 @@ void			Surface::SetText		(const char * Text, TTF_Font * Font, int R, int G, int 
 			MySurface = 0;
 		}
 
-		MySurface = RenderText(Text, Font, R, G, B, bgColor);
+		MySurface = RenderText(Text, Font,fgColor, bgColor);
 	}
 }
 
