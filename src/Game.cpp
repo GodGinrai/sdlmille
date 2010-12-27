@@ -44,6 +44,7 @@ namespace _SDLMille
 	ExtensionDeclined = false;
 	Frozen = false;
 	HumanWon = false;
+	MouseDown = false;
 	Running = true;
 
 	OldDiscardTop = DiscardTop = CARD_NULL_NULL;
@@ -474,6 +475,8 @@ bool	Game::IsValidPlay		(Uint8 Index)						const
 
 void	Game::OnClick			(int X, int Y)
 {
+	static	Uint32	LastClick = 0;
+
 	if (Frozen)		//Don't register clicks when frozen
 	{
 		if ((SDL_GetTicks() - 1000) > FrozenAt)
@@ -682,8 +685,13 @@ void	Game::OnClick			(int X, int Y)
 
 	else if (Scene == SCENE_LEGAL)	//Legal scene, return to main menu on click
 	{
-		LastScene = Scene;
-		Scene = SCENE_MAIN;
+		if (LastClick + 500 >= SDL_GetTicks())
+		{
+			LastScene = Scene;
+			Scene = SCENE_MAIN;
+		}
+		else
+			LastClick = SDL_GetTicks();
 	}
 }
 
@@ -695,8 +703,14 @@ void	Game::OnEvent			(SDL_Event * Event)
 	{
 		if (Event->type == SDL_QUIT)
 			Running = false;
+		else if (Event->type == SDL_MOUSEBUTTONDOWN)
+		{
+			MouseDown = true;
+		}
 		else if (Event->type == SDL_MOUSEBUTTONUP)	//Mouse click
 		{
+			MouseDown = false;
+
 			X = Event->button.x;
 			Y = Event->button.y;
 			//#ifdef	ANDROID_DEVICE		//Fix X and Y for WVGA
@@ -717,6 +731,38 @@ void	Game::OnEvent			(SDL_Event * Event)
 			}
 
 			OnClick(X, Y);
+		}
+		else if (Event->type == SDL_MOUSEMOTION)
+		{
+			if ((Scene == SCENE_LEGAL) && MouseDown)
+			{
+				int CurX = Portal.x;
+				int CurY = Portal.y;
+
+				int MotionX = Event->motion.xrel;
+				int MotionY = Event->motion.yrel;
+
+				int NewX = CurX - MotionX;
+				int NewY = CurY - MotionY;
+
+				int MaxX = Overlay[0].GetWidth() - Dimensions::ScreenWidth;
+				int MaxY = Overlay[0].GetHeight() - Dimensions::ScreenHeight;
+
+				if (NewX < 0)
+					NewX = 0;
+				else if (NewX > MaxX)
+					NewX = MaxX;
+
+				if (NewY < 0)
+					NewY = 0;
+				else if (NewY > MaxY)
+					NewY = MaxY;
+
+				Portal.x = NewX;
+				Portal.y = NewY;
+
+				Dirty = true;
+			}
 		}
 		else if (Event->type == SDL_KEYUP)	//Debugging purposes
 		{
@@ -770,11 +816,22 @@ bool	Game::OnInit			(void)
 		#elif defined ANDROID_DEVICE
 		if(!(Window = SDL_SetVideoMode(480, 800, 16, SDL_SWSURFACE)))
 		#else
-		if(!(Window = SDL_SetVideoMode(480, 720, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)))
+		if(!(Window = SDL_SetVideoMode(320, 480, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)))
 		#endif
 			return false;
 
 		Dimensions::SetDimensions(Window->w, Window->h);
+
+		Portal.x = 0;
+		if (Dimensions::ScreenWidth > 480)
+			Portal.w = 480;
+		else
+			Portal.w = Dimensions::ScreenWidth;
+		Portal.y = 0;
+		if (Dimensions::ScreenHeight > 920)
+			Portal.h = 920;
+		else
+			Portal.h = Dimensions::ScreenHeight;
 
 		SDL_WM_SetCaption("SDL Mille", "SDL Mille");
 	}
@@ -933,9 +990,14 @@ bool	Game::OnInit			(void)
 	{
 		SDL_Color	VersionRed = {230, 0, 11, 0};
 
-		Background.SetImage("gfx/scenes/legal.png");
+		Background.SetImage("gfx/scenes/green_bg.png");
 		if (!Background)
 			return false;
+
+		Overlay[0].SetImage("gfx/overlays/legal.png");
+
+		if (GameOverBig)
+			Overlay[1].SetText("Use finger/mouse to pan.", GameOverBig, &White, &Black);
 
 		if (GameOverSmall)
 			VersionSurface.SetText(VERSION_TEXT, GameOverSmall, &VersionRed);
@@ -1107,11 +1169,31 @@ void	Game::OnPlay			(Uint8 Index)
 
 void	Game::OnRender			(bool Force, bool Flip)
 {
+	bool	RefreshedSomething =	false, // We only flip the display if something changed
+			SceneChanged =			false; // Control variable. Do we need to call OnInit()?
+
+	#ifdef DEBUG
+	static	Uint32	LastReset = 0;
+	static	Uint32	FrameCount = 0;
+
+	SDL_Color	White = {255,255,255,0},
+				Black = {0,0,0,0};
+
+	++FrameCount;
+
+	Uint32 TickCount = SDL_GetTicks();
+
+	if ((LastReset + 333) < TickCount)
+	{
+		LastReset = TickCount;
+		DebugSurface.SetInteger(FrameCount * 3, GameOverBig, true, &Black, &White);
+		FrameCount = 0;
+		RefreshedSomething = true;
+	}
+	#endif
+
 	if ((Modal == MODAL_NONE) || Force)	//Don't re-render during modal, unless forced
 	{
-		bool	RefreshedSomething =	false, // We only flip the display if something changed
-				SceneChanged =			false; // Control variable. Do we need to call OnInit()?
-
 		#ifdef	ANDROID_DEVICE
 		static	SDL_Rect	SceneRect = {0, 40, 480, 720};
 		#endif
@@ -1204,7 +1286,15 @@ void	Game::OnRender			(bool Force, bool Flip)
 					Surface::Draw(Window, Surface::Load(Card::GetFileFromValue(i)), 135 + ((i / 5) * 64), 113 + ((i % 5) * 64) + ((i == CARD_SAFETY_RIGHT_OF_WAY) ? 32 : 0), SCALE_X_Y, true);
 			}
 			else if (Scene == SCENE_LEGAL)
-				VersionSurface.Render(315 - VersionSurface.GetWidth(), 1, Window);
+			{
+				Overlay[0].DrawPart(Portal, Window);
+
+				if ((Portal.x == 0) && (Portal.y == 0))
+					Overlay[1].Render((Dimensions::ScreenWidth - Overlay[1].GetWidth()) / 2, Dimensions::ScreenHeight - Overlay[1].GetHeight() - 5, Window, SCALE_NONE);
+
+				if (Portal.y < (VersionSurface.GetHeight() + 1))
+					VersionSurface.Render(Dimensions::ScreenWidth - VersionSurface.GetWidth() - 1, 1 - Portal.y, Window, SCALE_NONE);
+			}
 		}
 
 		if ((Scene == SCENE_GAME_PLAY) || IN_DEMO) // During play, we also need to render our players
@@ -1259,9 +1349,12 @@ void	Game::OnRender			(bool Force, bool Flip)
 		//	}
 		//}
 
-		if (RefreshedSomething && Flip)
-			SDL_Flip(Window);
 	}
+
+	DebugSurface.Render(0, 0, Window);
+
+	if (RefreshedSomething && Flip)
+		SDL_Flip(Window);
 }
 
 void	Game::Pop				(Uint8 Index)

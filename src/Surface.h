@@ -18,9 +18,7 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 //#define	WEBOS_DEVICE
-
-#define FIRST_ROW_Y ((TABLEAU_HEIGHT * 2) + 8)
-#define SECOND_ROW_Y (FIRST_ROW_Y + 62)
+//#define DEBUG
 
 #ifndef _SDLMILLE_SURFACE_H
 #define _SDLMILLE_SURFACE_H
@@ -31,7 +29,6 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
-#include <SDl_rotozoom.h>
 #include <cmath>
 #include <fstream>
 
@@ -46,6 +43,7 @@ public:
 							Surface			(void);
 							~Surface		(void);
 			void			Clear			(void);
+			bool			DrawPart		(SDL_Rect &SourceRect, SDL_Surface *Destination);
 			int				GetHeight		(void)																			const;
 			int				GetWidth		(void)																			const;
 			void			Render			(int X, int Y, SDL_Surface * Destination, int ScaleMode = SCALE_X_Y)			const;

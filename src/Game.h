@@ -91,6 +91,7 @@ private:
 	Surface		ArrowSurfaces[2],
 				Background,
 				CaptionSurface,
+				DebugSurface,
 				DiscardSurface,
 				DrawCardSurface, DrawTextSurface,
 				HandSurface,
@@ -107,6 +108,7 @@ private:
 	Player		Players[PLAYER_COUNT];
 	Options		GameOptions;
 	Deck		*SourceDeck;
+	SDL_Rect	Portal;
 	int			Scores[PLAYER_COUNT],
 				RunningScores[PLAYER_COUNT],
 				ScoreBreakdown[PLAYER_COUNT][SCORE_CATEGORY_COUNT];
@@ -116,6 +118,7 @@ private:
 				Extended, ExtensionDeclined,
 				Frozen,
 				HumanWon,
+				MouseDown,
 				Running;
 	Uint8		Current,				// Index of current player
 				Modal,

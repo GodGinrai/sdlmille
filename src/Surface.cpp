@@ -88,6 +88,18 @@ bool			Surface::Draw			(SDL_Surface * Destination, SDL_Surface * Source, int X, 
 	return true;
 }
 
+bool			Surface::DrawPart		(SDL_Rect &SourceRect, SDL_Surface *Destination)
+{
+	if ((MySurface != 0) && (Destination != 0))
+	{
+		SDL_BlitSurface(MySurface, &SourceRect, Destination, 0);
+
+		return true;
+	}
+
+	return false;
+}
+
 int				Surface::GetHeight		(void)																	const
 {
 	if (MySurface != 0)
@@ -136,7 +148,7 @@ SDL_Surface *	Surface::Load			(const char * File)
 		//else
 		//	Formatted = SDL_DisplayFormat(Loaded);
 
-		/* TODO: Remove. For testing only. */
+		/* TODO: Remove. For testing only. 
 		double	Scale = Dimensions::ScaleFactor;
 
 		if ((Scale != 1) && strcmp(File, "gfx/overlays/game_play_1.png"))
@@ -150,7 +162,7 @@ SDL_Surface *	Surface::Load			(const char * File)
 				Formatted = Zoomed;
 			}
 		}
-		/*	End testing	*/
+			End testing	*/
 
 		SDL_FreeSurface(Loaded);
 

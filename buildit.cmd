@@ -4,12 +4,12 @@
 cd src
 
 @rem Set the device you want to build for to 1
-set PRE=1
-set PIXI=0
+set PRE=0
+set PIXI=1
 set DEBUG=0
 
 @rem List your source files here
-set SRC=Card.cpp Deck.cpp Player.cpp Main.cpp Game.cpp Hand.cpp Surface.cpp Tableau.cpp Options.cpp
+set SRC=Card.cpp Deck.cpp Player.cpp Main.cpp Game.cpp Hand.cpp Surface.cpp Tableau.cpp Options.cpp Dimensions.cpp
 
 @rem List the libraries needed
 set LIBS=-lSDL -lSDL_ttf -lSDL_image
