@@ -734,7 +734,7 @@ void	Game::OnEvent			(SDL_Event * Event)
 		}
 		else if (Event->type == SDL_MOUSEMOTION)
 		{
-			if ((Scene == SCENE_LEGAL) && MouseDown)
+			if (((Scene == SCENE_LEGAL) || (Scene == SCENE_LEARN_1)) && MouseDown)
 			{
 				int CurX = Portal.x;
 				int CurY = Portal.y;
@@ -748,25 +748,29 @@ void	Game::OnEvent			(SDL_Event * Event)
 				int MaxX = Overlay[0].GetWidth() - Dimensions::ScreenWidth;
 				int MaxY = Overlay[0].GetHeight() - Dimensions::ScreenHeight;
 
+				if (NewX > MaxX)
+					NewX = MaxX;
 				if (NewX < 0)
 					NewX = 0;
-				else if (NewX > MaxX)
-					NewX = MaxX;
 
+				if (NewY > MaxY)
+					NewY = MaxY;
 				if (NewY < 0)
 					NewY = 0;
-				else if (NewY > MaxY)
-					NewY = MaxY;
 
-				Portal.x = NewX;
-				Portal.y = NewY;
+				if ((NewX != CurX) || (NewY != CurY))
+				{
+					Portal.x = NewX;
+					Portal.y = NewY;
 
-				Dirty = true;
+					Dirty = true;
+				}
 			}
 		}
 		else if (Event->type == SDL_KEYUP)	//Debugging purposes
 		{
-			printf("%u", Window->h);
+			SDL_SaveBMP(Window, "screen.bmp");
+			//printf("%u", Window->h);
 			//Surface	TestSurface;
 
 			//TestSurface.SetImage("gfx/scenes/green_bg.png");
@@ -822,16 +826,7 @@ bool	Game::OnInit			(void)
 
 		Dimensions::SetDimensions(Window->w, Window->h);
 
-		Portal.x = 0;
-		if (Dimensions::ScreenWidth > 480)
-			Portal.w = 480;
-		else
-			Portal.w = Dimensions::ScreenWidth;
-		Portal.y = 0;
-		if (Dimensions::ScreenHeight > 920)
-			Portal.h = 920;
-		else
-			Portal.h = Dimensions::ScreenHeight;
+		ResetPortal();
 
 		SDL_WM_SetCaption("SDL Mille", "SDL Mille");
 	}
@@ -905,10 +900,17 @@ bool	Game::OnInit			(void)
 
 	else if (Scene == SCENE_LEARN_1)
 	{
-		Background.SetImage("gfx/scenes/the-cards.png");
+		ResetPortal();
+
+		Background.SetImage("gfx/scenes/green_bg.png");
+		Overlay[0].SetImage("gfx/overlays/learn_1.png");
 
 		if (!Background)
 			return false;
+
+		if (GameOverBig)
+			Overlay[1].SetText("Drag to pan.", GameOverBig, &White, &Black);
+
 
 		return true;
 	}
@@ -990,6 +992,8 @@ bool	Game::OnInit			(void)
 	{
 		SDL_Color	VersionRed = {230, 0, 11, 0};
 
+		ResetPortal();
+
 		Background.SetImage("gfx/scenes/green_bg.png");
 		if (!Background)
 			return false;
@@ -997,7 +1001,7 @@ bool	Game::OnInit			(void)
 		Overlay[0].SetImage("gfx/overlays/legal.png");
 
 		if (GameOverBig)
-			Overlay[1].SetText("Use finger/mouse to pan.", GameOverBig, &White, &Black);
+			Overlay[1].SetText("Drag to pan.", GameOverBig, &White, &Black);
 
 		if (GameOverSmall)
 			VersionSurface.SetText(VERSION_TEXT, GameOverSmall, &VersionRed);
@@ -1204,7 +1208,7 @@ void	Game::OnRender			(bool Force, bool Flip)
 		SceneChanged |= CheckForChange(LastScene, Scene);
 
 		// Also if we're otherwise dirty
-		SceneChanged |= Dirty;
+		Force |= Dirty;
 
 		//Re-render the background if the hand has changed
 		if ((Scene == SCENE_GAME_PLAY) && Players[0].IsDirty())
@@ -1279,21 +1283,21 @@ void	Game::OnRender			(bool Force, bool Flip)
 					}
 				}
 			}
-			else if (Scene == SCENE_LEARN_1)
-			{
-				printf("Drew cards\n");
-				for (int i = 0; i < CARD_MILEAGE_25; ++i)
-					Surface::Draw(Window, Surface::Load(Card::GetFileFromValue(i)), 135 + ((i / 5) * 64), 113 + ((i % 5) * 64) + ((i == CARD_SAFETY_RIGHT_OF_WAY) ? 32 : 0), SCALE_X_Y, true);
-			}
-			else if (Scene == SCENE_LEGAL)
+			
+			else if ((Scene == SCENE_LEARN_1) || (Scene == SCENE_LEGAL))
 			{
 				Overlay[0].DrawPart(Portal, Window);
+				//for (int i = 0; i < CARD_MILEAGE_25; ++i)
+				//	Surface::Draw(Window, Surface::Load(Card::GetFileFromValue(i)), 135 + ((i / 5) * 64), 113 + ((i % 5) * 64) + ((i == CARD_SAFETY_RIGHT_OF_WAY) ? 32 : 0), SCALE_X_Y, true);
 
-				if ((Portal.x == 0) && (Portal.y == 0))
+				if ((Portal.x == 0) && (Portal.y == 0) && ((Overlay[0].GetWidth() > Dimensions::ScreenWidth) || (Overlay[0].GetHeight() > Dimensions::ScreenHeight)))
 					Overlay[1].Render((Dimensions::ScreenWidth - Overlay[1].GetWidth()) / 2, Dimensions::ScreenHeight - Overlay[1].GetHeight() - 5, Window, SCALE_NONE);
 
-				if (Portal.y < (VersionSurface.GetHeight() + 1))
-					VersionSurface.Render(Dimensions::ScreenWidth - VersionSurface.GetWidth() - 1, 1 - Portal.y, Window, SCALE_NONE);
+				if (Scene == SCENE_LEGAL)
+				{
+					if (Portal.y < (VersionSurface.GetHeight() + 1))
+						VersionSurface.Render(Dimensions::ScreenWidth - VersionSurface.GetWidth() - 1, 1 - Portal.y, Window, SCALE_NONE);
+				}
 			}
 		}
 
@@ -1424,6 +1428,14 @@ void	Game::Reset				(void)
 	//Odds and ends
 	if (SourceDeck)
 		OldDeckCount = DeckCount = SourceDeck->CardsLeft();
+}
+
+void	Game::ResetPortal		(void)
+{
+	Portal.x = 0;
+	Portal.y = 0;
+	Portal.w = Dimensions::ScreenWidth;
+	Portal.h = Dimensions::ScreenHeight;
 }
 
 bool	Game::Restore			(void)

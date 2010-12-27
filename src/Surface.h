@@ -45,6 +45,7 @@ public:
 			void			Clear			(void);
 			bool			DrawPart		(SDL_Rect &SourceRect, SDL_Surface *Destination);
 			int				GetHeight		(void)																			const;
+			SDL_Surface *	GetSurface		(void);
 			int				GetWidth		(void)																			const;
 			void			Render			(int X, int Y, SDL_Surface * Destination, int ScaleMode = SCALE_X_Y)			const;
 			void			SetAlpha		(int AlphaValue);
@@ -65,7 +66,12 @@ private:
 					Length;
 };
 
-inline	Surface::operator bool	(void)	const
+inline	SDL_Surface *	Surface::GetSurface		(void)
+{
+	return MySurface;
+}
+
+inline					Surface::operator bool	(void)	const
 {
 	return (MySurface != 0);
 }

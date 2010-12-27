@@ -81,6 +81,7 @@ private:
 	void		OnRender		(bool Force = false, bool Flip = true);
 	void		Pop				(Uint8 Index);
 	void		Reset			(void);
+	void		ResetPortal		(void);
 	bool		Restore			(void);
 	bool		Save			(void);
 	void		ShowMessage		(const char * Msg, bool SetDirty = true);
