@@ -60,12 +60,6 @@ bool			Surface::Draw			(SDL_Surface * Destination, SDL_Surface * Source, int X, 
 	if ((Destination == 0) || (Source == 0))
 		return false;
 
-	//#ifdef	ANDROID_DEVICE
-	//	X *= 1.5;
-	//	Y *= 1.5;
-	//	Y += 40;
-	//#endif
-
 	double Scale = Dimensions::ScaleFactor;
 
 	if (Scale != 1)
@@ -123,46 +117,12 @@ SDL_Surface *	Surface::Load			(const char * File)
 		SDL_Surface	*Loaded = 0,
 					*Formatted = 0;
 
-		// TODO: Fix this kludge
-		#ifdef	ANDROID_DEVICE
-		char	*NewFile = 0;
-		NewFile = new	char[strlen(File) + 5];
-		if (NewFile)
-		{
-			strcpy(NewFile, "hd/");
-			strcat(NewFile, File);
-			Loaded = IMG_Load(NewFile);
-			delete	[]	NewFile;
-			NewFile = 0;
-		}
-		#else
 		Loaded = IMG_Load(File);
-		#endif
 
 		if (Loaded == 0)
 			return 0;
 
-		//SDL_SetColorKey(Loaded, SDL_SRCCOLORKEY, SDL_MapRGB(Loaded->format, 255, 0, 255));
-		//if (Alpha)
-			Formatted = SDL_DisplayFormatAlpha(Loaded);
-		//else
-		//	Formatted = SDL_DisplayFormat(Loaded);
-
-		/* TODO: Remove. For testing only. 
-		double	Scale = Dimensions::ScaleFactor;
-
-		if ((Scale != 1) && strcmp(File, "gfx/overlays/game_play_1.png"))
-		{
-
-			SDL_Surface	*Zoomed = zoomSurface(Formatted, Scale, Scale, SMOOTHING_ON);
-
-			if (Zoomed != 0)
-			{
-				SDL_FreeSurface(Formatted);
-				Formatted = Zoomed;
-			}
-		}
-			End testing	*/
+		Formatted = SDL_DisplayFormatAlpha(Loaded);
 
 		SDL_FreeSurface(Loaded);
 

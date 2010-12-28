@@ -102,7 +102,7 @@ private:
 				MenuSurfaces[OPTION_COUNT + MENU_ITEM_COUNT][2],
 				ModalSurface,
 				OrbSurface,
-				Overlay[2],
+				Overlay[3],
 				ResultTextSurface,
 				ScoreSurfaces[SCORE_CATEGORY_COUNT + 1][SCORE_COLUMN_COUNT],
 				VersionSurface;
@@ -110,7 +110,10 @@ private:
 	Options		GameOptions;
 	Deck		*SourceDeck;
 	SDL_Rect	Portal;
-	int			Scores[PLAYER_COUNT],
+	SDL_Color	Black,
+				White;
+	int			DownX, DownY,
+				Scores[PLAYER_COUNT],
 				RunningScores[PLAYER_COUNT],
 				ScoreBreakdown[PLAYER_COUNT][SCORE_CATEGORY_COUNT];
 	Uint32		FrozenAt,

@@ -84,6 +84,9 @@ namespace _SDLMille
 	DrawFont = TTF_OpenFont("LiberationMono-Regular.ttf", 16);
 	GameOverBig = TTF_OpenFont("LiberationMono-Regular.ttf", 18);
 	GameOverSmall = TTF_OpenFont("LiberationMono-Regular.ttf", 14);
+
+	Black.r = 0; Black.g = 0; Black.b = 0;
+	White.r = 255; White.g = 255; White.b = 255;
 }
 
 		Game::~Game				(void)
@@ -581,8 +584,6 @@ void	Game::OnClick			(int X, int Y)
 				LastScene = SCENE_MAIN;
 				Scene =		SCENE_GAME_PLAY;
 				Restore();
-				//for (int i = 0; i < PLAYER_COUNT; ++i)
-				//	Players[i].SetSource(SourceDeck);
 			}
 			if ((Y >= 370) && (Y <= 415))	//Clicked Learn
 			{
@@ -691,7 +692,10 @@ void	Game::OnClick			(int X, int Y)
 			Scene = SCENE_MAIN;
 		}
 		else
+		{
 			LastClick = SDL_GetTicks();
+			Overlay[2].SetText("Double-click to return.", GameOverBig, &White, &Black);
+		}
 	}
 }
 
@@ -705,32 +709,35 @@ void	Game::OnEvent			(SDL_Event * Event)
 			Running = false;
 		else if (Event->type == SDL_MOUSEBUTTONDOWN)
 		{
-			MouseDown = true;
+			if (Event->button.which == 0)
+			{
+				MouseDown = true;
+
+				DownX = Event->button.x;
+				DownY = Event->button.y;
+			}
 		}
 		else if (Event->type == SDL_MOUSEBUTTONUP)	//Mouse click
 		{
-			MouseDown = false;
-
-			X = Event->button.x;
-			Y = Event->button.y;
-			//#ifdef	ANDROID_DEVICE		//Fix X and Y for WVGA
-			//if ((Y < 40) || (Y > 760))
-			//	return;
-			//else
-			//{
-			//	X = (X / 1.5);
-			//	Y = ((Y - 40) / 1.5);
-			//}
-			//#endif
-			double	Scale = Dimensions::ScaleFactor;
-
-			if (Scale != 1)
+			if (Event->button.which == 0)
 			{
-				X /= Scale;
-				Y /= Scale;
-			}
+				double	Scale = Dimensions::ScaleFactor;
+				MouseDown = false;
 
-			OnClick(X, Y);
+				X = Event->button.x;
+				Y = Event->button.y;
+
+				if ((abs(DownX - X) > 5) || (abs(DownY - Y) > 5))
+					return;
+
+				if (Scale != 1)
+				{
+					X /= Scale;
+					Y /= Scale;
+				}
+
+				OnClick(X, Y);
+			}
 		}
 		else if (Event->type == SDL_MOUSEMOTION)
 		{
@@ -762,6 +769,7 @@ void	Game::OnEvent			(SDL_Event * Event)
 				{
 					Portal.x = NewX;
 					Portal.y = NewY;
+					Overlay[2].Clear();
 
 					Dirty = true;
 				}
@@ -769,44 +777,13 @@ void	Game::OnEvent			(SDL_Event * Event)
 		}
 		else if (Event->type == SDL_KEYUP)	//Debugging purposes
 		{
-			SDL_SaveBMP(Window, "screen.bmp");
-			//printf("%u", Window->h);
-			//Surface	TestSurface;
-
-			//TestSurface.SetImage("gfx/scenes/green_bg.png");
-
-			//Uint32	Red;
-
-			//SDL_Surface	*RedBox = 0;
-
-			//Red = SDL_MapRGB(Window->format, 191, 0, 0);
-
-			//RedBox = SDL_CreateRGBSurface(SDL_HWSURFACE, 320, Dimensions::TableauHeight, 32, 0, 0, 0, 0);
-
-			//if (RedBox != 0)
-			//{
-			//	SDL_FillRect(RedBox, 0, Red);
-
-			//	printf("%u \n", SDL_GetTicks());
-
-			//	for (int i = 0; i < 10000; ++i)
-			//	{
-			//		TestSurface.Render(0, 0, Window);
-			//		SDL_BlitSurface(RedBox, 0, Window, 0);
-			//		SDL_Flip(Window);
-			//	}
-
-			//	printf("%u \n", SDL_GetTicks());
-			//}
+			return;
 		}
 	}
 }
 
 bool	Game::OnInit			(void)
 {
-	SDL_Color	Black = {0, 0, 0, 0},
-				White = {255, 255, 255, 0};
-
 	Dirty = false;
 
 	if (!Window)
@@ -817,10 +794,8 @@ bool	Game::OnInit			(void)
 
 		#if defined WEBOS_DEVICE
 		if(!(Window = SDL_SetVideoMode(0, 0, 0, SDL_SWSURFACE)))
-		#elif defined ANDROID_DEVICE
-		if(!(Window = SDL_SetVideoMode(480, 800, 16, SDL_SWSURFACE)))
 		#else
-		if(!(Window = SDL_SetVideoMode(320, 480, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)))
+		if(!(Window = SDL_SetVideoMode(320, 400, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)))
 		#endif
 			return false;
 
@@ -858,12 +833,6 @@ bool	Game::OnInit			(void)
 
 	else if ((Scene == SCENE_GAME_PLAY) || (Scene == SCENE_LEARN_2))
 	{
-		//#ifdef PALM_PIXI
-		//Background.SetImage("gfx/scenes/game-play-pixi.png");
-		//#else
-		//Background.SetImage("gfx/scenes/game-play.png");
-		//#endif
-
 		Background.Clear();
 
 		Overlay[0].SetImage("gfx/overlays/game_play_1.png");
@@ -909,7 +878,7 @@ bool	Game::OnInit			(void)
 			return false;
 
 		if (GameOverBig)
-			Overlay[1].SetText("Drag to pan.", GameOverBig, &White, &Black);
+			Overlay[1].SetText("Drag to scroll.", GameOverBig, &White, &Black);
 
 
 		return true;
@@ -919,7 +888,7 @@ bool	Game::OnInit			(void)
 	{
 		Background.SetImage("gfx/scenes/green_bg.png");
 		if (HumanWon)
-			Overlay[0].SetImage("gfx/overlays/game_over_won.png");
+			Overlay[0].SetImage("gfx/overlays/game_over_won.jpg");
 		else
 			Overlay[0].SetImage("gfx/overlays/game_over.png");
 
@@ -1001,7 +970,7 @@ bool	Game::OnInit			(void)
 		Overlay[0].SetImage("gfx/overlays/legal.png");
 
 		if (GameOverBig)
-			Overlay[1].SetText("Drag to pan.", GameOverBig, &White, &Black);
+			Overlay[1].SetText("Drag to scroll.", GameOverBig, &White, &Black);
 
 		if (GameOverSmall)
 			VersionSurface.SetText(VERSION_TEXT, GameOverSmall, &VersionRed);
@@ -1014,9 +983,6 @@ bool	Game::OnInit			(void)
 
 void	Game::OnLoop			(void)
 {
-	SDL_Color	Black = {0, 0, 0, 0},
-				White = {255, 255, 255, 0};
-
 	if (Message[0] != '\0')	//Clear message if necessary
 	{
 		if (((SDL_GetTicks() - 4000) > MessagedAt) && !IN_DEMO && (Scene != SCENE_GAME_OVER))
@@ -1090,7 +1056,6 @@ void	Game::OnLoop			(void)
 					Overlay[1].SetText("It's a draw! Click to start next game.", GameOverSmall, &White);
 				else if (Won)
 				{
-					SDL_Color bgColor = {0, 0, 0, 0};
 					Overlay[1].SetText("Congrats! Click to start next game.", GameOverSmall, &White, &Black);
 					HumanWon = true;
 				}
@@ -1180,9 +1145,6 @@ void	Game::OnRender			(bool Force, bool Flip)
 	static	Uint32	LastReset = 0;
 	static	Uint32	FrameCount = 0;
 
-	SDL_Color	White = {255,255,255,0},
-				Black = {0,0,0,0};
-
 	++FrameCount;
 
 	Uint32 TickCount = SDL_GetTicks();
@@ -1198,10 +1160,6 @@ void	Game::OnRender			(bool Force, bool Flip)
 
 	if ((Modal == MODAL_NONE) || Force)	//Don't re-render during modal, unless forced
 	{
-		#ifdef	ANDROID_DEVICE
-		static	SDL_Rect	SceneRect = {0, 40, 480, 720};
-		#endif
-
 		// If the scene, discard pile, or deck count have changed, we need to do a refresh
 		SceneChanged |= CheckForChange(OldDeckCount, DeckCount);
 		SceneChanged |= CheckForChange(OldDiscardTop, DiscardTop);
@@ -1237,11 +1195,7 @@ void	Game::OnRender			(bool Force, bool Flip)
 			Force = true;
 			RefreshedSomething = true;
 
-			// TODO: Remove the following hack, necessitated by transparency present in the enlarged graphics
-			#ifdef	ANDROID_DEVICE
-			SDL_FillRect(Window, &SceneRect, SDL_MapRGB(Window->format, 120, 192, 86));
-			#endif
-			
+		
 			// Render the appropriate surfaces
 			Background.Render(0, 0, Window);
 
@@ -1269,13 +1223,11 @@ void	Game::OnRender			(bool Force, bool Flip)
 					{
 						if (ScoreSurfaces[i][j])
 						{
-							int Padding = 
-								#ifdef PALM_PIXI
-								10
-								#else
-								25
-								#endif
-								;
+							int Padding = 25;
+
+							if (Dimensions::ScreenHeight < 480)
+								Padding = 10;
+
 							X = 12 + ((j > 0) ? 175 : 0) + ((j > 1) ? 75 : 0);
 							Y = Padding + (i * 26) + ((i > 0) ? Padding : 0) + ((i > (SCORE_CATEGORY_COUNT - 3)) ? Padding : 0) + ((i > (SCORE_CATEGORY_COUNT - 1)) ? Padding : 0);
 							ScoreSurfaces[i][j].Render(X, Y, Window);
@@ -1287,8 +1239,6 @@ void	Game::OnRender			(bool Force, bool Flip)
 			else if ((Scene == SCENE_LEARN_1) || (Scene == SCENE_LEGAL))
 			{
 				Overlay[0].DrawPart(Portal, Window);
-				//for (int i = 0; i < CARD_MILEAGE_25; ++i)
-				//	Surface::Draw(Window, Surface::Load(Card::GetFileFromValue(i)), 135 + ((i / 5) * 64), 113 + ((i % 5) * 64) + ((i == CARD_SAFETY_RIGHT_OF_WAY) ? 32 : 0), SCALE_X_Y, true);
 
 				if ((Portal.x == 0) && (Portal.y == 0) && ((Overlay[0].GetWidth() > Dimensions::ScreenWidth) || (Overlay[0].GetHeight() > Dimensions::ScreenHeight)))
 					Overlay[1].Render((Dimensions::ScreenWidth - Overlay[1].GetWidth()) / 2, Dimensions::ScreenHeight - Overlay[1].GetHeight() - 5, Window, SCALE_NONE);
@@ -1297,19 +1247,18 @@ void	Game::OnRender			(bool Force, bool Flip)
 				{
 					if (Portal.y < (VersionSurface.GetHeight() + 1))
 						VersionSurface.Render(Dimensions::ScreenWidth - VersionSurface.GetWidth() - 1, 1 - Portal.y, Window, SCALE_NONE);
+
+					Overlay[2].Render((Dimensions::ScreenWidth - Overlay[2].GetWidth()) / 2, 10, Window, SCALE_NONE);
 				}
 			}
 		}
 
-		if ((Scene == SCENE_GAME_PLAY) || IN_DEMO) // During play, we also need to render our players
+		if ((Scene == SCENE_GAME_PLAY) || IN_DEMO)
 		{
-			//Force compels players to re-render if this function re-rendered
-			//RefreshedSomething |= Players[0].OnRender(Window, 0, Force);
-			//RefreshedSomething |= Players[1].OnRender(Window, 1, Force);
-
-			//Render caption over hand
+			//Render card caption
 			if (GameOptions.GetOpt(OPTION_CARD_CAPTIONS))
 				CaptionSurface.Render((320 - CaptionSurface.GetWidth()) / 2, ((Dimensions::TableauHeight * 2) - CaptionSurface.GetHeight()) - 10, Window);
+
 			if (Scene == SCENE_GAME_PLAY)
 				MenuSurface.Render(2, 5, Window);
 		}
@@ -1341,21 +1290,11 @@ void	Game::OnRender			(bool Force, bool Flip)
 
 		if (MessageSurface)
 			MessageSurface.Render((Dimensions::ScreenWidth - MessageSurface.GetWidth()) / 2, Dimensions::TableauHeight - 50, Window, SCALE_Y); //Render the message last.
-
-		//if (Players[0].HasSafety(CARD_SAFETY_RIGHT_OF_WAY))
-		//{
-		//	if (Players[0].GetTopCard() == CARD_HAZARD_STOP)
-		//	{
-		//		char	BitmapFile[21];
-		//		sprintf(BitmapFile, "%u%s", SDL_GetTicks(), ".bmp");
-		//		SDL_SaveBMP(Window, BitmapFile);
-
-		//	}
-		//}
-
 	}
 
+	#ifdef DEBUG
 	DebugSurface.Render(0, 0, Window);
+	#endif
 
 	if (RefreshedSomething && Flip)
 		SDL_Flip(Window);
@@ -1465,9 +1404,6 @@ bool	Game::Restore			(void)
 			for (int i = 0; i < PLAYER_COUNT; ++i)
 				Players[i].Restore(SaveFile);
 			
-			//for (int i = 0; i < PLAYER_COUNT; ++i)
-			//	Players[i].ClobberSurfaces();
-
 			Success = SaveFile.good();
 		}
 		else
@@ -1523,8 +1459,6 @@ bool	Game::ShowModal			(Uint8 ModalName)
 {
 	if (ModalName < MODAL_NONE)
 	{
-		SDL_Color	FontColor = {255, 255, 255, 0};
-
 		Modal = ModalName;
 
 		Surface::Draw(Window, Surface::Load("gfx/modals/shadow.png"), 0, 0, true);	//Render shadow
@@ -1544,12 +1478,12 @@ bool	Game::ShowModal			(Uint8 ModalName)
 			{
 				if (i < OPTION_COUNT)
 				{
-					MenuSurfaces[i][0].SetText(OPTION_NAMES[i], GameOverBig, &FontColor);
-					MenuSurfaces[i][1].SetText((GameOptions.GetOpt(i)) ? "ON" : "OFF", GameOverBig, &FontColor);
+					MenuSurfaces[i][0].SetText(OPTION_NAMES[i], GameOverBig, &White);
+					MenuSurfaces[i][1].SetText((GameOptions.GetOpt(i)) ? "ON" : "OFF", GameOverBig, &White);
 					MenuSurfaces[i][1].Render(240, 120 + (i * 40), Window);
 				}
 				else
-					MenuSurfaces[i][0].SetText(MENU_ITEM_NAMES[i - OPTION_COUNT], GameOverBig, &FontColor);
+					MenuSurfaces[i][0].SetText(MENU_ITEM_NAMES[i - OPTION_COUNT], GameOverBig, &White);
 
 				MenuSurfaces[i][0].Render(50, 120 + (i * 40), Window);
 			}
@@ -1567,10 +1501,5 @@ bool	Game::ShowModal			(Uint8 ModalName)
 
 	return false;
 }
-
-
-
-
-
 
 }

@@ -72,7 +72,6 @@ void		Tableau::BlitWithShadow	(Surface &CardSurface, int X, int Y, SDL_Surface *
 
 void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 {
-	static	Uint8	FadeAlpha = 4;
 	static	bool	BattleArea = false,
 					LimitArea = false;
 
@@ -100,7 +99,6 @@ void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 
 	if (!FadeRunning)
 	{
-		printf("%u\n", SDL_GetTicks());
 		FadeRunning = true;
 		i = 0;
 
@@ -136,17 +134,12 @@ void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 		if (PlayerIndex == 0)
 			Y += Dimensions::TableauHeight;
 
-		//if (!BattleArea)
-		//	X = 263;
-
 		if (BattleArea)
 		{
-			//RollCard.SetAlpha(FadeAlpha);
 			RollCard.Render(RollX, RollY, Target);
 		}
 		if (LimitArea)
 		{
-			//EndLimit.SetAlpha(FadeAlpha);
 			EndLimit.Render(EndLimitX, EndLimitY, Target);
 		}
 
@@ -176,8 +169,6 @@ void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 
 
 		FadeRunning = false;
-		
-		printf("%u\n", SDL_GetTicks());
 	}
 
 	Dirty = true;
@@ -274,8 +265,6 @@ void	Tableau::OnPlay			(Uint8 Value, bool CoupFourre, bool SpeedLimit)
 	Uint8	Type =	Card::GetTypeFromValue(Value),
 			Index =	0xFF;
 
-	//bool	FadeWasRunning = FadeRunning;
-
 	Dirty = true;
 
 	switch (Type)
@@ -294,8 +283,6 @@ void	Tableau::OnPlay			(Uint8 Value, bool CoupFourre, bool SpeedLimit)
 		}
 		break;
 	case CARD_HAZARD:
-		//FadeRunning = false;
-		//FadeAlpha = 4;
 		if (Value == CARD_HAZARD_SPEED_LIMIT)
 		{
 			if (!HasSpeedLimit())
@@ -308,11 +295,6 @@ void	Tableau::OnPlay			(Uint8 Value, bool CoupFourre, bool SpeedLimit)
 		{
 			if (IsRolling())
 				SetTopCard(Value);
-			//if (FadeWasRunning && (LimitCard == CARD_HAZARD_SPEED_LIMIT))
-			//{
-			//	OldLimitCard = LimitCard;
-			//	LimitCard = CARD_REMEDY_END_LIMIT;
-			//}
 		}
 		break;
 	case CARD_REMEDY:
