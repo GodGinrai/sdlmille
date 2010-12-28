@@ -580,6 +580,7 @@ void	Game::OnClick			(int X, int Y)
 		{
 			if ((Y >= 300) && (Y <= 355))	//Clicked Play
 			{
+				ShowLoading();
 				Reset();
 				LastScene = SCENE_MAIN;
 				Scene =		SCENE_GAME_PLAY;
@@ -587,6 +588,7 @@ void	Game::OnClick			(int X, int Y)
 			}
 			if ((Y >= 370) && (Y <= 415))	//Clicked Learn
 			{
+				ShowLoading();
 				Reset();
 				LastScene = SCENE_MAIN;
 				Scene =		SCENE_LEARN_1;
@@ -827,6 +829,8 @@ bool	Game::OnInit			(void)
 			return false;
 
 		LogoSurface.SetImage("gfx/gpl.png");
+
+		Overlay[0].SetText("Loading...", GameOverBig, &Black, &White);
 
 		return true;
 	}
@@ -1443,6 +1447,12 @@ bool	Game::Save				(void)
 
 	return Success;	
 
+}
+
+void	Game::ShowLoading		(void)
+{
+	Overlay[0].Render((Dimensions::ScreenWidth - Overlay[0].GetWidth()) / 2, (Dimensions::ScreenHeight - Overlay[0].GetHeight()) / 2, Window, SCALE_NONE);
+	SDL_Flip(Window);
 }
 
 void	Game::ShowMessage		(const char * Msg, bool SetDirty)

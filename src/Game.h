@@ -84,6 +84,7 @@ private:
 	void		ResetPortal		(void);
 	bool		Restore			(void);
 	bool		Save			(void);
+	void		ShowLoading		(void);
 	void		ShowMessage		(const char * Msg, bool SetDirty = true);
 	bool		ShowModal		(Uint8 ModalName);
 
