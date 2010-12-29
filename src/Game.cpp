@@ -797,7 +797,7 @@ bool	Game::OnInit			(void)
 		#if defined WEBOS_DEVICE
 		if(!(Window = SDL_SetVideoMode(0, 0, 0, SDL_SWSURFACE)))
 		#else
-		if(!(Window = SDL_SetVideoMode(320, 400, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)))
+		if(!(Window = SDL_SetVideoMode(320, 480, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)))
 		#endif
 			return false;
 
@@ -828,9 +828,12 @@ bool	Game::OnInit			(void)
 		if (!Background)
 			return false;
 
-		LogoSurface.SetImage("gfx/gpl.png");
+		if (Dimensions::ScreenHeight > 440)
+			LogoSurface.SetImage("gfx/gpl.png");
+		else
+			LogoSurface.SetImage("gfx/gpl_sideways.png");
 
-		Overlay[0].SetText("Loading...", GameOverBig, &Black, &White);
+		Overlay[0].SetImage("gfx/loading.png");
 
 		return true;
 	}
@@ -1204,7 +1207,7 @@ void	Game::OnRender			(bool Force, bool Flip)
 			Background.Render(0, 0, Window);
 
 			if (Scene == SCENE_MAIN)
-				LogoSurface.Render(Dimensions::ScreenWidth - 88, Dimensions::ScreenHeight - 31, Window);
+				LogoSurface.Render(Dimensions::ScreenWidth - LogoSurface.GetWidth(), Dimensions::ScreenHeight - LogoSurface.GetHeight(), Window);
 			else if ((Scene == SCENE_GAME_PLAY) || IN_DEMO)
 			{
 				Overlay[0].Render(0, Dimensions::EffectiveTableauHeight - 1, Window, SCALE_NONE);

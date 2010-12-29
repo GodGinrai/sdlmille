@@ -102,7 +102,7 @@ void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 		FadeRunning = true;
 		i = 0;
 
-		if (((Card::GetTypeFromValue(TopCard) == CARD_REMEDY) && (TopCard != CARD_REMEDY_ROLL)) || TopCard == CARD_HAZARD_STOP)
+		if (IsRolling() && HasSafety(CARD_SAFETY_RIGHT_OF_WAY) && (TopCard != CARD_REMEDY_ROLL))
 			BattleArea = true;
 		if (LimitCard == CARD_HAZARD_SPEED_LIMIT)
 			LimitArea = true;
@@ -120,7 +120,7 @@ void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 	}
 	else
 	{
-		if ((Card::GetTypeFromValue(TopCard) != CARD_REMEDY) && (TopCard != CARD_HAZARD_STOP))
+		if ((Card::GetTypeFromValue(TopCard) == CARD_HAZARD) && (TopCard != CARD_HAZARD_STOP))
 		{
 			BattleArea = false;
 			RollX = BattleX;
@@ -342,6 +342,9 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 	static	Uint8		LastStatus =	0xFF;
 			bool		WasDirty =		Dirty;
 
+	if ((Card::GetTypeFromValue(TopCard) == CARD_HAZARD) && (TopCard != CARD_HAZARD_STOP) && HasSafety(Card::GetMatchingSafety(TopCard)))
+		SetTopCard(TopCard + 5);
+
 	if (Target != 0)
 	{
 		if (Dirty || Force)
@@ -434,9 +437,9 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 
 	if (FadeRunning)
 		FadeIn(PlayerIndex, Target);
-	else if ((((Card::GetTypeFromValue(TopCard) == CARD_REMEDY) && TopCard != CARD_REMEDY_ROLL) || TopCard == CARD_HAZARD_STOP) && (HasSafety(CARD_SAFETY_RIGHT_OF_WAY)) && !FadeRunning)
+	else if (IsRolling() && HasSafety(CARD_SAFETY_RIGHT_OF_WAY) && (TopCard != CARD_REMEDY_ROLL))
 		FadeIn(PlayerIndex, Target);
-	else if ((LimitCard == CARD_HAZARD_SPEED_LIMIT) && (HasSafety(CARD_SAFETY_RIGHT_OF_WAY)) && !FadeRunning)
+	else if ((LimitCard == CARD_HAZARD_SPEED_LIMIT) && (HasSafety(CARD_SAFETY_RIGHT_OF_WAY)))
 		FadeIn(PlayerIndex, Target);
 
 	return WasDirty;
