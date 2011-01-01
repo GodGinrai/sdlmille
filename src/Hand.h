@@ -32,6 +32,7 @@ class Hand
 public:
 				Hand		(void);
 				~Hand		(void)							{}
+	void		Detach		(Uint8 Index);
 	bool		Discard		(Uint8 Index);
 	bool		Draw		(Deck * Source, Uint8 Index);
 	Uint8		GetType		(Uint8 Index)								const;
@@ -47,7 +48,8 @@ public:
 	void		UnPop		(Uint8 Index);
 private:
 	Card		ThisHand[HAND_SIZE];
-	bool		Dirty,
+	bool		Detached[HAND_SIZE],
+				Dirty,
 				Popped[HAND_SIZE];
 	Surface		CancelSurface,
 				CardSurfaces[HAND_SIZE],				

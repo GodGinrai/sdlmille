@@ -33,6 +33,7 @@ class Player
 public:
 				Player			(void);
 	bool		Discard			(Uint8 Index);
+	void		Detach			(Uint8 Index);
 	void		Draw			(void);
 	bool		Draw			(Uint8 Index);
 	Uint8		Get200Count		(void)						const;
@@ -62,6 +63,11 @@ private:
 	Uint8		QualifiedCoupFourre;
 	Deck *		SourceDeck;
 };
+
+inline	void	Player::Detach			(Uint8 Index)
+{
+	PlayerHand.Detach(Index);
+}
 
 inline	Uint8	Player::Get200Count		(void)				const
 {

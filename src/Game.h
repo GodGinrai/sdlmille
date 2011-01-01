@@ -53,7 +53,7 @@ const	char	TUTORIAL_TEXT[][MESSAGE_SIZE] = {
 					"Click it again to play.",
 					"Or click here to discard.",
 					"Enjoy the game!"	};
-const	char	VERSION_TEXT[] = "0.5.2 (beta2)";
+const	char	VERSION_TEXT[] = "0.5.2-1 (beta3 test1)";
 const	int		SAVE_FORMAT_VER = 7;
 
 class Game
@@ -71,7 +71,9 @@ private:
 	bool		Discard			(void);
 	bool		EndOfGame		(void)					const;
 	Uint8		FindPopped		(void)					const;
+	Uint8		GetIndex		(int X, int Y)			const;
 	void		GetScores		(void);
+	bool		InDiscardPile	(int X, int Y)			const;
 	bool		IsValidPlay		(Uint8 Index)			const;
 	void		OnClick			(int X, int Y);
 	void		OnEvent			(SDL_Event * Event);
@@ -96,6 +98,7 @@ private:
 				DebugSurface,
 				DiscardSurface,
 				DrawCardSurface, DrawTextSurface,
+				FloatSurface,
 				HandSurface,
 				LogoSurface,
 				MenuSurface,
@@ -106,6 +109,7 @@ private:
 				Overlay[3],
 				ResultTextSurface,
 				ScoreSurfaces[SCORE_CATEGORY_COUNT + 1][SCORE_COLUMN_COUNT],
+				TargetSurface,
 				VersionSurface;
 	Player		Players[PLAYER_COUNT];
 	Options		GameOptions;
@@ -114,18 +118,21 @@ private:
 	SDL_Color	Black,
 				White;
 	int			DownX, DownY,
+				DragX, DragY,
 				Scores[PLAYER_COUNT],
 				RunningScores[PLAYER_COUNT],
 				ScoreBreakdown[PLAYER_COUNT][SCORE_CATEGORY_COUNT];
 	Uint32		FrozenAt,
 				MessagedAt;
 	bool		Dirty,
+				Dragging,
 				Extended, ExtensionDeclined,
 				Frozen,
 				HumanWon,
 				MouseDown,
 				Running;
 	Uint8		Current,				// Index of current player
+				DownIndex,
 				Modal,
 				Scene, LastScene,
 				DeckCount, OldDeckCount,

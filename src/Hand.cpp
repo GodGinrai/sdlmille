@@ -27,7 +27,26 @@ namespace _SDLMille
 	Dirty = false;
 
 	for (int i = 0; i < HAND_SIZE; ++i)
+	{
+		Detached[i] = false;
 		Popped[i] = false;
+	}
+}
+
+void	Hand::Detach	(Uint8 Index)
+{
+	if (Index < HAND_SIZE)
+	{
+		if (Detached[Index])
+			return;
+		
+		for (int i = 0; i < HAND_SIZE; ++i)
+			Detached[i] = false;
+
+		Detached[Index] = true;
+
+		Dirty = true;
+	}
 }
 
 bool	Hand::Discard	(Uint8 Index)
@@ -35,6 +54,10 @@ bool	Hand::Discard	(Uint8 Index)
 	if (Index < HAND_SIZE)
 	{
 		Dirty = true;
+
+		Detached[Index] = false;
+		Popped[Index] = false;
+
 		return ThisHand[Index].Discard();
 	}
 
@@ -86,7 +109,12 @@ void	Hand::OnInit	(void)
 	Overlay.SetImage("gfx/overlays/game_play_2.png");
 
 	for (int i = 0; i < HAND_SIZE; ++i)
-		CardSurfaces[i].SetImage(Card::GetFileFromValue(ThisHand[i].GetValue()));
+	{
+		if (Detached[i])
+			CardSurfaces[i].SetImage(Card::GetFileFromValue(CARD_NULL_NULL));
+		else
+			CardSurfaces[i].SetImage(Card::GetFileFromValue(ThisHand[i].GetValue()));
+	}
 }
 
 bool	Hand::OnRender	(SDL_Surface * Target, bool Force)
@@ -156,6 +184,7 @@ void	Hand::Pop		(Uint8 Index)
 				if (Popped[i] == true)
 				{
 					Popped[i] = false;
+					Detached[i] = false;
 					Dirty = true;
 				}
 			}
@@ -202,6 +231,7 @@ void	Hand::UnPop		(Uint8 Index)
 {
 	if (Index < HAND_SIZE)
 	{
+		Detached[Index] = false;
 		Popped[Index] = false;
 		Dirty = true;
 	}

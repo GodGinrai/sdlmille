@@ -38,8 +38,10 @@ namespace _SDLMille
 	Modal = MODAL_NONE;
 	Scene = SCENE_MAIN;
 	LastScene = SCENE_INVALID;
+	DownIndex = 0xFF;
 
 	Dirty = true;
+	Dragging = false;
 	Extended = false;
 	ExtensionDeclined = false;
 	Frozen = false;
@@ -247,6 +249,30 @@ Uint8	Game::FindPopped		(void)								const
 	return 0xFF;
 }
 
+Uint8	Game::GetIndex			(int X, int Y)						const
+{
+	Uint8	Invalid = 0xFF;
+
+	if ((Y >= Dimensions::FirstRowY) && (Y <= (Dimensions::SecondRowY + 57)))
+	{
+		Uint8	Add = 0,
+				Index = 0;
+
+		if (Y >= (Dimensions::SecondRowY + 5))	// Clicked the bottom row. Add 4 to the index
+			Add = 4;
+		else if (Y > (Dimensions::FirstRowY + 52))	//Clicked in the dead zone
+			return Invalid;
+
+		if (X >= 86)	//Clicked within hand
+		{
+			if (((X - 84) % 65) <= 35)	//Click was not in horizontal dead zone
+				return (((X - 84) / 65) + Add);
+		}
+	}
+
+	return Invalid;
+}
+
 void	Game::GetScores			(void)
 {
 	if (EndOfGame())
@@ -362,8 +388,16 @@ void	Game::GetScores			(void)
 	}
 }
 
+bool	Game::InDiscardPile		(int X, int Y)						const
+{
+	return ((X >= 3) && (X <= 43) && (Y >= Dimensions::FirstRowY) && (Y <= (Dimensions::FirstRowY + 57)));
+}
+
 bool	Game::IsValidPlay		(Uint8 Index)						const
 {
+	if (Index >= HAND_SIZE)
+		return false;
+
 	Uint8	Type =	Players[Current].GetType(Index),
 			Value =	Players[Current].GetValue(Index);
 
@@ -621,31 +655,25 @@ void	Game::OnClick			(int X, int Y)
 				Pop(FindPopped());	//Play selected card, if any
 			else if ((Y >= Dimensions::FirstRowY) && (Y <= (Dimensions::SecondRowY + 57)))	//Clicked within the two rows at the bottom of the screen
 			{
-				Uint8	Add = 0,
-						Index = 0;
-
-				if (Y >= (Dimensions::SecondRowY + 5))	// Clicked the bottom row. Add 4 to the index
-					Add = 4;
-				else if (Y > (Dimensions::FirstRowY + 52))	//Clicked in the dead zone
-					return; 
-
-				if (X >= 86)	//Clicked within hand
+				Uint8 Index = GetIndex(X, Y);
+				
+				if (Index == 0)
 				{
-					if (((X - 84) % 65) <= 35)	//Click was not in horizontal dead zone
-					{
-						Index = ((X - 84) / 65) + Add;
+					Players[0].UnPop(FindPopped());
+					return;
+				}
+				else
+				{
+					Index -= 1;
 
-						if (Index > 0)	//Clicked a card, so pop it
-							Pop(Index - 1);
-						else //Clicked the X, so cancel selection/click
-						{
-							Players[0].UnPop(FindPopped());
-							return;
-						}
+					if (Index < HAND_SIZE)
+						Pop(Index);	//Clicked a card, so pop it
+					else
+					{
+						if (InDiscardPile(X, Y))	//Clicked the discard pile
+							Discard();
 					}
 				}
-				else if ((X >= 3) && (X <= 43) && (Y <= (Dimensions::SecondRowY + 57)))	//Clicked the discard pile
-					Discard();
 			}
 		}
 	}
@@ -717,6 +745,9 @@ void	Game::OnEvent			(SDL_Event * Event)
 
 				DownX = Event->button.x;
 				DownY = Event->button.y;
+
+				if (Scene == SCENE_GAME_PLAY)
+					DownIndex = GetIndex(DownX / Dimensions::ScaleFactor, DownY / Dimensions::ScaleFactor) - 1;
 			}
 		}
 		else if (Event->type == SDL_MOUSEBUTTONUP)	//Mouse click
@@ -728,6 +759,24 @@ void	Game::OnEvent			(SDL_Event * Event)
 
 				X = Event->button.x;
 				Y = Event->button.y;
+
+				if ((Scene == SCENE_GAME_PLAY) && (Current == 0) && Dragging)
+				{
+					Dragging = false;
+
+					if (DownIndex < HAND_SIZE)
+					{
+						if (Y < (Dimensions::EffectiveTableauHeight * 2))
+							Pop(DownIndex);
+						else if (InDiscardPile(X / Scale, Y / Scale))
+							Discard();
+
+						Players[0].UnPop(DownIndex);
+						DownIndex = 0xFF;
+
+						FloatSurface.Clear();
+					}
+				}
 
 				if ((abs(DownX - X) > 5) || (abs(DownY - Y) > 5))
 					return;
@@ -743,37 +792,61 @@ void	Game::OnEvent			(SDL_Event * Event)
 		}
 		else if (Event->type == SDL_MOUSEMOTION)
 		{
-			if (((Scene == SCENE_LEGAL) || (Scene == SCENE_LEARN_1)) && MouseDown)
+			if (MouseDown)
 			{
-				int CurX = Portal.x;
-				int CurY = Portal.y;
-
 				int MotionX = Event->motion.xrel;
 				int MotionY = Event->motion.yrel;
 
-				int NewX = CurX - MotionX;
-				int NewY = CurY - MotionY;
-
-				int MaxX = Overlay[0].GetWidth() - Dimensions::ScreenWidth;
-				int MaxY = Overlay[0].GetHeight() - Dimensions::ScreenHeight;
-
-				if (NewX > MaxX)
-					NewX = MaxX;
-				if (NewX < 0)
-					NewX = 0;
-
-				if (NewY > MaxY)
-					NewY = MaxY;
-				if (NewY < 0)
-					NewY = 0;
-
-				if ((NewX != CurX) || (NewY != CurY))
+				if ((Scene == SCENE_LEGAL) || (Scene == SCENE_LEARN_1))
 				{
-					Portal.x = NewX;
-					Portal.y = NewY;
-					Overlay[2].Clear();
+					int CurX = Portal.x;
+					int CurY = Portal.y;
 
-					Dirty = true;
+					int NewX = CurX - MotionX;
+					int NewY = CurY - MotionY;
+
+					int MaxX = Overlay[0].GetWidth() - Dimensions::ScreenWidth;
+					int MaxY = Overlay[0].GetHeight() - Dimensions::ScreenHeight;
+
+					if (NewX > MaxX)
+						NewX = MaxX;
+					if (NewX < 0)
+						NewX = 0;
+
+					if (NewY > MaxY)
+						NewY = MaxY;
+					if (NewY < 0)
+						NewY = 0;
+
+					if ((NewX != CurX) || (NewY != CurY))
+					{
+						Portal.x = NewX;
+						Portal.y = NewY;
+						Overlay[2].Clear();
+
+						Dirty = true;
+					}
+				}
+				else if ((Scene == SCENE_GAME_PLAY) && (Current == 0))
+				{
+					if (DownIndex < HAND_SIZE)
+					{
+						DragX = Event->motion.x;
+						DragY = Event->motion.y;
+
+						if (!Dragging)
+						{
+							if ((abs(DownX - DragX) > 5) || (abs(DownY - DragY) > 5))
+							{
+								Dragging = true;
+								Pop(DownIndex);
+								Players[0].Detach(DownIndex);
+								FloatSurface.SetImage(Card::GetFileFromValue(Players[0].GetValue(DownIndex)));
+							}
+						}
+						
+						Dirty = true;
+					}
 				}
 			}
 		}
@@ -845,6 +918,7 @@ bool	Game::OnInit			(void)
 		Overlay[0].SetImage("gfx/overlays/game_play_1.png");
 
 		DiscardSurface.SetImage(Card::GetFileFromValue(DiscardTop));
+		TargetSurface.SetImage("gfx/drop_target.png");
 
 		if ((SourceDeck != 0) && (SourceDeck->Empty()))
 			DrawCardSurface.SetImage(Card::GetFileFromValue(CARD_NULL_NULL));
@@ -1297,6 +1371,12 @@ void	Game::OnRender			(bool Force, bool Flip)
 
 		if (MessageSurface)
 			MessageSurface.Render((Dimensions::ScreenWidth - MessageSurface.GetWidth()) / 2, Dimensions::TableauHeight - 50, Window, SCALE_Y); //Render the message last.
+
+		if (Dragging)
+		{
+			TargetSurface.Render(DragX - 24, DragY - 24, Window, SCALE_NONE);
+			FloatSurface.Render(DragX - 20, DragY - 67, Window, SCALE_NONE);
+		}
 	}
 
 	#ifdef DEBUG
