@@ -64,6 +64,7 @@ public:
 	bool		OnExecute		(void);
 private:
 	/* Methods */
+	void		AnimatePlay		(Uint8 Index);
 	void		ChangePlayer	(void);
 	bool		CheckForChange	(Uint8 &Old, Uint8 &New);
 	void		ClearMessage	(void);
@@ -124,7 +125,8 @@ private:
 				ScoreBreakdown[PLAYER_COUNT][SCORE_CATEGORY_COUNT];
 	Uint32		FrozenAt,
 				MessagedAt;
-	bool		Dirty,
+	bool		Animating,
+				Dirty,
 				Dragging,
 				Extended, ExtensionDeclined,
 				Frozen,

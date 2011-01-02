@@ -40,6 +40,7 @@ namespace _SDLMille
 	LastScene = SCENE_INVALID;
 	DownIndex = 0xFF;
 
+	Animating = false;
 	Dirty = true;
 	Dragging = false;
 	Extended = false;
@@ -141,6 +142,86 @@ bool	Game::OnExecute			(void)
 }
 
 /* Private methods */
+
+void	Game::AnimatePlay		(Uint8 Index)
+{
+	if ((Index < HAND_SIZE) && (Index == FindPopped()) && (IsValidPlay(Index)))
+	{
+		Animating = true;
+
+		int StartX, StartY,
+			DestX, DestY;
+
+		double	IncX, IncY,
+				X, Y;
+
+		Uint8	Target = Current,
+				Type = CARD_NULL,
+				Value = CARD_NULL_NULL;
+
+		Value = Players[Current].GetValue(Index);
+		Type = Card::GetTypeFromValue(Value);
+
+		if (Type < CARD_NULL)
+		{
+			if (Dragging)
+			{
+				StartX = (DragX - 20) / Dimensions::ScaleFactor;
+				StartY = (DragY - 67) / Dimensions::ScaleFactor;
+			}
+
+			if (Type == CARD_HAZARD)
+				Target = 1 - Current;
+
+			Tableau::GetTargetCoords(Value, Target, DestX, DestY);
+
+			X = StartX;
+			Y = StartY;
+
+			if (abs(DestX - X) > abs(DestY - Y))
+			{
+				IncX = 5;
+				IncY = abs(DestY - Y) / (abs(DestX - X) / 5);
+			}
+			else
+			{
+				IncY = 5;
+				IncX = abs(DestX - X) / (abs(DestY - Y) / 5);
+			}
+
+			while ((X != DestX) || (Y != DestY))
+			{
+
+				if (abs(DestX - X) < IncX)
+					X = DestX;
+				else
+				{
+					if (X > DestX)
+						X -= IncX;
+					else
+						X += IncX;
+				}
+
+				if (abs(DestY - Y) < IncY)
+					Y = DestY;
+				else
+				{
+					if (Y > DestY)
+						Y -= IncY;
+					else
+						Y += IncY;
+				}
+
+				OnRender(true, false);
+				
+				FloatSurface.Render(X, Y, Window);
+				SDL_Flip(Window);
+			}
+		}
+
+		Animating = false;
+	}			
+}
 
 void	Game::ChangePlayer		(void)
 {
@@ -762,12 +843,14 @@ void	Game::OnEvent			(SDL_Event * Event)
 
 				if ((Scene == SCENE_GAME_PLAY) && (Current == 0) && Dragging)
 				{
-					Dragging = false;
 
 					if (DownIndex < HAND_SIZE)
 					{
 						if (Y < (Dimensions::EffectiveTableauHeight * 2))
+						{
+							AnimatePlay(DownIndex);
 							Pop(DownIndex);
+						}
 						else if (InDiscardPile(X / Scale, Y / Scale))
 							Discard();
 
@@ -776,6 +859,8 @@ void	Game::OnEvent			(SDL_Event * Event)
 
 						FloatSurface.Clear();
 					}
+
+					Dragging = false;
 				}
 
 				if ((abs(DownX - X) > 5) || (abs(DownY - Y) > 5))
@@ -839,9 +924,11 @@ void	Game::OnEvent			(SDL_Event * Event)
 							if ((abs(DownX - DragX) > 5) || (abs(DownY - DragY) > 5))
 							{
 								Dragging = true;
+
+								Uint8 Value = Players[Current].GetValue(DownIndex);
 								Pop(DownIndex);
 								Players[0].Detach(DownIndex);
-								FloatSurface.SetImage(Card::GetFileFromValue(Players[0].GetValue(DownIndex)));
+								FloatSurface.SetImage(Card::GetFileFromValue(Value, ((Value - SAFETY_OFFSET) == Players[Current].GetQualifiedCoupFourre())));
 							}
 						}
 						
@@ -1372,9 +1459,8 @@ void	Game::OnRender			(bool Force, bool Flip)
 		if (MessageSurface)
 			MessageSurface.Render((Dimensions::ScreenWidth - MessageSurface.GetWidth()) / 2, Dimensions::TableauHeight - 50, Window, SCALE_Y); //Render the message last.
 
-		if (Dragging)
+		if (Dragging && !Animating)
 		{
-			TargetSurface.Render(DragX - 24, DragY - 24, Window, SCALE_NONE);
 			FloatSurface.Render(DragX - 20, DragY - 67, Window, SCALE_NONE);
 		}
 	}

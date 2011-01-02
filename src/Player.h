@@ -40,6 +40,7 @@ public:
 	int			GetMileage		(void)						const;
 	Uint8		GetTopCard		(bool SpeedPile = false)	const;
 	Uint8		GetType			(Uint8 Index)				const;
+	Uint8		GetQualifiedCoupFourre	(void)				const;
 	Uint8		GetValue		(Uint8 Index)				const;
 	bool		HasCoupFourre	(Uint8 Value)				const;
 	bool		HasSafety		(Uint8 Value)				const;
@@ -87,6 +88,11 @@ inline	Uint8	Player::GetTopCard		(bool SpeedPile)	const
 inline	Uint8	Player::GetType			(Uint8 Index)		const
 {
 	return PlayerHand.GetType(Index);
+}
+
+inline	Uint8	Player::GetQualifiedCoupFourre	(void)		const
+{
+	return QualifiedCoupFourre;
 }
 
 inline	Uint8	Player::GetValue		(Uint8 Index)		const

@@ -174,6 +174,30 @@ void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 	Dirty = true;
 }
 
+void	Tableau::GetTargetCoords	(Uint8 Value, Uint8 PlayerIndex, int &X, int &Y)
+{
+	Uint8 Type = Card::GetTypeFromValue(Value);
+
+	if (Type < CARD_NULL)
+	{
+		Y = 1;
+		if (PlayerIndex == 0)
+			Y += Dimensions::TableauHeight;
+
+		if ((Type == CARD_HAZARD) || (Type == CARD_REMEDY))
+		{
+			if ((Value == CARD_HAZARD_SPEED_LIMIT) || (Value == CARD_REMEDY_END_LIMIT))
+				X = LimitX;
+			else
+				X = BattleX;
+		}
+		else if (Type == CARD_MILEAGE)
+			X = (Value - MILEAGE_OFFSET) * 42 + 2;
+		else
+			X = 0;
+	}
+}
+
 Uint8	Tableau::GetTopCard		(bool SpeedPile)								const
 {
 	if (SpeedPile)

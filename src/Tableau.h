@@ -48,6 +48,7 @@ public:
 	void		FadeIn			(Uint8 PlayerIndex, SDL_Surface *Target);
 	Uint8		Get200Count		(void)															const;
 	int			GetMileage		(void)															const;
+	static	void	GetTargetCoords	(Uint8 Value, Uint8 PlayerIndex, int &X, int &Y);
 	Uint8		GetTopCard		(bool SpeedPile = false)										const;
 	bool		HasCoupFourre	(Uint8 Value)													const;
 	bool		HasSafety		(Uint8 Value)													const;
