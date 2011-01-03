@@ -487,9 +487,11 @@ void	Tableau::Reset			(void)
 
 	OldLimitCard = LimitCard = OldTopCard = TopCard = CARD_NULL_NULL;
 
-	Dirty = true;
-
 	Mileage = 0;
+
+	FadeRunning = false;
+
+	Dirty = true;
 }
 
 bool	Tableau::Restore		(std::ifstream &SaveFile)

@@ -912,6 +912,7 @@ void	Game::OnEvent			(SDL_Event * Event)
 						Dirty = true;
 					}
 				}
+				/*	Block out for beta2r2
 				else if ((Scene == SCENE_GAME_PLAY) && (Current == 0))
 				{
 					if (DownIndex < HAND_SIZE)
@@ -935,6 +936,7 @@ void	Game::OnEvent			(SDL_Event * Event)
 						Dirty = true;
 					}
 				}
+					End block-out	*/
 			}
 		}
 		else if (Event->type == SDL_KEYUP)	//Debugging purposes
