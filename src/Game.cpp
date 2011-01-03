@@ -143,14 +143,18 @@ bool	Game::OnExecute			(void)
 
 /* Private methods */
 
-void	Game::AnimatePlay		(Uint8 Index)
+void	Game::AnimatePlay		(Uint8 Index, bool Discard)
 {
-	if ((Index < HAND_SIZE) && (Index == FindPopped()) && (IsValidPlay(Index)))
+	bool	CoupFourre	= false;
+	Uint8	PileCount	= 0;
+
+	if ((Index < HAND_SIZE) && (Index == FindPopped()) && (IsValidPlay(Index) || Discard))
 	{
 		Animating = true;
 
 		int StartX, StartY,
-			DestX, DestY;
+			DestX, DestY,
+			i = 0, TotalIterations;
 
 		double	IncX, IncY,
 				X, Y;
@@ -167,13 +171,40 @@ void	Game::AnimatePlay		(Uint8 Index)
 			if (Dragging)
 			{
 				StartX = (DragX - 20) / Dimensions::ScaleFactor;
-				StartY = (DragY - 67) / Dimensions::ScaleFactor;
+				StartY = (DragY - 57) / Dimensions::ScaleFactor;
+			}
+			else
+			{
+				if (Current == 0)
+				{
+					GetIndexCoords(Index, StartX, StartY);
+				}
+				else
+				{
+					StartX = 140;
+					StartY = -61;
+				}
 			}
 
 			if (Type == CARD_HAZARD)
 				Target = 1 - Current;
+			else if (Type == CARD_MILEAGE)
+				PileCount = Players[Current].GetPileCount(Value);
+			else if ((Type == CARD_SAFETY) && (Value - SAFETY_OFFSET == Players[Current].GetQualifiedCoupFourre()))
+				CoupFourre = true;
 
-			Tableau::GetTargetCoords(Value, Target, DestX, DestY);
+			if (Discard)
+			{
+				DestX = 3;
+				DestY = Dimensions::FirstRowY;
+			}
+			else
+				Tableau::GetTargetCoords(Value, Target, DestX, DestY, CoupFourre, PileCount);
+
+			if (Current == 0)
+				FloatSurface.SetImage(Card::GetFileFromValue(Value, CoupFourre));
+			else
+				FloatSurface.SetImage("gfx/card_bg.png");
 
 			X = StartX;
 			Y = StartY;
@@ -181,16 +212,20 @@ void	Game::AnimatePlay		(Uint8 Index)
 			if (abs(DestX - X) > abs(DestY - Y))
 			{
 				IncX = 5;
+				TotalIterations = abs(DestX - X) / 5;
 				IncY = abs(DestY - Y) / (abs(DestX - X) / 5);
 			}
 			else
 			{
 				IncY = 5;
+				TotalIterations = abs(DestY - Y) / 5;
 				IncX = abs(DestX - X) / (abs(DestY - Y) / 5);
 			}
 
 			while ((X != DestX) || (Y != DestY))
 			{
+				if ((i == TotalIterations / 2) && (Current != 0))
+					FloatSurface.SetImage(Card::GetFileFromValue(Value, CoupFourre));
 
 				if (abs(DestX - X) < IncX)
 					X = DestX;
@@ -216,6 +251,10 @@ void	Game::AnimatePlay		(Uint8 Index)
 				
 				FloatSurface.Render(X, Y, Window);
 				SDL_Flip(Window);
+
+				++i;
+
+				SDL_Delay(5);
 			}
 		}
 
@@ -259,7 +298,8 @@ void	Game::ComputerMove		(void)
 	{	
 		if (IsValidPlay(i))	// Play the first valid move we find (the computer is currently stupid)
 		{
-			OnPlay(i);
+			Pop(i);
+			Pop(i);
 			Played = true;
 			break;
 		}
@@ -278,30 +318,31 @@ void	Game::ComputerMove		(void)
 
 bool	Game::Discard			(void)
 {
-	bool Success =	false;
-
 	Uint8	Value =	CARD_NULL_NULL,
 			Index =	FindPopped(); // Find out which card is popped
 
 	if (Index < HAND_SIZE)
 	{
 		Value	= Players[Current].GetValue(Index);
-		Success = Players[Current].Discard(Index);
 
-		if (Success)
+		if (Value != CARD_NULL_NULL)	// Sanity check
 		{
-			if (Value != CARD_NULL_NULL)	// Sanity check
-				DiscardTop = Value;	// Put the card on top of the discard pile
-
-			Players[Current].UnPop(Index);
-			ChangePlayer();
-
-			//Save after each discard
-			Save();
+			Players[Current].Detach(Index);
+			AnimatePlay(Index, true);
+			DiscardTop = Value;	// Put the card on top of the discard pile
+			Players[Current].Discard(Index);
 		}
+
+		Players[Current].UnPop(Index);
+		ChangePlayer();
+
+		//Save after each discard
+		Save();
+
+		return true;
 	}
 
-	return Success;
+	return false;
 }
 
 bool	Game::EndOfGame			(void)								const
@@ -339,19 +380,33 @@ Uint8	Game::GetIndex			(int X, int Y)						const
 		Uint8	Add = 0,
 				Index = 0;
 
-		if (Y >= (Dimensions::SecondRowY + 5))	// Clicked the bottom row. Add 4 to the index
+		if (Y > (Dimensions::SecondRowY + 1))	// Clicked the bottom row. Add 4 to the index
 			Add = 4;
-		else if (Y > (Dimensions::FirstRowY + 52))	//Clicked in the dead zone
+		else if (Y > (Dimensions::FirstRowY + 54))	//Clicked in the dead zone
 			return Invalid;
 
-		if (X >= 86)	//Clicked within hand
+		if (X >= 81)	//Clicked within hand
 		{
-			if (((X - 84) % 65) <= 35)	//Click was not in horizontal dead zone
-				return (((X - 84) / 65) + Add);
+			if (((X - 81) % 65) < 41)	//Click was not in horizontal dead zone
+				return (((X - 81) / 65) + Add);
 		}
 	}
 
 	return Invalid;
+}
+
+void	Game::GetIndexCoords	(Uint8 Index, int &X, int &Y)				const
+{
+	if (Index < 3)
+	{
+		X = 81 + (65 * (Index + 1));
+		Y = Dimensions::FirstRowY;
+	}
+	else
+	{
+		X = 81 + (65 * (Index - 3));
+		Y = Dimensions::SecondRowY;
+	}
 }
 
 void	Game::GetScores			(void)
@@ -428,7 +483,7 @@ void	Game::GetScores			(void)
 				++CategoryIndex;
 
 				// 300pt bonus for safe trip (no 200-mile cards)
-				if (Players[i].Get200Count() == 0)
+				if (Players[i].GetPileCount(CARD_MILEAGE_200) == 0)
 				{
 					Score += 300;
 					ScoreBreakdown[i][CategoryIndex] = 300;
@@ -501,7 +556,7 @@ bool	Game::IsValidPlay		(Uint8 Index)						const
 				return false;
 		}
 
-		if ((Value == CARD_MILEAGE_200) && (Players[Current].Get200Count() > 1))
+		if ((Value == CARD_MILEAGE_200) && (Players[Current].GetPileCount(CARD_MILEAGE_200) > 1))
 			// Cannot play more than two 200-mile cards
 			return false;
 
@@ -848,7 +903,7 @@ void	Game::OnEvent			(SDL_Event * Event)
 					{
 						if (Y < (Dimensions::EffectiveTableauHeight * 2))
 						{
-							AnimatePlay(DownIndex);
+							//AnimatePlay(DownIndex);
 							Pop(DownIndex);
 						}
 						else if (InDiscardPile(X / Scale, Y / Scale))
@@ -912,7 +967,6 @@ void	Game::OnEvent			(SDL_Event * Event)
 						Dirty = true;
 					}
 				}
-				/*	Block out for beta2r2
 				else if ((Scene == SCENE_GAME_PLAY) && (Current == 0))
 				{
 					if (DownIndex < HAND_SIZE)
@@ -936,7 +990,6 @@ void	Game::OnEvent			(SDL_Event * Event)
 						Dirty = true;
 					}
 				}
-					End block-out	*/
 			}
 		}
 		else if (Event->type == SDL_KEYUP)	//Debugging purposes
@@ -1480,6 +1533,7 @@ void	Game::Pop				(Uint8 Index)
 	if (Players[Current].IsPopped(Index) && IsValidPlay(Index))
 	{
 		// If the card is already popped, then play it (if it's a valid play)
+		AnimatePlay(Index);
 		Players[Current].UnPop(Index);
 		OnPlay(Index);
 	}

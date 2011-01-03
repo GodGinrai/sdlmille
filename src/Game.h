@@ -53,7 +53,7 @@ const	char	TUTORIAL_TEXT[][MESSAGE_SIZE] = {
 					"Click it again to play.",
 					"Or click here to discard.",
 					"Enjoy the game!"	};
-const	char	VERSION_TEXT[] = "0.5.3 (beta2r2)";
+const	char	VERSION_TEXT[] = "0.5.3-1 (beta3 test2)";
 const	int		SAVE_FORMAT_VER = 7;
 
 class Game
@@ -64,7 +64,7 @@ public:
 	bool		OnExecute		(void);
 private:
 	/* Methods */
-	void		AnimatePlay		(Uint8 Index);
+	void		AnimatePlay		(Uint8 Index, bool Discard = false);
 	void		ChangePlayer	(void);
 	bool		CheckForChange	(Uint8 &Old, Uint8 &New);
 	void		ClearMessage	(void);
@@ -73,6 +73,7 @@ private:
 	bool		EndOfGame		(void)					const;
 	Uint8		FindPopped		(void)					const;
 	Uint8		GetIndex		(int X, int Y)			const;
+	void		GetIndexCoords	(Uint8 Index, int &X, int &Y)	const;
 	void		GetScores		(void);
 	bool		InDiscardPile	(int X, int Y)			const;
 	bool		IsValidPlay		(Uint8 Index)			const;

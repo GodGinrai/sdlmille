@@ -36,8 +36,8 @@ public:
 	void		Detach			(Uint8 Index);
 	void		Draw			(void);
 	bool		Draw			(Uint8 Index);
-	Uint8		Get200Count		(void)						const;
 	int			GetMileage		(void)						const;
+	Uint8		GetPileCount	(Uint8 Value)				const;
 	Uint8		GetTopCard		(bool SpeedPile = false)	const;
 	Uint8		GetType			(Uint8 Index)				const;
 	Uint8		GetQualifiedCoupFourre	(void)				const;
@@ -70,9 +70,9 @@ inline	void	Player::Detach			(Uint8 Index)
 	PlayerHand.Detach(Index);
 }
 
-inline	Uint8	Player::Get200Count		(void)				const
+inline	Uint8	Player::GetPileCount	(Uint8 Value)		const
 {
-	return MyTableau.Get200Count();
+	return MyTableau.GetPileCount(Value);
 }
 
 inline	int		Player::GetMileage		(void)				const

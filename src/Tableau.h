@@ -46,9 +46,9 @@ public:
 				~Tableau		(void);
 	void		BlitWithShadow	(Surface &CardSurface, int X, int Y, SDL_Surface *Target, bool CoupFourre = false);
 	void		FadeIn			(Uint8 PlayerIndex, SDL_Surface *Target);
-	Uint8		Get200Count		(void)															const;
 	int			GetMileage		(void)															const;
-	static	void	GetTargetCoords	(Uint8 Value, Uint8 PlayerIndex, int &X, int &Y);
+	Uint8		GetPileCount	(Uint8 Value)													const;
+	static	void	GetTargetCoords	(Uint8 Value, Uint8 PlayerIndex, int &X, int &Y, bool CoupFourre, Uint8 PileCount = 0);
 	Uint8		GetTopCard		(bool SpeedPile = false)										const;
 	bool		HasCoupFourre	(Uint8 Value)													const;
 	bool		HasSafety		(Uint8 Value)													const;
@@ -84,11 +84,6 @@ private:
 	Uint32		Mileage;
 	TTF_Font	*MyFont;
 };
-
-inline	Uint8	Tableau::Get200Count	(void)	const
-{
-	return CardCount[MILEAGE_PILES - 1];
-}
 
 inline int		Tableau::GetMileage		(void)	const
 {

@@ -174,7 +174,15 @@ void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 	Dirty = true;
 }
 
-void	Tableau::GetTargetCoords	(Uint8 Value, Uint8 PlayerIndex, int &X, int &Y)
+Uint8	Tableau::GetPileCount		(Uint8 Value)														const
+{
+	if ((Value >= CARD_MILEAGE_25) && (Value <= CARD_MILEAGE_200))
+		return CardCount[Value - MILEAGE_OFFSET];
+
+	return 0;
+}
+
+void	Tableau::GetTargetCoords	(Uint8 Value, Uint8 PlayerIndex, int &X, int &Y, bool CoupFourre, Uint8 PileCount)
 {
 	Uint8 Type = Card::GetTypeFromValue(Value);
 
@@ -192,9 +200,34 @@ void	Tableau::GetTargetCoords	(Uint8 Value, Uint8 PlayerIndex, int &X, int &Y)
 				X = BattleX;
 		}
 		else if (Type == CARD_MILEAGE)
+		{
 			X = (Value - MILEAGE_OFFSET) * 42 + 2;
-		else
-			X = 0;
+			if (PileCount > 0)
+				Y += PileCount * 8;
+		}
+		else if (Type == CARD_SAFETY)
+		{
+			if (Dimensions::MultiRowSafeties)
+			{
+				X = 213;
+				Y += 58;
+				if ((Value - SAFETY_OFFSET) > 1)
+					Y += 58;
+				if ((Value - SAFETY_OFFSET) % 2 == 0)
+				X += 58;
+			}
+			else
+			{
+				Y += 75;
+				X = 97 + ((Value - SAFETY_OFFSET) * 58);
+			}
+
+			if (CoupFourre)
+			{
+				Y += 8;
+				X -= 8;
+			}
+		}
 	}
 }
 
@@ -380,7 +413,7 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 			}
 
 			int	R, G = 0, B = 0,
-				Y = 1;
+				X, Y = 1, SafetyY;
 
 			if (PlayerIndex == 0)
 			{
@@ -429,29 +462,9 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 			{
 				if (SafetySurfaces[i])
 				{
-					int YOffset = 0;
-					int X = 0;
-
-					if (Dimensions::MultiRowSafeties)
-					{
-						YOffset = ((i < 2) ? 58 : 116);
-						X = 213 + ((i % 2) ? 0 : 58);
-					}
-					else
-					{
-						YOffset = 75;
-						X = 97 + (i * 58);
-					}
-
 					bool CoupFourre = CoupFourres[i];
-
-					if (CoupFourre)
-					{
-						YOffset += 8;
-						X -= 8;
-					}
-
-					BlitWithShadow(SafetySurfaces[i], X, Y + YOffset, Target, CoupFourre);
+					GetTargetCoords(i + SAFETY_OFFSET, PlayerIndex, X, SafetyY, CoupFourre);
+					BlitWithShadow(SafetySurfaces[i], X, SafetyY, Target, CoupFourre);
 				}
 			}
 
