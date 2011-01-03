@@ -148,6 +148,9 @@ void	Game::AnimatePlay		(Uint8 Index, bool Discard)
 	bool	CoupFourre	= false;
 	Uint8	PileCount	= 0;
 
+	if (!GameOptions.GetOpt(OPTION_ANIMATIONS))
+		return;
+
 	if ((Index < HAND_SIZE) && (Index == FindPopped()) && (IsValidPlay(Index) || Discard))
 	{
 		Animating = true;
@@ -163,6 +166,7 @@ void	Game::AnimatePlay		(Uint8 Index, bool Discard)
 				Type = CARD_NULL,
 				Value = CARD_NULL_NULL;
 
+		Players[Current].Detach(Index);
 		Value = Players[Current].GetValue(Index);
 		Type = Card::GetTypeFromValue(Value);
 
@@ -213,13 +217,13 @@ void	Game::AnimatePlay		(Uint8 Index, bool Discard)
 			{
 				IncX = 5;
 				TotalIterations = abs(DestX - X) / 5;
-				IncY = abs(DestY - Y) / (abs(DestX - X) / 5);
+				IncY = abs(DestY - Y) / (double) (abs(DestX - X) / 5.0);
 			}
 			else
 			{
 				IncY = 5;
 				TotalIterations = abs(DestY - Y) / 5;
-				IncX = abs(DestX - X) / (abs(DestY - Y) / 5);
+				IncX = abs(DestX - X) / (double) (abs(DestY - Y) / 5.0);
 			}
 
 			while ((X != DestX) || (Y != DestY))
@@ -1070,7 +1074,7 @@ bool	Game::OnInit			(void)
 		if (DrawFont)
 		{
 			DrawTextSurface.SetInteger(DeckCount, DrawFont, true, &White);
-			if (FindPopped() < HAND_SIZE)
+			if ((Current == 0) && (FindPopped() < HAND_SIZE))
 			{
 				Uint8	Value = Players[Current].GetValue(FindPopped());
 				if (Value < CARD_MILEAGE_25)

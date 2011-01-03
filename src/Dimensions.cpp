@@ -19,6 +19,9 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Dimensions.h"
 
+namespace _SDLMille
+{
+
 double	Dimensions::ScaleFactor;
 int		Dimensions::EffectiveTableauHeight,
 		Dimensions::FirstRowY,
@@ -56,4 +59,6 @@ void	Dimensions::SetDimensions	(int Width, int Height)
 		MultiRowSafeties = true;
 	else
 		MultiRowSafeties = false;
+}
+
 }
