@@ -44,8 +44,9 @@ class Tableau
 public:
 				Tableau			(void);
 				~Tableau		(void);
+	void		Animate			(Uint8 PlayerIndex, SDL_Surface *Target);
+	bool		AnimationRunning	(void)														const;
 	void		BlitWithShadow	(Surface &CardSurface, int X, int Y, SDL_Surface *Target, bool CoupFourre = false);
-	void		FadeIn			(Uint8 PlayerIndex, SDL_Surface *Target);
 	int			GetMileage		(void)															const;
 	Uint8		GetPileCount	(Uint8 Value)													const;
 	static	void	GetTargetCoords	(Uint8 Value, Uint8 PlayerIndex, int &X, int &Y, bool CoupFourre, Uint8 PileCount = 0);
@@ -61,6 +62,9 @@ public:
 	void		Reset			(void);
 	bool		Restore			(std::ifstream &SaveFile);
 	bool		Save			(std::ofstream &SaveFile);
+
+static	Surface	ShadowSurface,
+				ShadowSurfaceCF;
 private:
 	/* Methods */
 	void		SetTopCard		(Uint8 Value);
@@ -69,23 +73,25 @@ private:
 	Surface		BattleSurface,
 				LimitSurface,
 				MileageTextSurface,
-				PileSurfaces[MILEAGE_PILES][MAX_PILE_SIZE],
-				SafetySurfaces[SAFETY_COUNT],
-
-				ShadowSurface,
-				ShadowSurfaceCF;
+				SafetySurfaces[SAFETY_COUNT];
+static	Surface	MileageSurfaces[MILEAGE_PILES];
 	Uint8		CardCount[MILEAGE_PILES],
 				LimitCard, OldLimitCard,
 				TopCard, OldTopCard;
-	bool		CoupFourres[SAFETY_COUNT],
+	bool		Animating,
+				CoupFourres[SAFETY_COUNT],
 				Dirty,
-				FadeRunning,
 				Safeties[SAFETY_COUNT];
 	Uint32		Mileage;
-	TTF_Font	*MyFont;
+static	TTF_Font	*MyFont;
 };
 
-inline int		Tableau::GetMileage		(void)	const
+inline	bool	Tableau::AnimationRunning	(void)	const
+{
+	return Animating;
+}
+
+inline	int		Tableau::GetMileage			(void)	const
 {
 	return Mileage;
 }

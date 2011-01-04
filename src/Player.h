@@ -32,6 +32,7 @@ class Player
 {
 public:
 				Player			(void);
+	bool		AnimationRunning	(void)					const;
 	bool		Discard			(Uint8 Index);
 	void		Detach			(Uint8 Index);
 	void		Draw			(void);
@@ -64,6 +65,11 @@ private:
 	Uint8		QualifiedCoupFourre;
 	Deck *		SourceDeck;
 };
+
+inline	bool	Player::AnimationRunning	(void)			const
+{
+	return MyTableau.AnimationRunning();
+}
 
 inline	void	Player::Detach			(Uint8 Index)
 {

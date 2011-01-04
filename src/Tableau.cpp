@@ -22,6 +22,11 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 namespace _SDLMille
 {
 
+Surface		Tableau::MileageSurfaces[MILEAGE_PILES],
+			Tableau::ShadowSurface,
+			Tableau::ShadowSurfaceCF;
+TTF_Font	*Tableau::MyFont;
+
 		Tableau::Tableau		(void)
 {
 	MyFont = 0;
@@ -35,42 +40,23 @@ namespace _SDLMille
 		CoupFourres[i] = false;
 	}
 	
+	Animating = false;
 	Dirty = true;
-	FadeRunning = false;
 	Mileage = 0;
 	OldTopCard = TopCard = CARD_NULL_NULL;
 	OldLimitCard = LimitCard = CARD_NULL_NULL;
-
-	// Set up font
-	if (!TTF_WasInit())
-		TTF_Init();
-	MyFont = TTF_OpenFont("LiberationMono-Regular.ttf", 24);
 }
 
 		Tableau::~Tableau		(void)
 {
-	if (MyFont)
-		/*	TODO: Find a way to fix the following. SDL_ttf reuses pointers, so this will
-			end up closing an invalid pointer (we have two tableaus using the same font).
-			I think SDL_ttf handles this gracefully, but it does cause an access violation
-			when run on Visual Studio in debug mode	*/
-		TTF_CloseFont(MyFont);
-}
-
-void		Tableau::BlitWithShadow	(Surface &CardSurface, int X, int Y, SDL_Surface *Target, bool CoupFourre)
-{
-	if (CardSurface)
+	if (MyFont != 0)
 	{
-		if (CoupFourre)
-			ShadowSurfaceCF.Render(X, Y, Target);
-		else
-			ShadowSurface.Render(X, Y, Target);
-
-		CardSurface.Render(X, Y, Target);
+		TTF_CloseFont(MyFont);
+		MyFont = 0;
 	}
 }
 
-void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
+void	Tableau::Animate		(Uint8 PlayerIndex, SDL_Surface *Target)
 {
 	static	bool	BattleArea = false,
 					LimitArea = false;
@@ -88,18 +74,25 @@ void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 					EndLimitX,
 					EndLimitY;
 
+	static	Uint32	LastBlit = 0;
+
 	#ifdef	WEBOS_DEVICE
 			int		Divisor = 35;
 	#else
 			int		Divisor = 70;
 	#endif
 
+	if (SDL_GetTicks() < (LastBlit + 15))
+		return;
+	else
+		LastBlit = SDL_GetTicks();
+
 	if (PlayerIndex == 0)
 		AreaTop += Dimensions::TableauHeight;
 
-	if (!FadeRunning)
+	if (!Animating)
 	{
-		FadeRunning = true;
+		Animating = true;
 		i = 0;
 
 		if (IsRolling() && HasSafety(CARD_SAFETY_RIGHT_OF_WAY) && (TopCard != CARD_REMEDY_ROLL))
@@ -128,7 +121,7 @@ void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 	}
 
 	if (RollY >= AreaTop)
-	{		
+	{
 		int	Y = 1;
 
 		if (PlayerIndex == 0)
@@ -149,8 +142,6 @@ void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 		EndLimitY = RollY;
 
 		++i;
-
-		SDL_Delay(15);
 	}
 	else
 	{
@@ -168,10 +159,23 @@ void	Tableau::FadeIn		(Uint8 PlayerIndex, SDL_Surface *Target)
 		}
 
 
-		FadeRunning = false;
+		Animating = false;
 	}
 
 	Dirty = true;
+}
+
+void		Tableau::BlitWithShadow	(Surface &CardSurface, int X, int Y, SDL_Surface *Target, bool CoupFourre)
+{
+	if (CardSurface)
+	{
+		if (CoupFourre)
+			ShadowSurfaceCF.Render(X, Y, Target);
+		else
+			ShadowSurface.Render(X, Y, Target);
+
+		CardSurface.Render(X, Y, Target);
+	}
 }
 
 Uint8	Tableau::GetPileCount		(Uint8 Value)														const
@@ -285,6 +289,15 @@ bool	Tableau::IsRolling		(void)											const
 
 void	Tableau::OnInit			(void)
 {
+	if (MyFont == 0)
+	{
+		// Set up font
+		if (!TTF_WasInit())
+			TTF_Init();
+
+		MyFont = TTF_OpenFont("LiberationMono-Regular.ttf", 24);
+	}
+
 	// Refresh our surfaces
 	BattleSurface.SetImage(Card::GetFileFromValue(TopCard));
 	LimitSurface.SetImage(Card::GetFileFromValue(LimitCard));
@@ -293,23 +306,14 @@ void	Tableau::OnInit			(void)
 	ShadowSurfaceCF.SetImage("gfx/card_shadow_cf.png");
 
 	for (int i = 0; i < MILEAGE_PILES; ++i)
-	{
-		if (CardCount[i])
-		{
-			for (int j = 0; j < CardCount[i]; ++j)
-			{
-				if (!PileSurfaces[i][j])
-					PileSurfaces[i][j].SetImage(Card::GetFileFromValue(i + MILEAGE_OFFSET));
-			}
-		}
-	}
+		MileageSurfaces[i].SetImage(Card::GetFileFromValue(i + MILEAGE_OFFSET));
 
 	for (int i = 0; i < SAFETY_COUNT; ++i)
 	{
 		if (Safeties[i])
 		{
 			if (!SafetySurfaces[i])
-				SafetySurfaces[i].SetImage(Card::GetFileFromValue(i + 10, CoupFourres[i]));
+				SafetySurfaces[i].SetImage(Card::GetFileFromValue(i + SAFETY_OFFSET, CoupFourres[i]));
 		}
 	}
 
@@ -450,8 +454,13 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 			// Draw our stuff
 			for (int i = 0; i < MILEAGE_PILES; ++i)
 			{
-				for (int j = 0; j < MAX_PILE_SIZE; ++ j)
-					BlitWithShadow(PileSurfaces[i][j], (i * 42) + 2, Y + (j * 8), Target);
+				if (CardCount[i])
+				{
+					for (int j = 0; j < CardCount[i]; ++j)
+						BlitWithShadow(MileageSurfaces[i], (i * 42) + 2, Y + (j * 8), Target);
+				}
+				//for (int j = 0; j < MAX_PILE_SIZE; ++ j)
+				//	BlitWithShadow(PileSurfaces[i][j], (i * 42) + 2, Y + (j * 8), Target);
 			}
 
 			BlitWithShadow(BattleSurface, BattleX, Y, Target);
@@ -472,12 +481,12 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 		}
 	}
 
-	if (FadeRunning)
-		FadeIn(PlayerIndex, Target);
+	if (Animating)
+		Animate(PlayerIndex, Target);
 	else if (IsRolling() && HasSafety(CARD_SAFETY_RIGHT_OF_WAY) && (TopCard != CARD_REMEDY_ROLL))
-		FadeIn(PlayerIndex, Target);
+		Animate(PlayerIndex, Target);
 	else if ((LimitCard == CARD_HAZARD_SPEED_LIMIT) && (HasSafety(CARD_SAFETY_RIGHT_OF_WAY)))
-		FadeIn(PlayerIndex, Target);
+		Animate(PlayerIndex, Target);
 
 	return WasDirty;
 }
@@ -485,12 +494,7 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 void	Tableau::Reset			(void)
 {
 	for (int i = 0; i < MILEAGE_PILES; ++i)
-	{
-		for (int j = 0; j < MAX_PILE_SIZE; ++j)
-			PileSurfaces[i][j].Clear();
-
 		CardCount[i] = 0;
-	}
 
 	for (int i = 0; i < SAFETY_COUNT; ++i)
 	{
@@ -502,7 +506,7 @@ void	Tableau::Reset			(void)
 
 	Mileage = 0;
 
-	FadeRunning = false;
+	Animating = false;
 
 	Dirty = true;
 }

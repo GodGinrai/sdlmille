@@ -53,8 +53,10 @@ const	char	TUTORIAL_TEXT[][MESSAGE_SIZE] = {
 					"Click it again to play.",
 					"Or click here to discard.",
 					"Enjoy the game!"	};
-const	char	VERSION_TEXT[] = "0.5.3-2 (beta3 test3)";
+const	char	VERSION_TEXT[] = "0.5.3-3 (beta3 test4)";
 const	int		SAVE_FORMAT_VER = 7;
+
+enum	{ANIMATION_PLAY = 0, ANIMATION_DISCARD, ANIMATION_RETURN, ANIMATION_INVALID};
 
 class Game
 {
@@ -64,7 +66,8 @@ public:
 	bool		OnExecute		(void);
 private:
 	/* Methods */
-	void		AnimatePlay		(Uint8 Index, bool Discard = false);
+	void		Animate			(Uint8 Index, Uint8 AnimationType);
+	bool		AnimationRunning	(void)				const;
 	void		ChangePlayer	(void);
 	bool		CheckForChange	(Uint8 &Old, Uint8 &New);
 	void		ClearMessage	(void);
