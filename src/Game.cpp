@@ -131,9 +131,9 @@ bool	Game::OnExecute			(void)
 		// We have to render twice because the computer moves during OnLoop() and we
 		// want to render the human's move before the 500ms delay. Hopefully this will
 		// be fixed soon.
-		OnRender(); 
+		OnRender(Window, false, true); 
 		OnLoop();
-		OnRender();
+		OnRender(Window, false, true);
 
 		if (!AnimationRunning())
 			SDL_Delay(25);
@@ -145,13 +145,20 @@ bool	Game::OnExecute			(void)
 
 /* Private methods */
 
-void	Game::Animate			(Uint8 Index, Uint8 AnimationType)
+void	Game::Animate			(Uint8 Index, Uint8 AnimationType, Uint8 Value)
 {
 	bool	CoupFourre	= false;
 	Uint8	PileCount	= 0;
 	char	DurationMsg[41];
 	Uint32	StartTicks	= SDL_GetTicks(),
+			LastLocalBlit = 0,
 			Duration;
+	int		TargetFrames = 
+			#ifdef WEBOS_DEVICE
+			12;
+			#else
+			50;
+			#endif
 
 	if (!GameOptions.GetOpt(OPTION_ANIMATIONS))
 		return;
@@ -159,42 +166,51 @@ void	Game::Animate			(Uint8 Index, Uint8 AnimationType)
 	if (AnimationType >= ANIMATION_INVALID)
 		return;
 
-	if ((Index < HAND_SIZE) && (Index == FindPopped()) && (IsValidPlay(Index) || (AnimationType != ANIMATION_PLAY)))
+	if ((AnimationType == ANIMATION_COUP_FOURRE_BOUNCE) || ((Index < HAND_SIZE) && (Index == FindPopped()) && (IsValidPlay(Index) || (AnimationType != ANIMATION_PLAY))))
 	{
 		Animating = true;
 
 		int StartX, StartY,
+			DeltaX, DeltaY,
 			DestX, DestY,
-			i = 0, TotalIterations;
+			i = 0;
 
 		double	IncX, IncY,
 				X, Y;
 
 		Uint8	Target = Current,
-				Type = CARD_NULL,
-				Value = CARD_NULL_NULL;
+				Type = CARD_NULL;
 
-		Players[Current].Detach(Index);
-		Value = Players[Current].GetValue(Index);
+		SDL_Surface	*Backdrop = 0;
+
+		if (AnimationType != ANIMATION_COUP_FOURRE_BOUNCE)
+		{
+			Value = Players[Current].GetValue(Index);
+			Players[Current].Detach(Index);
+		}
+
 		Type = Card::GetTypeFromValue(Value);
 
 		if (Type < CARD_NULL)
 		{
-			if (Dragging)
+			if (Dragging && (AnimationType != ANIMATION_COUP_FOURRE_BOUNCE))
 			{
 				StartX = (DragX - 20) / Dimensions::ScaleFactor;
 				StartY = (DragY - 67) / Dimensions::ScaleFactor;
 			}
 			else
 			{
-				if (Current == 0)
-				{
-					GetIndexCoords(Index, StartX, StartY);
-				}
+				if (AnimationType == ANIMATION_COUP_FOURRE_BOUNCE)
+					Tableau::GetTargetCoords(Value, Current, StartX, StartY, false);
 				else
 				{
-					StartX = 140;
-					StartY = -61;
+					if (Current == 0)
+						Hand::GetIndexCoords(Index, StartX, StartY);
+					else
+					{
+						StartX = 140;
+						StartY = -61;
+					}
 				}
 			}
 
@@ -202,10 +218,10 @@ void	Game::Animate			(Uint8 Index, Uint8 AnimationType)
 				Target = 1 - Current;
 			else if (Type == CARD_MILEAGE)
 				PileCount = Players[Current].GetPileCount(Value);
-			else if ((Type == CARD_SAFETY) && (Value - SAFETY_OFFSET == Players[Current].GetQualifiedCoupFourre()))
+			else if ((Type == CARD_SAFETY) && (Value == Card::GetMatchingSafety(Players[Current].GetQualifiedCoupFourre())))
 				CoupFourre = true;
 
-			if (AnimationType == ANIMATION_DISCARD)
+			if ((AnimationType == ANIMATION_DISCARD) || (AnimationType == ANIMATION_COUP_FOURRE_BOUNCE))
 			{
 				DestX = 3;
 				DestY = Dimensions::FirstRowY;
@@ -213,7 +229,8 @@ void	Game::Animate			(Uint8 Index, Uint8 AnimationType)
 			else if (AnimationType == ANIMATION_PLAY)
 				Tableau::GetTargetCoords(Value, Target, DestX, DestY, CoupFourre, PileCount);
 			else
-				GetIndexCoords(Index, DestX, DestY);
+				Hand::GetIndexCoords(Index, DestX, DestY);
+
 
 			if (Current == 0)
 				FloatSurface.SetImage(Card::GetFileFromValue(Value, CoupFourre));
@@ -223,22 +240,35 @@ void	Game::Animate			(Uint8 Index, Uint8 AnimationType)
 			X = StartX;
 			Y = StartY;
 
-			if (abs(DestX - X) > abs(DestY - Y))
-			{
-				IncX = 5;
-				TotalIterations = abs(DestX - X) / 5;
-				IncY = abs(DestY - Y) / (double) (abs(DestX - X) / 5.0);
-			}
-			else
-			{
-				IncY = 5;
-				TotalIterations = abs(DestY - Y) / 5;
-				IncX = abs(DestX - X) / (double) (abs(DestY - Y) / 5.0);
-			}
+			DeltaX = abs(DestX - X);
+			DeltaY = abs(DestY - Y);
+
+			IncX = DeltaX / (double) TargetFrames;
+			IncY = DeltaY / (double) TargetFrames;
+
+			#ifdef WEBOS_DEVICE
+			Backdrop = SDL_CreateRGBSurface(SDL_SWSURFACE, Dimensions::ScreenWidth, Dimensions::ScreenHeight, Window->format->BitsPerPixel, 0, 0, 0, 0);
+			#else
+			Backdrop = SDL_CreateRGBSurface(SDL_HWSURFACE, Dimensions::ScreenWidth, Dimensions::ScreenHeight, Window->format->BitsPerPixel, 0, 0, 0, 0);
+			#endif
+
+			if (Backdrop != 0)
+				OnRender(Backdrop, true, false);
 
 			while ((X != DestX) || (Y != DestY))
 			{
-				if ((i == TotalIterations / 2) && (Current != 0))
+				CheckTableau(Backdrop);
+
+				IgnoreEvents();
+
+				#ifndef	WEBOS_DEVICE
+				if (SDL_GetTicks() < (LastLocalBlit + (250 / TargetFrames)))
+					continue;
+				#endif
+
+				LastLocalBlit = SDL_GetTicks();
+
+				if ((i == TargetFrames / 2) && (Current != 0))
 					FloatSurface.SetImage(Card::GetFileFromValue(Value, CoupFourre));
 
 				if (abs(DestX - X) < IncX)
@@ -261,7 +291,7 @@ void	Game::Animate			(Uint8 Index, Uint8 AnimationType)
 						Y += IncY;
 				}
 
-				OnRender(true, false);
+				SDL_BlitSurface(Backdrop, 0, Window, 0);
 				
 				if (CoupFourre)
 					Tableau::ShadowSurfaceCF.Render(X, Y, Window);
@@ -272,15 +302,17 @@ void	Game::Animate			(Uint8 Index, Uint8 AnimationType)
 				SDL_Flip(Window);
 
 				++i;
-
-				#ifndef	WEBOS_DEVICE
-				SDL_Delay(5);
-				#endif
 			}
 
 			Duration = SDL_GetTicks() - StartTicks;
 
-			sprintf(DurationMsg, "Animation took %u ms", Duration);
+			if (Backdrop != 0)
+			{
+				SDL_FreeSurface(Backdrop);
+				Backdrop = 0;
+			}
+
+			sprintf(DurationMsg, "%u , %u ms", i, Duration);
 			ShowMessage(DurationMsg);
 		}
 
@@ -318,6 +350,15 @@ bool	Game::CheckForChange	(Uint8 &Old, Uint8 &New)
 	return false;
 }
 
+void	Game::CheckTableau		(SDL_Surface *Target)
+{
+	if (AnimationRunning())
+	{
+		if (Tableau::LastAnimationBlit + 15 <= SDL_GetTicks())
+			OnRender(Target);
+	}
+}
+
 void	Game::ClearMessage		(void)
 {
 	Message[0] = '\0';
@@ -328,12 +369,18 @@ void	Game::ClearMessage		(void)
 
 void	Game::ComputerMove		(void)
 {
-	bool Played = false;
+	bool	Played		= false;
+	Uint32	StartTicks	= SDL_GetTicks(),
+			EndTicks = StartTicks + ((GameOptions.GetOpt(OPTION_FAST_GAME)) ? 200 : 500);
 
 	for (int i = 0; i < HAND_SIZE; ++i)
 	{	
+		CheckTableau(Window);
+
 		if (IsValidPlay(i))	// Play the first valid move we find (the computer is currently stupid)
 		{
+			DelayUntil(EndTicks);
+
 			Pop(i);
 			Pop(i);
 			Played = true;
@@ -343,12 +390,29 @@ void	Game::ComputerMove		(void)
 
 	if (Played == false)
 	{
+		CheckTableau(Window);
+
 		for (int i = 0; i < HAND_SIZE; ++i)	//No valid moves, discard
 		{
-			Pop(i);
-			if (Discard())
-				break;
+			if (Players[Current].GetValue(i) < CARD_NULL_NULL)
+			{
+				DelayUntil(EndTicks);
+
+				Pop(i);
+				if (Discard())
+					break;
+			}
 		}
+	}
+}
+
+void	Game::DelayUntil		(Uint32 Ticks)
+{
+	while (SDL_GetTicks() < Ticks)
+	{
+		CheckTableau(Window);
+		IgnoreEvents();
+		SDL_Delay(5);
 	}
 }
 
@@ -405,44 +469,6 @@ Uint8	Game::FindPopped		(void)								const
 	}
 
 	return 0xFF;
-}
-
-Uint8	Game::GetIndex			(int X, int Y)						const
-{
-	Uint8	Invalid = 0xFF;
-
-	if ((Y >= Dimensions::FirstRowY) && (Y <= (Dimensions::SecondRowY + 57)))
-	{
-		Uint8	Add = 0,
-				Index = 0;
-
-		if (Y > (Dimensions::SecondRowY + 1))	// Clicked the bottom row. Add 4 to the index
-			Add = 4;
-		else if (Y > (Dimensions::FirstRowY + 54))	//Clicked in the dead zone
-			return Invalid;
-
-		if (X >= 81)	//Clicked within hand
-		{
-			if (((X - 81) % 65) < 41)	//Click was not in horizontal dead zone
-				return (((X - 81) / 65) + Add);
-		}
-	}
-
-	return Invalid;
-}
-
-void	Game::GetIndexCoords	(Uint8 Index, int &X, int &Y)				const
-{
-	if (Index < 3)
-	{
-		X = 81 + (65 * (Index + 1));
-		Y = Dimensions::FirstRowY;
-	}
-	else
-	{
-		X = 81 + (65 * (Index - 3));
-		Y = Dimensions::SecondRowY;
-	}
 }
 
 void	Game::GetScores			(void)
@@ -560,9 +586,26 @@ void	Game::GetScores			(void)
 	}
 }
 
+void	Game::IgnoreEvents		(void)
+{
+	SDL_Event	DummyEvent;
+
+	while (SDL_PollEvent(&DummyEvent))
+		;
+}
+
 bool	Game::InDiscardPile		(int X, int Y)						const
 {
-	return ((X >= 3) && (X <= 43) && (Y >= Dimensions::FirstRowY) && (Y <= (Dimensions::FirstRowY + 57)));
+	int MaxX = 48;
+	int MaxY = Dimensions::FirstRowY + 61;
+
+	if (Dragging)
+	{
+		MaxX += 3;
+		MaxY += 3;
+	}
+
+	return ((X >= 3) && (X <= MaxX) && (Y >= Dimensions::FirstRowY) && (Y <= MaxY));
 }
 
 bool	Game::IsValidPlay		(Uint8 Index)						const
@@ -827,7 +870,7 @@ void	Game::OnClick			(int X, int Y)
 				Pop(FindPopped());	//Play selected card, if any
 			else if ((Y >= Dimensions::FirstRowY) && (Y <= (Dimensions::SecondRowY + 57)))	//Clicked within the two rows at the bottom of the screen
 			{
-				Uint8 Index = GetIndex(X, Y);
+				Uint8 Index = Hand::GetIndex(X, Y);
 				
 				if (Index == 0)
 				{
@@ -897,6 +940,7 @@ void	Game::OnClick			(int X, int Y)
 		{
 			LastClick = SDL_GetTicks();
 			Overlay[2].SetText("Double-click to return.", GameOverBig, &White, &Black);
+			Dirty = true;
 		}
 	}
 }
@@ -919,7 +963,7 @@ void	Game::OnEvent			(SDL_Event * Event)
 				DownY = Event->button.y;
 
 				if (Scene == SCENE_GAME_PLAY)
-					DownIndex = GetIndex(DownX / Dimensions::ScaleFactor, DownY / Dimensions::ScaleFactor) - 1;
+					DownIndex = Hand::GetIndex(DownX / Dimensions::ScaleFactor, DownY / Dimensions::ScaleFactor) - 1;
 			}
 		}
 		else if (Event->type == SDL_MOUSEBUTTONUP)	//Mouse click
@@ -1011,23 +1055,27 @@ void	Game::OnEvent			(SDL_Event * Event)
 				{
 					if (DownIndex < HAND_SIZE)
 					{
-						DragX = Event->motion.x;
-						DragY = Event->motion.y;
-
-						if (!Dragging)
+						Uint8	Value	= Players[Current].GetValue(DownIndex);
+						if (Value < CARD_NULL_NULL)
 						{
-							if ((abs(DownX - DragX) > 5) || (abs(DownY - DragY) > 5))
-							{
-								Dragging = true;
+							DragX = Event->motion.x;
+							DragY = Event->motion.y;
 
-								Uint8 Value = Players[Current].GetValue(DownIndex);
-								Pop(DownIndex);
-								Players[0].Detach(DownIndex);
-								FloatSurface.SetImage(Card::GetFileFromValue(Value, ((Value - SAFETY_OFFSET) == Players[Current].GetQualifiedCoupFourre())));
+							if (!Dragging)
+							{
+								if ((abs(DownX - DragX) > 5) || (abs(DownY - DragY) > 5))
+								{
+									Dragging = true;
+
+									Uint8 Value = Players[Current].GetValue(DownIndex);
+									Pop(DownIndex);
+									Players[0].Detach(DownIndex);
+									FloatSurface.SetImage(Card::GetFileFromValue(Value, (Value == Card::GetMatchingSafety(Players[Current].GetQualifiedCoupFourre()))));
+								}
 							}
+							
+							Dirty = true;
 						}
-						
-						Dirty = true;
 					}
 				}
 			}
@@ -1354,12 +1402,7 @@ void	Game::OnLoop			(void)
 			ChangePlayer();
 
 		if (Current == 1)
-		{
-			// Delay for a moment, then the computer makes a move
-			SDL_Delay((GameOptions.GetOpt(OPTION_FAST_GAME)) ? 200 : 500);
-
 			ComputerMove();
-		}
 	}
 }
 
@@ -1387,9 +1430,12 @@ void	Game::OnPlay			(Uint8 Index)
 		else	//Playing a safety gives us another turn.
 		{
 			if (DiscardedCard != CARD_NULL_NULL)
+			{
 				// A Coup Fourre bounced a card off the player's tableau. Put it on
 				// the discard pile
+				Animate(0, ANIMATION_COUP_FOURRE_BOUNCE, DiscardedCard);
 				DiscardTop = DiscardedCard;
+			}
 
 			if (SourceDeck)
 				// We immediately draw another card after playing a safety.
@@ -1401,7 +1447,7 @@ void	Game::OnPlay			(Uint8 Index)
 	}
 }
 
-void	Game::OnRender			(bool Force, bool Flip)
+void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 {
 	bool	RefreshedSomething =	false, // We only flip the display if something changed
 			SceneChanged =			false; // Control variable. Do we need to call OnInit()?
@@ -1448,7 +1494,7 @@ void	Game::OnRender			(bool Force, bool Flip)
 		if ((Scene == SCENE_GAME_PLAY) || IN_DEMO)
 		{
 			for (int i = (PLAYER_COUNT - 1); i >= 0; --i)
-				RefreshedSomething |= Players[i].OnRender(Window, i, Force);
+				RefreshedSomething |= Players[i].OnRender(Target, i, Force);
 		}
 
 
@@ -1462,25 +1508,25 @@ void	Game::OnRender			(bool Force, bool Flip)
 
 		
 			// Render the appropriate surfaces
-			Background.Render(0, 0, Window);
+			Background.Render(0, 0, Target);
 
 			if (Scene == SCENE_MAIN)
-				LogoSurface.Render(Dimensions::ScreenWidth - LogoSurface.GetWidth(), Dimensions::ScreenHeight - LogoSurface.GetHeight(), Window);
+				LogoSurface.Render(Dimensions::ScreenWidth - LogoSurface.GetWidth(), Dimensions::ScreenHeight - LogoSurface.GetHeight(), Target);
 			else if ((Scene == SCENE_GAME_PLAY) || IN_DEMO)
 			{
-				Overlay[0].Render(0, Dimensions::EffectiveTableauHeight - 1, Window, SCALE_NONE);
-				Overlay[0].Render(0, (Dimensions::EffectiveTableauHeight * 2) - 1, Window, SCALE_NONE);
+				Overlay[0].Render(0, Dimensions::EffectiveTableauHeight - 1, Target, SCALE_NONE);
+				Overlay[0].Render(0, (Dimensions::EffectiveTableauHeight * 2) - 1, Target, SCALE_NONE);
 
-				DiscardSurface.Render(3, Dimensions::FirstRowY, Window);
-				DrawCardSurface.Render(3, Dimensions::SecondRowY, Window);
-				DrawTextSurface.Render(23 - (DrawTextSurface.GetWidth() / 2), Dimensions::SecondRowY + 33, Window);
+				DiscardSurface.Render(3, Dimensions::FirstRowY, Target);
+				DrawCardSurface.Render(3, Dimensions::SecondRowY, Target);
+				DrawTextSurface.Render(23 - (DrawTextSurface.GetWidth() / 2), Dimensions::SecondRowY + 33, Target);
 			}
 			else if (Scene == SCENE_GAME_OVER)
 			{
 				int X = 0, Y = 0;
 
-				Overlay[0].Render(0, (Dimensions::ScreenHeight - Overlay[0].GetHeight()) / 2, Window);
-				Overlay[1].Render((Dimensions::ScreenWidth - Overlay[1].GetWidth()) / 2, Dimensions::ScreenHeight - Overlay[1].GetHeight() - 12, Window);
+				Overlay[0].Render(0, (Dimensions::ScreenHeight - Overlay[0].GetHeight()) / 2, Target);
+				Overlay[1].Render((Dimensions::ScreenWidth - Overlay[1].GetWidth()) / 2, Dimensions::ScreenHeight - Overlay[1].GetHeight() - 12, Target);
 
 				for (int i = 0; i < (SCORE_CATEGORY_COUNT + 1); ++i)
 				{
@@ -1495,7 +1541,7 @@ void	Game::OnRender			(bool Force, bool Flip)
 
 							X = 12 + ((j > 0) ? 175 : 0) + ((j > 1) ? 75 : 0);
 							Y = Padding + (i * 26) + ((i > 0) ? Padding : 0) + ((i > (SCORE_CATEGORY_COUNT - 3)) ? Padding : 0) + ((i > (SCORE_CATEGORY_COUNT - 1)) ? Padding : 0);
-							ScoreSurfaces[i][j].Render(X, Y, Window);
+							ScoreSurfaces[i][j].Render(X, Y, Target);
 						}
 					}
 				}
@@ -1503,17 +1549,17 @@ void	Game::OnRender			(bool Force, bool Flip)
 			
 			else if ((Scene == SCENE_LEARN_1) || (Scene == SCENE_LEGAL))
 			{
-				Overlay[0].DrawPart(Portal, Window);
+				Overlay[0].DrawPart(Portal, Target);
 
 				if ((Portal.x == 0) && (Portal.y == 0) && ((Overlay[0].GetWidth() > Dimensions::ScreenWidth) || (Overlay[0].GetHeight() > Dimensions::ScreenHeight)))
-					Overlay[1].Render((Dimensions::ScreenWidth - Overlay[1].GetWidth()) / 2, Dimensions::ScreenHeight - Overlay[1].GetHeight() - 5, Window, SCALE_NONE);
+					Overlay[1].Render((Dimensions::ScreenWidth - Overlay[1].GetWidth()) / 2, Dimensions::ScreenHeight - Overlay[1].GetHeight() - 5, Target, SCALE_NONE);
 
 				if (Scene == SCENE_LEGAL)
 				{
 					if (Portal.y < (VersionSurface.GetHeight() + 1))
-						VersionSurface.Render(Dimensions::ScreenWidth - VersionSurface.GetWidth() - 1, 1 - Portal.y, Window, SCALE_NONE);
+						VersionSurface.Render(Dimensions::ScreenWidth - VersionSurface.GetWidth() - 1, 1 - Portal.y, Target, SCALE_NONE);
 
-					Overlay[2].Render((Dimensions::ScreenWidth - Overlay[2].GetWidth()) / 2, 10, Window, SCALE_NONE);
+					Overlay[2].Render((Dimensions::ScreenWidth - Overlay[2].GetWidth()) / 2, 10, Target, SCALE_NONE);
 				}
 			}
 		}
@@ -1522,16 +1568,16 @@ void	Game::OnRender			(bool Force, bool Flip)
 		{
 			//Render card caption
 			if (GameOptions.GetOpt(OPTION_CARD_CAPTIONS))
-				CaptionSurface.Render((320 - CaptionSurface.GetWidth()) / 2, ((Dimensions::TableauHeight * 2) - CaptionSurface.GetHeight()) - 10, Window);
+				CaptionSurface.Render((320 - CaptionSurface.GetWidth()) / 2, ((Dimensions::TableauHeight * 2) - CaptionSurface.GetHeight()) - 10, Target);
 
 			if (Scene == SCENE_GAME_PLAY)
-				MenuSurface.Render(2, 5, Window);
+				MenuSurface.Render(2, 5, Target);
 		}
 
 		if (IN_TUTORIAL)
 		{
-			ArrowSurfaces[0].Render(5, 5, Window);	//Render back and forward arrows
-			ArrowSurfaces[1].Render(240, 5, Window);
+			ArrowSurfaces[0].Render(5, 5, Target);	//Render back and forward arrows
+			ArrowSurfaces[1].Render(240, 5, Target);
 
 			if (Scene >= SCENE_LEARN_2)
 			{
@@ -1540,39 +1586,39 @@ void	Game::OnRender			(bool Force, bool Flip)
 				if (Scene < SCENE_LEARN_6)	//Render orb
 				{
 					if (Index < 2)
-						OrbSurface.Render((Dimensions::ScreenWidth - 41) / 2, (Dimensions::TableauHeight * Index) + ((Dimensions::TableauHeight - 41) / 2), Window, SCALE_Y);
+						OrbSurface.Render((Dimensions::ScreenWidth - 41) / 2, (Dimensions::TableauHeight * Index) + ((Dimensions::TableauHeight - 41) / 2), Target, SCALE_Y);
 					else
-						OrbSurface.Render(146, Dimensions::FirstRowY + 8, Window);
+						OrbSurface.Render(146, Dimensions::FirstRowY + 8, Target);
 				}
 
 				if ((Scene >= SCENE_LEARN_4) && (Scene < SCENE_LEARN_7)) //Render hand icon
 				{
 					Index -= 2;
-					HandSurface.Render(HAND_COORDS[Index], Dimensions::FirstRowY + 32, Window);
+					HandSurface.Render(HAND_COORDS[Index], Dimensions::FirstRowY + 32, Target);
 				}
 			}
 		}
 
 		if (MessageSurface)
-			MessageSurface.Render((Dimensions::ScreenWidth - MessageSurface.GetWidth()) / 2, Dimensions::TableauHeight - 50, Window, SCALE_Y); //Render the message last.
+			MessageSurface.Render((Dimensions::ScreenWidth - MessageSurface.GetWidth()) / 2, Dimensions::TableauHeight - 50, Target, SCALE_Y); //Render the message last.
 
 		if (Dragging && !Animating)
 		{
-			if (Players[Current].GetValue(DownIndex) - SAFETY_OFFSET == Players[Current].GetQualifiedCoupFourre())
-				Tableau::ShadowSurfaceCF.Render(DragX - 20, DragY - 67, Window, SCALE_NONE);
+			if (Players[Current].GetValue(DownIndex) == Card::GetMatchingSafety(Players[Current].GetQualifiedCoupFourre()))
+				Tableau::ShadowSurfaceCF.Render(DragX - 20, DragY - 67, Target, SCALE_NONE);
 			else
-				Tableau::ShadowSurface.Render(DragX - 20, DragY - 67, Window, SCALE_NONE);
+				Tableau::ShadowSurface.Render(DragX - 20, DragY - 67, Target, SCALE_NONE);
 
-			FloatSurface.Render(DragX - 20, DragY - 67, Window, SCALE_NONE);
+			FloatSurface.Render(DragX - 20, DragY - 67, Target, SCALE_NONE);
 		}
 	}
 
 	#ifdef DEBUG
-	DebugSurface.Render(0, 0, Window);
+	DebugSurface.Render(0, 0, Target);
 	#endif
 
 	if (RefreshedSomething && Flip)
-		SDL_Flip(Window);
+		SDL_Flip(Target);
 }
 
 void	Game::Pop				(Uint8 Index)
@@ -1752,7 +1798,7 @@ bool	Game::ShowModal			(Uint8 ModalName)
 			ModalSurface.Render(74, 193, Window);
 			break;
 		case MODAL_GAME_MENU:
-			OnRender(true, false); //Re-render the background, but don't flip it.
+			OnRender(Window, true, false); //Re-render the background, but don't flip it.
 
 			ModalSurface.SetImage("gfx/modals/menu_top.png");
 			ModalSurface.Render(40, 80, Window);

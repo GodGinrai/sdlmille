@@ -35,6 +35,8 @@ public:
 	void		Detach		(Uint8 Index);
 	bool		Discard		(Uint8 Index);
 	bool		Draw		(Deck * Source, Uint8 Index);
+static	Uint8		GetIndex		(int X, int Y);
+static	void		GetIndexCoords	(Uint8 Index, int &X, int &Y);
 	Uint8		GetType		(Uint8 Index)								const;
 	Uint8		GetValue	(Uint8 Index)								const;
 	bool		IsDirty		(void)										const;

@@ -26,6 +26,7 @@ Surface		Tableau::MileageSurfaces[MILEAGE_PILES],
 			Tableau::ShadowSurface,
 			Tableau::ShadowSurfaceCF;
 TTF_Font	*Tableau::MyFont;
+Uint32		Tableau::LastAnimationBlit;
 
 		Tableau::Tableau		(void)
 {
@@ -74,18 +75,11 @@ void	Tableau::Animate		(Uint8 PlayerIndex, SDL_Surface *Target)
 					EndLimitX,
 					EndLimitY;
 
-	static	Uint32	LastBlit = 0;
-
 	#ifdef	WEBOS_DEVICE
 			int		Divisor = 35;
 	#else
 			int		Divisor = 70;
 	#endif
-
-	if (SDL_GetTicks() < (LastBlit + 15))
-		return;
-	else
-		LastBlit = SDL_GetTicks();
 
 	if (PlayerIndex == 0)
 		AreaTop += Dimensions::TableauHeight;
@@ -94,6 +88,7 @@ void	Tableau::Animate		(Uint8 PlayerIndex, SDL_Surface *Target)
 	{
 		Animating = true;
 		i = 0;
+		LastAnimationBlit = 0;
 
 		if (IsRolling() && HasSafety(CARD_SAFETY_RIGHT_OF_WAY) && (TopCard != CARD_REMEDY_ROLL))
 			BattleArea = true;
@@ -128,20 +123,20 @@ void	Tableau::Animate		(Uint8 PlayerIndex, SDL_Surface *Target)
 			Y += Dimensions::TableauHeight;
 
 		if (BattleArea)
-		{
 			RollCard.Render(RollX, RollY, Target);
-		}
 		if (LimitArea)
-		{
 			EndLimit.Render(EndLimitX, EndLimitY, Target);
+
+		if ((LastAnimationBlit + 15) <= SDL_GetTicks())
+		{
+			LastAnimationBlit = SDL_GetTicks();
+			RollX = SafetyX - (((SafetyX - BattleX) * i) / Divisor);
+			RollY = SafetyY - (((SafetyY - AreaTop) * i) / Divisor);
+			EndLimitX = SafetyX - (((SafetyX - LimitX) * i) / Divisor);
+			EndLimitY = RollY;
+
+			++i;
 		}
-
-		RollX = SafetyX - (((SafetyX - BattleX) * i) / Divisor);
-		RollY = SafetyY - (((SafetyY - AreaTop) * i) / Divisor);
-		EndLimitX = SafetyX - (((SafetyX - LimitX) * i) / Divisor);
-		EndLimitY = RollY;
-
-		++i;
 	}
 	else
 	{

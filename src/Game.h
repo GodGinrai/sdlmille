@@ -53,10 +53,10 @@ const	char	TUTORIAL_TEXT[][MESSAGE_SIZE] = {
 					"Click it again to play.",
 					"Or click here to discard.",
 					"Enjoy the game!"	};
-const	char	VERSION_TEXT[] = "0.5.3-3 (beta3 test4)";
+const	char	VERSION_TEXT[] = "0.5.3-8 (beta3 test9)";
 const	int		SAVE_FORMAT_VER = 7;
 
-enum	{ANIMATION_PLAY = 0, ANIMATION_DISCARD, ANIMATION_RETURN, ANIMATION_INVALID};
+enum	{ANIMATION_PLAY = 0, ANIMATION_DISCARD, ANIMATION_RETURN, ANIMATION_COUP_FOURRE_BOUNCE, ANIMATION_INVALID};
 
 class Game
 {
@@ -66,18 +66,19 @@ public:
 	bool		OnExecute		(void);
 private:
 	/* Methods */
-	void		Animate			(Uint8 Index, Uint8 AnimationType);
+	void		Animate			(Uint8 Index, Uint8 AnimationType, Uint8 Value = CARD_NULL_NULL);
 	bool		AnimationRunning	(void)				const;
 	void		ChangePlayer	(void);
 	bool		CheckForChange	(Uint8 &Old, Uint8 &New);
+	void		CheckTableau	(SDL_Surface *Target);
 	void		ClearMessage	(void);
 	void		ComputerMove	(void);
+	void		DelayUntil		(Uint32 Ticks);
 	bool		Discard			(void);
 	bool		EndOfGame		(void)					const;
 	Uint8		FindPopped		(void)					const;
-	Uint8		GetIndex		(int X, int Y)			const;
-	void		GetIndexCoords	(Uint8 Index, int &X, int &Y)	const;
 	void		GetScores		(void);
+	void		IgnoreEvents	(void);
 	bool		InDiscardPile	(int X, int Y)			const;
 	bool		IsValidPlay		(Uint8 Index)			const;
 	void		OnClick			(int X, int Y);
@@ -85,7 +86,7 @@ private:
 	bool		OnInit			(void);
 	void		OnLoop			(void);
 	void		OnPlay			(Uint8 Index);
-	void		OnRender		(bool Force = false, bool Flip = true);
+	void		OnRender		(SDL_Surface *Target, bool Force = false, bool Flip = true);
 	void		Pop				(Uint8 Index);
 	void		Reset			(void);
 	void		ResetPortal		(void);

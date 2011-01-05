@@ -65,6 +65,7 @@ public:
 
 static	Surface	ShadowSurface,
 				ShadowSurfaceCF;
+static	Uint32	LastAnimationBlit;
 private:
 	/* Methods */
 	void		SetTopCard		(Uint8 Value);

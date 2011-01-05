@@ -21,25 +21,28 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 #define	_SDLMILLE_OPTIONS_H
 
 #include <sys/stat.h>
+#include <SDL.h>
 
 namespace	_SDLMille
 {
 
 const	int		OPTION_COUNT = 3;
+const	Uint16	OPTION_VERSION = 2;
 const	char	OPTION_NAMES[OPTION_COUNT][14] = {"Card captions", "Fast game", "Animations"};
 enum	{OPTION_CARD_CAPTIONS = 0, OPTION_FAST_GAME, OPTION_ANIMATIONS};
 
 class	Options
 {
 public:
-			Options		(void):	Opts (5)	{}
-			~Options	(void)				{}
-	bool	GetOpt		(int Option)				const;
+			Options		(void):	SavedOptionVersion (0), Opts (5)	{}
+			~Options	(void)										{}
+	bool	GetOpt		(int Option)								const;
 	bool	ReadOpts	(void);
-	bool	SaveOpts	(void)						const;
+	bool	SaveOpts	(void)										const;
 	bool	SetOpt		(int Option, bool Switch);
 	bool	SwitchOpt	(int Option);
 private:
+	Uint16	SavedOptionVersion;
 	char	Opts;
 };
 

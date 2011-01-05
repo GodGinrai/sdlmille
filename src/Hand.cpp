@@ -78,6 +78,44 @@ bool	Hand::Draw		(Deck * Source, Uint8 Index)
 	return false;
 }
 
+Uint8	Hand::GetIndex			(int X, int Y)
+{
+	Uint8	Invalid = 0xFF;
+
+	if ((Y >= Dimensions::FirstRowY) && (Y <= (Dimensions::SecondRowY + 57)))
+	{
+		Uint8	Add = 0,
+				Index = 0;
+
+		if (Y >= Dimensions::SecondRowY)	// Clicked the bottom row. Add 4 to the index
+			Add = 4;
+		else if (Y >= (Dimensions::FirstRowY + 57))	//Clicked in the dead zone
+			return Invalid;
+
+		if (X >= 81)	//Clicked within hand
+		{
+			if (((X - 81) % 65) < 41)	//Click was not in horizontal dead zone
+				return (((X - 81) / 65) + Add);
+		}
+	}
+
+	return Invalid;
+}
+
+void	Hand::GetIndexCoords	(Uint8 Index, int &X, int &Y)
+{
+	if (Index < 3)
+	{
+		X = 81 + (65 * (Index + 1));
+		Y = Dimensions::FirstRowY;
+	}
+	else
+	{
+		X = 81 + (65 * (Index - 3));
+		Y = Dimensions::SecondRowY;
+	}
+}
+
 Uint8	Hand::GetType	(Uint8 Index)						const
 {
 	if (Index < HAND_SIZE)
@@ -162,7 +200,7 @@ bool	Hand::OnRender	(SDL_Surface * Target, bool Force)
 					{
 						CardSurfaces[Index].Render(X, Y, Target);	//Draw the cards
 
-						if (Popped[Index] && OrbSurface)	//If this card is popped, render the orb over it
+						if (Popped[Index] && OrbSurface && !Detached[Index])	//If this card is popped, render the orb over it
 							OrbSurface.Render(X, Y + 8, Target);
 					}
 				}

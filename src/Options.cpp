@@ -45,9 +45,13 @@ bool	Options::ReadOpts	(void)
 		if (OptsFile.is_open())
 		{
 			OptsFile.seekg(0);
-			OptsFile.read(&Opts, 1);
-			Success = OptsFile.good();
-			OptsFile.close();
+			OptsFile.read((char *) &SavedOptionVersion, sizeof(Uint16));
+			if ((SavedOptionVersion == OPTION_VERSION) && OptsFile.good())
+			{
+				OptsFile.read(&Opts, 1);
+				Success = OptsFile.good();
+				OptsFile.close();
+			}
 		}
 	}
 
@@ -64,6 +68,7 @@ bool	Options::SaveOpts	(void)						const
 	if (OptsFile.is_open())
 	{
 		OptsFile.seekp(0);
+		OptsFile.write((char *) &OPTION_VERSION, sizeof(Uint16));
 		OptsFile.write(&Opts, 1);
 		Success = OptsFile.good();
 		OptsFile.close();
