@@ -72,6 +72,7 @@ private:
 	bool		CheckForChange	(Uint8 &Old, Uint8 &New);
 	void		CheckTableau	(SDL_Surface *Target);
 	void		ClearMessage	(void);
+	bool		ComputerDecideExtension	(void)			const;
 	void		ComputerMove	(void);
 	void		DelayUntil		(Uint32 Ticks);
 	bool		Discard			(void);

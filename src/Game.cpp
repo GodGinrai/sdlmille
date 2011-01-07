@@ -367,6 +367,31 @@ void	Game::ClearMessage		(void)
 	Dirty = true;
 }
 
+bool	Game::ComputerDecideExtension	(void)			const
+{
+	bool	ReturnValue = true;
+	int		MileageInHand = Players[1].MileageInHand(),
+			MileageNeeded;
+	Uint8	CardsRemaining = 0;
+
+	if (SourceDeck != 0)
+		CardsRemaining = SourceDeck->CardsLeft();
+
+	if (CardsRemaining < 5)
+		MileageNeeded = 300;
+	else if (CardsRemaining < 10)
+		MileageNeeded = 200;
+	else
+		MileageNeeded = 100;
+
+	if (Players[0].GetMileage() == 0)
+		ReturnValue = false;
+	else if (MileageInHand < MileageNeeded)
+		ReturnValue = false;
+
+	return ReturnValue;
+}
+
 void	Game::ComputerMove		(void)
 {
 	bool	Played		= false;
@@ -1321,10 +1346,9 @@ void	Game::OnLoop			(void)
 				}
 				else if (Players[1].GetMileage() == 700) //Computer randomly decides whether to extend
 				{
-					srand(time(0));
-					if (rand() % 2)
+					Extended = ComputerDecideExtension();
+					if (Extended)
 					{
-						Extended = true;
 						ShowMessage("Computer extends trip");
 						ChangePlayer();
 					}

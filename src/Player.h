@@ -50,6 +50,7 @@ public:
 	bool		IsOutOfCards	(void)						const;
 	bool		IsPopped		(Uint8 Index)				const;
 	bool		IsRolling		(void)						const;
+	int			MileageInHand	(void)						const;
 	Uint8		OnPlay			(Uint8 Index);
 	bool		OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force = false);
 	void		Pop				(Uint8 Index);

@@ -76,6 +76,15 @@ bool	Player::IsOutOfCards	(void)												const
 	return true;	//We didn't find a populated slot
 }
 
+int		Player::MileageInHand	(void)												const
+{
+	int ReturnValue = 0;
+	for (int i = 0; i < HAND_SIZE; ++i)
+		ReturnValue += Card::GetMileValue(PlayerHand.GetValue(i));
+
+	return ReturnValue;
+}
+
 Uint8	Player::OnPlay			(Uint8 Index)
 {
 	Uint8	ReturnValue =	CARD_NULL_NULL;
