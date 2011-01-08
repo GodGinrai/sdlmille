@@ -27,6 +27,7 @@ Surface		Tableau::MileageSurfaces[MILEAGE_PILES],
 			Tableau::ShadowSurfaceCF;
 TTF_Font	*Tableau::MyFont;
 Uint32		Tableau::LastAnimationBlit;
+bool		Tableau::EnableAnimation;
 
 		Tableau::Tableau		(void)
 {
@@ -43,6 +44,7 @@ Uint32		Tableau::LastAnimationBlit;
 	
 	Animating = false;
 	Dirty = true;
+	EnableAnimation = true;
 	Mileage = 0;
 	OldTopCard = TopCard = CARD_NULL_NULL;
 	OldLimitCard = LimitCard = CARD_NULL_NULL;
@@ -114,6 +116,9 @@ void	Tableau::Animate		(Uint8 PlayerIndex, SDL_Surface *Target)
 			RollX = BattleX;
 		}
 	}
+
+	if (!EnableAnimation)
+		RollY = AreaTop - 1;
 
 	if (RollY >= AreaTop)
 	{

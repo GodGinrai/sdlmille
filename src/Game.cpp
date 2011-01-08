@@ -81,6 +81,7 @@ namespace _SDLMille
 		OldDeckCount = DeckCount = SourceDeck->CardsLeft();
 
 	GameOptions.ReadOpts();
+	Tableau::EnableAnimation = GameOptions.GetOpt(OPTION_ANIMATIONS);
 
 	Message[0] = '\0';
 
@@ -626,7 +627,7 @@ bool	Game::InDiscardPile		(int X, int Y)						const
 
 	if (Dragging)
 	{
-		MaxX += 3;
+		MaxX += 12;
 		MaxY += 3;
 	}
 
@@ -827,6 +828,7 @@ void	Game::OnClick			(int X, int Y)
 					GameOptions.SaveOpts();
 					Modal = MODAL_NONE;
 					Dirty = true;
+					Tableau::EnableAnimation = GameOptions.GetOpt(OPTION_ANIMATIONS);
 				}
 			}
 		}
@@ -1028,7 +1030,10 @@ void	Game::OnEvent			(SDL_Event * Event)
 				}
 
 				if ((abs(DownX - X) > 5) || (abs(DownY - Y) > 5))
-					return;
+				{
+					if ((Scene != SCENE_GAME_PLAY) || (Hand::GetIndex(X / Scale, Y / Scale) != 0))
+						return;
+				}
 
 				if (Scale != 1)
 				{
@@ -1301,9 +1306,7 @@ bool	Game::OnInit			(void)
 
 		ResetPortal();
 
-		Background.SetImage("gfx/scenes/green_bg.png");
-		if (!Background)
-			return false;
+		Background.Clear();
 
 		Overlay[0].SetImage("gfx/overlays/legal.png");
 
