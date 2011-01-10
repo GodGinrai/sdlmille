@@ -31,8 +31,9 @@ const int	PLAYER_GIVEN_NO_ARGUMENT =	3000;
 class Player
 {
 public:
-				Player			(void);
+				Player				(void);
 	bool		AnimationRunning	(void)					const;
+	Uint8		CardsInHand			(void)					const;
 	bool		Discard			(Uint8 Index);
 	void		Detach			(Uint8 Index);
 	void		Draw			(void);

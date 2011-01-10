@@ -38,6 +38,11 @@ enum	{	CARD_HAZARD_ACCIDENT = 0, CARD_HAZARD_GAS, CARD_HAZARD_FLAT, CARD_HAZARD_
 const int	DECK_ERROR = 2000;
 
 const	Uint8	DECK_SIZE =	101,
+				EXISTING_CARDS[CARD_NULL_NULL] =
+	{	2, 2, 2, 3, 4,			//Hazards
+		6, 6, 6, 6, 14,			//Remedies
+		1, 1, 1, 1,				//Safeties
+		10, 10, 10, 12, 4	},	//Mileage
 				STD_DECK[DECK_SIZE] =
 
 	{	CARD_HAZARD_ACCIDENT, CARD_HAZARD_ACCIDENT, // Removed one of each hazard, since we have two players.

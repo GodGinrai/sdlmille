@@ -28,6 +28,19 @@ namespace _SDLMille
 	SourceDeck = 0;
 }
 
+Uint8	Player::CardsInHand		(void)					const
+{
+	Uint8 ReturnValue = 0;
+
+	for (int i = 0; i < HAND_SIZE; ++i)
+	{
+		if (PlayerHand.GetValue(i) < CARD_NULL_NULL)
+			++ReturnValue;
+	}
+
+	return ReturnValue;
+}
+
 bool	Player::Discard			(Uint8 Index)
 {
 	if (PlayerHand.Discard(Index))

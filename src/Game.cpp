@@ -432,6 +432,127 @@ void	Game::ComputerMove		(void)
 	}
 }
 
+void	Game::ComputerSmartMove	(void)
+{
+	int		TripLength = (Extended) ? 1000 : 700,
+			MyMileage = Players[Current].GetMileage(),
+			MyRemaining = MyMileage - TripLength,
+			OpponentMileage = Players[1 - Current].GetMileage(),
+			OpponentRemaining = TripLength - OpponentMileage,
+			Weight[HAND_SIZE];
+	Uint8	ArrayIndex = 0,
+			MatchingCard = 0,
+			Processed[CARD_NULL_NULL],
+			ValidMoves[HAND_SIZE];
+	bool	MyselfLimited = Players[Current].IsLimited(),
+			MyselfOneMoveAway = false,
+			MyselfRolling = Players[Current].IsRolling(),
+			OpponentLimited = Players[1 - Current].IsLimited(),
+			OpponentOneMoveAway = false,
+			OpponentRolling = Players[1 - Current].IsRolling();
+
+
+	if (OpponentRolling)
+	{
+		if (OpponentLimited)
+		{
+			if (OpponentRemaining <= 50)
+			{
+			}
+		}
+		else
+			;
+	}
+
+	for (int i = 0; i < CARD_NULL_NULL; ++i)
+		Processed[i] = 0;
+
+	//	Populate valid plays
+	for (int i = 0; i < HAND_SIZE; ++i)
+	{
+		CheckTableau(Window);
+
+		if (IsValidPlay(i))
+		{
+			ValidMoves[ArrayIndex] = i;
+			++ArrayIndex;
+		}
+
+		Weight[i] = 0;
+	}
+
+	// Cut off array
+	for (; ArrayIndex < HAND_SIZE; ++ArrayIndex)
+		ValidMoves[ArrayIndex] = HAND_SIZE;
+
+	for (int i = 0; i < HAND_SIZE; ++i)
+	{
+		Uint8	Type = Players[Current].GetType(i),
+				Value = Players[Current].GetValue(i);
+
+		if (Type == CARD_SAFETY)
+		{
+			MatchingCard = Value - SAFETY_OFFSET;
+
+			if (Card::GetMatchingSafety(Players[Current].GetQualifiedCoupFourre()) == Value)
+				// This is a coup fourre
+				Weight[i] += 100;
+			else
+			{
+				if (OpponentLimited)
+				{
+					if (OpponentRemaining <= 50)
+						Weight[i] += 90;
+				}
+				else if (OpponentRemaining == 200)
+				{
+					if ((Players[1 - Current].GetPileCount(CARD_MILEAGE_200) < 2) && (KnownCards(CARD_MILEAGE_200) < EXISTING_CARDS[CARD_MILEAGE_200]))
+						Weight[i] += 90;
+				}
+				else if (OpponentRemaining <= 100)
+					Weight[i] += 90;
+
+				if (KnownCards(MatchingCard) >= EXISTING_CARDS[MatchingCard])
+					Weight[i] += 50;
+				else if ((Value == CARD_SAFETY_RIGHT_OF_WAY) && (KnownCards(CARD_HAZARD_STOP) >= EXISTING_CARDS[CARD_HAZARD_STOP]))
+					Weight[i] += 50;
+			}
+		}
+		else if (Type == CARD_REMEDY)
+		{
+			MatchingCard = Value - 5;
+
+			if (Players[Current].GetTopCard((MatchingCard == CARD_HAZARD_SPEED_LIMIT)) == MatchingCard)
+				Weight[i] += 60;
+			else if (KnownCards(Value) > EXISTING_CARDS[MatchingCard])
+				Weight[i] -= 100;
+		}
+		else if (Type == CARD_HAZARD)
+		{
+			MatchingCard = Value + 5;
+
+			if (Players[1 - Current].HasSafety(Card::GetMatchingSafety(Value)))
+				Weight[i] -= 100;
+			else
+			{
+				if (Players[1 - Current].IsRolling())
+				{
+					if (OpponentMileage == 0)
+						Weight[i] += 70;
+					else if ((OpponentRemaining = 200) || (OpponentRemaining <= 100))
+						Weight[i] += 70;
+
+					if ((KnownCards(MatchingCard) >= EXISTING_CARDS[MatchingCard]) && (Weight[i] < 80))
+						Weight[i] = 80;
+				}
+			}
+		}
+
+
+
+	}
+}
+
 void	Game::DelayUntil		(Uint32 Ticks)
 {
 	while (SDL_GetTicks() < Ticks)
@@ -451,12 +572,14 @@ bool	Game::Discard			(void)
 	{
 		Value	= Players[Current].GetValue(Index);
 
-		if (Value != CARD_NULL_NULL)	// Sanity check
+		if (Value < CARD_NULL_NULL)	// Sanity check
 		{
 			Players[Current].Detach(Index);
 			Animate(Index, ANIMATION_DISCARD);
 			DiscardTop = Value;	// Put the card on top of the discard pile
 			Players[Current].Discard(Index);
+
+			++ExposedCards[Value];
 		}
 
 		Players[Current].UnPop(Index);
@@ -634,6 +757,108 @@ bool	Game::InDiscardPile		(int X, int Y)						const
 	return ((X >= 3) && (X <= MaxX) && (Y >= Dimensions::FirstRowY) && (Y <= MaxY));
 }
 
+bool	Game::IsOneCardAway		(Uint8 PlayerIndex)					const
+{
+	int		Mileage = Players[PlayerIndex].GetMileage(),
+			RemainingMileage = ((Extended) ? 1000 : 700) - Mileage;
+
+	Uint8	CardCount = Players[PlayerIndex].CardsInHand(),
+			TopCard = Players[PlayerIndex].GetTopCard(),
+			ValueNeeded = CARD_NULL_NULL;
+
+	bool	CouldRoll = false,
+			HandKnowledge = (PlayerIndex == Current),
+			IsLimited = Players[PlayerIndex].IsLimited(),
+			IsRolling = Players[PlayerIndex].IsRolling(),
+			MayHaveROW = false;
+
+	if (CardCount < 1)
+		return false;
+
+	if (Players[PlayerIndex].HasSafety(CARD_SAFETY_RIGHT_OF_WAY))
+		MayHaveROW = true;
+	else if (ExposedCards[CARD_SAFETY_RIGHT_OF_WAY] < 1)
+	{
+		if (InHand(CARD_SAFETY_RIGHT_OF_WAY))
+		{
+			if (HandKnowledge)
+				MayHaveROW = true;
+			else
+				MayHaveROW = false;
+		}
+		else if (CardCount > 1)
+			MayHaveROW = true;
+		/*
+		if (!HandKnowledge)
+			MayHaveROW = true;
+		else if (InHand(CARD_SAFETY_RIGHT_OF_WAY))
+			MayHaveROW = false;
+		else
+			MayHaveROW = true;
+		*/
+	}
+
+	if (IsRolling || MayHaveROW)
+	{
+		Uint8 MatchingSafety = Card::GetMatchingSafety(TopCard);
+
+		CouldRoll = true;
+
+		if (MatchingSafety < CARD_NULL_NULL)
+		{
+			if (Card::GetTypeFromValue(TopCard) == CARD_HAZARD)
+			{
+				if (ExposedCards[MatchingSafety] < 1)
+				{
+					if (!HandKnowledge && InHand(MatchingSafety))
+						CouldRoll = false;
+				}
+			}
+		}
+	}
+
+	if (CouldRoll)
+	{
+		if (IsLimited && !MayHaveROW && (RemainingMileage > 50))
+			return false;
+		else if (RemainingMileage > 200)
+			return false;
+		else if ((RemainingMileage < 200) && (RemainingMileage > 100))
+			return false;
+
+		ValueNeeded = Card::GetCardFromMileage(RemainingMileage);
+
+		if (((HandKnowledge) ? KnownCards(ValueNeeded) : ExposedCards[ValueNeeded]) >= EXISTING_CARDS[ValueNeeded])
+			return false;
+
+		if ((ValueNeeded == CARD_MILEAGE_200) && (Players[PlayerIndex].GetPileCount(CARD_MILEAGE_200) > 1))
+			return false;
+
+		if (HandKnowledge && !InHand(ValueNeeded))
+			return false;
+
+		return true;
+	}
+
+	return false;
+}
+
+Uint8	Game::InHand			(Uint8 Value)						const
+{
+	Uint8 ReturnValue = 0;
+
+	if (Value < CARD_NULL_NULL)
+	{
+		for (int i = 0; i < HAND_SIZE; ++i)
+		{
+			if (Players[Current].GetValue(i) == Value)
+				++ReturnValue;
+		}
+	}
+
+	return ReturnValue;
+}
+
 bool	Game::IsValidPlay		(Uint8 Index)						const
 {
 	if (Index >= HAND_SIZE)
@@ -749,6 +974,19 @@ bool	Game::IsValidPlay		(Uint8 Index)						const
 
 	// Default to false. We should never get here unless something went horribly wrong.
 	return false;
+}
+
+Uint8	Game::KnownCards		(Uint8 Value)						const
+{
+	Uint8 ReturnValue = ExposedCards[Value];
+
+	for (int i = 0; i < HAND_SIZE; ++i)
+	{
+		if (Players[Current].GetValue(i) == Value)
+			++ReturnValue;
+	}
+
+	return ReturnValue;
 }
 
 void	Game::OnClick			(int X, int Y)
@@ -1112,7 +1350,20 @@ void	Game::OnEvent			(SDL_Event * Event)
 		}
 		else if (Event->type == SDL_KEYUP)	//Debugging purposes
 		{
-			return;
+			//return;
+
+			//for (int i = 0; i < CARD_NULL_NULL; ++i)
+			//	printf("%2u %2u\n", i, ExposedCards[i]);
+
+			for (int i = 0; i < PLAYER_COUNT; ++i)
+			{
+				if (IsOneCardAway(i))
+					printf("%u could win in one turn.\n", i);
+				else
+					printf("%u could not win.\n", i);
+			}
+
+			printf("\n");
 		}
 	}
 }
@@ -1440,12 +1691,13 @@ void	Game::OnPlay			(Uint8 Index)
 
 	if (IsValidPlay(Index))
 	{
-		Uint8 Type = Players[Current].GetType(Index);
+		Uint8	Type = Players[Current].GetType(Index),
+				Value = Players[Current].GetValue(Index);
 
 		if ((Type == CARD_MILEAGE) || (Type == CARD_REMEDY) || (Type == CARD_SAFETY))
 			DiscardedCard = Players[Current].OnPlay(Index);
 		else
-			Players[1 - Current].ReceiveHazard(Players[Current].GetValue(Index));
+			Players[1 - Current].ReceiveHazard(Value);
 
 		// We "discard" after playing, but the card doesn't actually go to the discard pile.
 		Players[Current].Discard(Index);
@@ -1468,6 +1720,9 @@ void	Game::OnPlay			(Uint8 Index)
 				// We immediately draw another card after playing a safety.
 				Players[Current].Draw();
 		}
+
+		if (Value < CARD_NULL_NULL)
+			++ExposedCards[Value];
 
 		//Save game after every card played
 		Save();
@@ -1692,6 +1947,9 @@ void	Game::Reset				(void)
 			break;
 		}
 	}
+
+	for (int i = 0; i < CARD_NULL_NULL; ++i)
+		ExposedCards[i] = 0;
 
 	Dirty = true;
 	Extended = false;

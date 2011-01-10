@@ -76,6 +76,21 @@ bool			Card::Draw				(Deck * Source)
 		return false;
 }
 
+Uint8			Card::GetCardFromMileage	(int Mileage)
+{
+	Uint8 ReturnValue = 0xFF;
+
+	if ((Mileage >= 25) && (Mileage <= 200) && ((Mileage % 25) == 0))
+	{
+		if (Mileage == 200)
+			ReturnValue = CARD_MILEAGE_200;
+		else if (Mileage <= 100)
+			ReturnValue = MILEAGE_OFFSET + ((Mileage / 25) - 1);
+	}
+
+	return ReturnValue;
+}
+
 const char *	Card::GetFileFromValue		(Uint8 ArgValue, bool CoupFourre)
 {
 	switch (ArgValue)

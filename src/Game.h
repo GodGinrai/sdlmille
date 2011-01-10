@@ -53,7 +53,7 @@ const	char	TUTORIAL_TEXT[][MESSAGE_SIZE] = {
 					"Click it again to play.",
 					"Or click here to discard.",
 					"Enjoy the game!"	};
-const	char	VERSION_TEXT[] = "0.5.3-9 (beta3 test10)";
+const	char	VERSION_TEXT[] = "0.5.3-10 (beta3 test11)";
 const	int		SAVE_FORMAT_VER = 7;
 
 enum	{ANIMATION_PLAY = 0, ANIMATION_DISCARD, ANIMATION_RETURN, ANIMATION_COUP_FOURRE_BOUNCE, ANIMATION_INVALID};
@@ -74,6 +74,7 @@ private:
 	void		ClearMessage	(void);
 	bool		ComputerDecideExtension	(void)			const;
 	void		ComputerMove	(void);
+	void		ComputerSmartMove	(void);
 	void		DelayUntil		(Uint32 Ticks);
 	bool		Discard			(void);
 	bool		EndOfGame		(void)					const;
@@ -81,7 +82,10 @@ private:
 	void		GetScores		(void);
 	void		IgnoreEvents	(void);
 	bool		InDiscardPile	(int X, int Y)			const;
+	Uint8		InHand			(Uint8 Value)			const;
+	bool		IsOneCardAway	(Uint8 PlayerIndex)		const;
 	bool		IsValidPlay		(Uint8 Index)			const;
+	Uint8		KnownCards		(Uint8 Value)			const;
 	void		OnClick			(int X, int Y);
 	void		OnEvent			(SDL_Event * Event);
 	bool		OnInit			(void);
@@ -144,7 +148,8 @@ private:
 				Modal,
 				Scene, LastScene,
 				DeckCount, OldDeckCount,
-				DiscardTop, OldDiscardTop;
+				DiscardTop, OldDiscardTop,
+				ExposedCards[CARD_NULL_NULL];
 	char		Message[MESSAGE_SIZE];
 	TTF_Font	*DrawFont, *GameOverBig, *GameOverSmall;
 

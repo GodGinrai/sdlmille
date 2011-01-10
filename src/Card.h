@@ -39,6 +39,7 @@ public:
 	const	Card &			Copy				(const Card & Source);
 			bool			Discard				(void);
 			bool			Draw				(Deck * Source);
+	static	Uint8			GetCardFromMileage	(int Mileage);
 	static	const char *	GetFileFromValue	(Uint8 ArgValue, bool CoupFourre = false);
 	static	Uint8			GetMatchingSafety	(Uint8 HazardValue);
 	static	Uint8			GetMileValue		(Uint8 ArgValue);
