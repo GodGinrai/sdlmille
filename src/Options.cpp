@@ -35,8 +35,9 @@ bool	Options::ReadOpts	(void)
 {
 	using namespace std;
 
-	bool Success = false;
 	struct	stat	Info;
+	bool	Success = false;
+	
 
 	if (stat("options.dat", &Info) == 0)	//File exists
 	{
@@ -46,12 +47,26 @@ bool	Options::ReadOpts	(void)
 		{
 			OptsFile.seekg(0);
 			OptsFile.read((char *) &SavedOptionVersion, sizeof(Uint16));
-			if ((SavedOptionVersion == OPTION_VERSION) && OptsFile.good())
+			if (OptsFile.good())
 			{
-				OptsFile.read(&Opts, 1);
-				Success = OptsFile.good();
-				OptsFile.close();
+				if (SavedOptionVersion == OPTION_VERSION)
+				{
+					OptsFile.read(&Opts, 1);
+					Success = OptsFile.good();
+				}
 			}
+			else
+			{
+				//Upgrading from beta2 or earlier, without version number
+				OptsFile.clear();
+				OptsFile.seekg(0);
+				OptsFile.read(&Opts, 1);
+
+				if (OptsFile.good())
+					SetOpt(OPTION_ANIMATIONS, true);
+			}
+
+			OptsFile.close();
 		}
 	}
 

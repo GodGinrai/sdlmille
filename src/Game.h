@@ -53,7 +53,7 @@ const	char	TUTORIAL_TEXT[][MESSAGE_SIZE] = {
 					"Click it again to play.",
 					"Or click here to discard.",
 					"Enjoy the game!"	};
-const	char	VERSION_TEXT[] = "0.5.3-10 (beta3 test11)";
+const	char	VERSION_TEXT[] = "0.5.3-11 (beta3 test12)";
 const	int		SAVE_FORMAT_VER = 7;
 
 enum	{ANIMATION_PLAY = 0, ANIMATION_DISCARD, ANIMATION_RETURN, ANIMATION_COUP_FOURRE_BOUNCE, ANIMATION_INVALID};
@@ -72,6 +72,7 @@ private:
 	bool		CheckForChange	(Uint8 &Old, Uint8 &New);
 	void		CheckTableau	(SDL_Surface *Target);
 	void		ClearMessage	(void);
+	bool		CouldHoldCard	(Uint8 PlayerIndex, Uint8 Value)	const;
 	bool		ComputerDecideExtension	(void)			const;
 	void		ComputerMove	(void);
 	void		ComputerSmartMove	(void);

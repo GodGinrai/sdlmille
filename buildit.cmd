@@ -12,7 +12,7 @@ set DEBUG=0
 set SRC=Card.cpp Deck.cpp Player.cpp Main.cpp Game.cpp Hand.cpp Surface.cpp Tableau.cpp Options.cpp Dimensions.cpp
 
 @rem List the libraries needed
-set LIBS=-lSDL -lSDL_ttf -lSDL_image -lPDL
+set LIBS=-lSDL -lSDL_ttf -lSDL_image -lpdl
 
 @rem Name your output executable
 set OUTFILE=..\pkg\SDLMille.elf
