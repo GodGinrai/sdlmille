@@ -39,6 +39,7 @@ namespace _SDLMille
 	Scene = SCENE_MAIN;
 	LastScene = SCENE_INVALID;
 	DownIndex = 0xFF;
+	Outcome = OUTCOME_NOT_OVER;
 
 	Animating = false;
 	Dirty = true;
@@ -46,7 +47,6 @@ namespace _SDLMille
 	Extended = false;
 	ExtensionDeclined = false;
 	Frozen = false;
-	HumanWon = false;
 	MouseDown = false;
 	Running = true;
 
@@ -400,8 +400,6 @@ void	Game::ComputerMove		(void)
 	Uint32	StartTicks	= SDL_GetTicks(),
 			EndTicks = StartTicks + ((GameOptions.GetOpt(OPTION_FAST_GAME)) ? 200 : 500);
 
-	//ComputerSmartMove();
-
 	for (int i = 0; i < HAND_SIZE; ++i)
 	{	
 		CheckTableau(Window);
@@ -471,63 +469,120 @@ void	Game::ComputerSmartMove	(void)
 			MatchingCard = Value - SAFETY_OFFSET;
 
 			if (Card::GetMatchingSafety(Players[Current].GetQualifiedCoupFourre()) == Value)
+			{
 				// This is a coup fourre
 				Weight[i][1] += 100;
+				printf("A0: Coup Fourre\n");
+			}
 			else if (IsOneCardAway(Opponent))
+			{
 				// Opponent could end the game. Play safeties now
 				Weight[i][1] += 90;
+				printf("A10: Game almost over\n");
+			}
 			else if (KnownCards(MatchingCard) == EXISTING_CARDS[MatchingCard])
 			{
 				if ((Value != CARD_SAFETY_RIGHT_OF_WAY) || (KnownCards(CARD_HAZARD_STOP) == EXISTING_CARDS[CARD_HAZARD_STOP]))
+				{
 					// No more hazards to go with it. No use in saving it
 					Weight[i][1] += 50;
+					printf("A20: No more hazards\n");
+				}
 			}
 		}
 		else if (Type == CARD_REMEDY)
 		{
+			Uint8	TopCard = CARD_NULL_NULL;
+
 			// Get corresponding hazard
 			MatchingCard = Value - 5;
+			TopCard = Players[Current].GetTopCard((MatchingCard == CARD_HAZARD_SPEED_LIMIT));
 
 			if (Players[Current].HasSafety(Card::GetMatchingSafety(MatchingCard)))
+			{
 				// We have the safety, our remedy is useless
 				Weight[i][1] -= 100;
-			else if (Players[Current].GetTopCard((MatchingCard == CARD_HAZARD_SPEED_LIMIT)) == MatchingCard)
+				printf("B0: We have the safety\n");
+			}
+			else if ((TopCard == MatchingCard) || ((Value == CARD_REMEDY_ROLL) && ((Card::GetTypeFromValue(TopCard) == CARD_REMEDY) || TopCard == CARD_NULL_NULL)))
+			{
 				// A remedy for our current hazard
 				Weight[i][1] += 50;
+				printf("B10: Remedy for current hazard\n");
+			}
 			else if (KnownCards(MatchingCard) == EXISTING_CARDS[MatchingCard])
 			{
+				printf("B20: Exhausted hazard\n");
 				// Matching hazard has been exhausted. No use in keeping the remedy
 				if (Value != CARD_REMEDY_ROLL)
 					//We need to keep roll cards on hand even if there are no more stop cards
 					Weight[i][1] -= 100;
+				else
+					Weight[i][1] += 10;
+			}
+			else if (InHand(Value) >= (EXISTING_CARDS[MatchingCard] - ExposedCards[MatchingCard]))
+			{
+				printf("B30: More remedies than remaining hazards\n");
+				if (Value != CARD_REMEDY_ROLL)
+					// We have more than we need.
+					Weight[i][1] -= 100;
+				else
+					Weight[i][1] += 10;
+			}
+			else if (Value == CARD_REMEDY_ROLL)
+			{
+				if (!Players[Current].HasSafety(CARD_SAFETY_RIGHT_OF_WAY) && !InHand(CARD_SAFETY_RIGHT_OF_WAY))
+				{
+					// Roll cards are more valuable than other remedies.
+					Weight[i][1] += 40;
+					printf("B40: Roll card without RoW safety\n");
+				}
 			}
 			else
+			{
+				printf("B50: General remedy\n");
 				// Doesn't help us right now, but we might need it later
 				Weight[i][1] += 30;
+			}
 		}
 		else if (Type == CARD_HAZARD)
 		{
 			MatchingCard = Value + 5;
 
 			if (Players[Opponent].HasSafety(Card::GetMatchingSafety(Value)))
+			{
+				printf("C0: Opponent has safety\n");
 				// Hazard is useless
 				Weight[i][1] -= 100;
+			}
 			else
 			{
 				if (IsOneCardAway(Opponent) || (OpponentMileage == 0) || (OpponentRemaining <= 200) || (OpponentLead >= 200))
+				{
+					printf("C10: Must stop opponent\n");
 					// We need to stop the opponent if possible
 					Weight[i][1] += 60;
+				}
 				else
+				{
+					printf("C20: General hazard\n");
 					// No pressing need right now
 					Weight[i][1] += 40;
+				}
 
 				if (!CouldHoldCard(Opponent, MatchingCard))
+				{
+					printf("C30: Opponent could not hold remedy\n");
 					// Opponent could not hold the remedy
 					Weight[i][1] += 10;
+				}
 
 				if (!CouldHoldCard(Opponent, Card::GetMatchingSafety(Value)))
+				{
+					printf("C40: Opponent could not hold safety\n");
 					// Opponent could not hold the safety
 					Weight[i][1] += 15;
+				}
 			}
 		}
 		else if (Type == CARD_MILEAGE)
@@ -537,6 +592,7 @@ void	Game::ComputerSmartMove	(void)
 
 			if (MileValue > MyRemaining)
 			{
+				printf("D0: Goes past end of trip\n");
 				// Would take us past end of trip
 				if (Extended)
 					// Card is totally useless
@@ -547,6 +603,7 @@ void	Game::ComputerSmartMove	(void)
 			}
 			else if (MileValue == MyRemaining)
 			{
+				printf("D10: Takes us exactly to end of hand\n");
 				// Card could win us the hand
 				Weight[i][1] += 50;
 
@@ -563,18 +620,33 @@ void	Game::ComputerSmartMove	(void)
 				{
 					// Hand could be one in two plays, including this play
 					if (InHand(Card::GetCardFromMileage(MileBalance)) > 0)
+					{
+						printf("D20: Complimentary mileage to finish trip\n");
 						// We have the mileage necessary to do so
 						Weight[i][1] += 50;
+					}
 					else if (MileBalance == 25)
+					{
+						printf("D30: Leaves us with only 25 miles left\n");
 						// Prefer not to end up with only 25 miles remaining
 						Weight[i][1] -= 10;
+					}
+					else
+					{
+						printf("D40: Gets us within 100 miles\n");
+						Weight[i][1] += 20;
+					}
 				}
 				else
+				{
+					printf("D50: Nearing end; balance greater than 100\n");
 					// Give some weight to it, but not much. Would require at least two more plays after this one
-					Weight[i][1] += 30;
+					Weight[i][1] += 10;
+				}
 			}
 			else
 			{
+				printf("D60: Weighted on mileage\n");
 				// Weight based on mileage
 				Weight[i][1] += (MileValue / 25) * 6;
 
@@ -587,17 +659,79 @@ void	Game::ComputerSmartMove	(void)
 			}
 
 			if ((Value == CARD_MILEAGE_200) && (My200Count > 1))
+			{
+				printf("Can't play any more 200's\n");
 				// Useless card
 				Weight[i][1] = -100;
+			}
 		}
 
 		if (Type == CARD_MILEAGE)
-			printf("%u %u %i\n", i, Value, Weight[i][1]);
+			printf("%u %u %i %u\n", i, Value, Weight[i][1], Card::GetMileValue(Value));
 		else
 			printf("%u %u %i %s\n", i, Value, Weight[i][1], CARD_CAPTIONS[Value]); 
 	}
 
 	printf("\n");
+
+	for (int i = 0; i < (HAND_SIZE - 1); ++i)
+	{
+		bool Sorted = false;
+
+		while (!Sorted)
+		{
+			Sorted = true;
+
+			for (int j = i; j < (HAND_SIZE - 1); ++j)
+			{
+				if (Weight[j][1] < Weight[j+1][1])
+				{
+					int	TempIndex = Weight[j][0],
+						TempWeight = Weight[j][1];
+
+					Weight[j][0] = Weight[j+1][0];
+					Weight[j][1] = Weight[j+1][1];
+
+					Weight[j+1][0] = TempIndex;
+					Weight[j+1][1] = TempWeight;
+
+					Sorted = false;
+				}
+			}
+		}
+	}
+
+	bool Played = false;
+
+	for (int i = 0; i < HAND_SIZE; ++i)
+	{
+		Uint8 Index = Weight[i][0];
+
+		if (IsValidPlay(Index) && (Weight[i][1] != 0))
+		{
+			Pop(Index);
+			Pop(Index);
+
+			Played = true;
+			break;
+		}
+	}
+	
+	if (!Played)
+	{
+		for (int i = HAND_SIZE - 1; i >= 0; --i)
+		{
+			Uint8 Index = Weight[i][0];
+
+			if ((Players[Current].GetValue(Index) < CARD_NULL_NULL) && (Weight[i][1] != 0))
+			{
+				Pop(Index);
+
+				if (Discard())
+					break;
+			}
+		}
+	}
 }
 
 bool	Game::CouldHoldCard		(Uint8 PlayerIndex, Uint8 Value)			const
@@ -1411,7 +1545,10 @@ void	Game::OnEvent			(SDL_Event * Event)
 		}
 		else if (Event->type == SDL_KEYUP)	//Debugging purposes
 		{
-			return;
+			//return;
+
+			OnRender(Window, true, false);
+			SDL_SaveBMP(Window, "screenshot.bmp");
 			/*
 			for (int i = 0; i < CARD_NULL_NULL; ++i)
 				printf("%2u %2u\n", i, ExposedCards[i]);
@@ -1554,17 +1691,33 @@ bool	Game::OnInit			(void)
 		ClearMessage();
 
 		Background.SetImage("gfx/scenes/green_bg.png");
-		if (HumanWon)
+
+		if (Outcome == OUTCOME_WON)
 			Overlay[0].SetImage("gfx/overlays/game_over_won.jpg");
 		else
 			Overlay[0].SetImage("gfx/overlays/game_over.png");
+
+		switch (Outcome)
+		{
+		case	OUTCOME_WON:
+			Overlay[1].SetText("Congrats! Click to start next game.", GameOverSmall, &White, &Black);
+			break;
+		case	OUTCOME_DRAW:
+			Overlay[1].SetText("It's a draw! Click to start next game.", GameOverSmall, &White);
+			break;
+		case	OUTCOME_LOST:
+			Overlay[1].SetText("Aw, shucks! Click to start next game.", GameOverSmall, &White);
+			break;
+		default:
+			Overlay[1].SetText("Click to start next hand!", GameOverSmall, &White);
+		}
 
 		if (GameOverBig)
 		{
 			ScoreSurfaces[0][1].Clear();
 			ScoreSurfaces[0][2].Clear();
 
-			if (HumanWon)
+			if (Outcome == OUTCOME_WON)
 			{
 				ScoreSurfaces[0][1].SetText("Human", GameOverBig, &White, &Black);
 				ScoreSurfaces[0][2].SetText("CPU", GameOverBig, &White, &Black);
@@ -1585,7 +1738,7 @@ bool	Game::OnInit			(void)
 
 					if (j == 0)
 					{
-						if (HumanWon)
+						if (Outcome == OUTCOME_WON)
 						{
 							for (int k = 0; k < PLAYER_COUNT; ++k)
 							{
@@ -1609,7 +1762,7 @@ bool	Game::OnInit			(void)
 					{
 						int Score = ScoreBreakdown[j - 1][i - 1];
 
-						if (HumanWon)
+						if (Outcome == OUTCOME_WON)
 						{
 							if ((Score != 0) && ShowRow)
 								ScoreSurfaces[i][j].SetInteger(Score, GameOverBig, (i >= (SCORE_CATEGORY_COUNT - 2)), &White, &Black);
@@ -1695,11 +1848,10 @@ void	Game::OnLoop			(void)
 
 			GetScores();
 
-			/* Do the captioning here */
+			/* Determine outcome of hand */
 			if (ScoreBreakdown[0][SCORE_CATEGORY_COUNT - 1] >= 5000)
 			{
-				bool Won = true;
-				bool Tied = false;
+				Outcome = OUTCOME_WON;
 
 				for (int i = 1; i < PLAYER_COUNT; ++i)
 				{
@@ -1707,40 +1859,24 @@ void	Game::OnLoop			(void)
 					{
 						if (ScoreBreakdown[i][SCORE_CATEGORY_COUNT - 1] > ScoreBreakdown[0][SCORE_CATEGORY_COUNT - 1])
 						{
-							Won = false;
-							Tied = false;
+							Outcome = OUTCOME_LOST;
 							break;
 						}
 						else
-							Tied = true;
+							Outcome = OUTCOME_DRAW;
 					}
-				}
-
-				if (Tied)
-					Overlay[1].SetText("It's a draw! Click to start next game.", GameOverSmall, &White);
-				else if (Won)
-				{
-					Overlay[1].SetText("Congrats! Click to start next game.", GameOverSmall, &White, &Black);
-					HumanWon = true;
 				}
 			}
 			else
 			{
-				bool ComputerWon = false;
-
 				for (int i = 1; i < PLAYER_COUNT; ++i)
 				{
 					if (ScoreBreakdown[i][SCORE_CATEGORY_COUNT - 1] >= 5000)
 					{
-						ComputerWon = true;
+						Outcome = OUTCOME_LOST;
 						break;
 					}
 				}
-
-				if (ComputerWon)
-					Overlay[1].SetText("Aw, shucks! Click to start next game.", GameOverSmall, &White);
-				else
-					Overlay[1].SetText("Click to start next hand!", GameOverSmall, &White);
 			}
 
 			LastScene = Scene;
@@ -1753,7 +1889,7 @@ void	Game::OnLoop			(void)
 			ChangePlayer();
 
 		if (Current == 1)
-			ComputerMove();
+			ComputerSmartMove();
 	}
 }
 
@@ -1991,6 +2127,8 @@ void	Game::Pop				(Uint8 Index)
 
 void	Game::Reset				(void)
 {
+	PlayerStats.ProcessHand(Outcome, ScoreBreakdown[0][9], ScoreBreakdown[0][11]);
+
 	//Reset my stuff
 	if (SourceDeck)
 		SourceDeck->Shuffle();
@@ -2027,7 +2165,6 @@ void	Game::Reset				(void)
 	Dirty = true;
 	Extended = false;
 	ExtensionDeclined = false;
-	HumanWon = false;
 
 	Current = 0;
 
@@ -2047,6 +2184,8 @@ void	Game::Reset				(void)
 	//Odds and ends
 	if (SourceDeck)
 		OldDeckCount = DeckCount = SourceDeck->CardsLeft();
+
+	Outcome = OUTCOME_NOT_OVER;
 }
 
 void	Game::ResetPortal		(void)

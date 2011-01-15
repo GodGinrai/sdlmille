@@ -25,6 +25,7 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Player.h"
 #include "Options.h"
+#include "Stats.h"
 
 namespace _SDLMille
 {
@@ -126,6 +127,7 @@ private:
 	Player		Players[PLAYER_COUNT];
 	Options		GameOptions;
 	Deck		*SourceDeck;
+	Stats		PlayerStats;
 	SDL_Rect	Portal;
 	SDL_Color	Black,
 				White;
@@ -141,7 +143,6 @@ private:
 				Dragging,
 				Extended, ExtensionDeclined,
 				Frozen,
-				HumanWon,
 				MouseDown,
 				Running;
 	Uint8		Current,				// Index of current player
@@ -150,7 +151,8 @@ private:
 				Scene, LastScene,
 				DeckCount, OldDeckCount,
 				DiscardTop, OldDiscardTop,
-				ExposedCards[CARD_NULL_NULL];
+				ExposedCards[CARD_NULL_NULL],
+				Outcome;
 	char		Message[MESSAGE_SIZE];
 	TTF_Font	*DrawFont, *GameOverBig, *GameOverSmall;
 

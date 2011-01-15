@@ -197,6 +197,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\Stats.cpp"
+				>
+			</File>
+			<File
 				RelativePath="src\Surface.cpp"
 				>
 			</File>
@@ -240,6 +244,10 @@
 			</File>
 			<File
 				RelativePath=".\src\resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\Stats.h"
 				>
 			</File>
 			<File

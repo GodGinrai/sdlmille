@@ -18,7 +18,6 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "Options.h"
-#include <fstream>
 
 namespace _SDLMille
 {

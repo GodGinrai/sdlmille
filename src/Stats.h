@@ -17,8 +17,8 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 (See file LICENSE for full text of license)
 */
 
-#ifndef	_SDLMILLE_OPTIONS_H
-#define	_SDLMILLE_OPTIONS_H
+#ifndef	_SDLMILLE_STATS_H
+#define	_SDLMILLE_STATS_H
 
 #include <sys/stat.h>
 #include <fstream>
@@ -27,24 +27,24 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 namespace	_SDLMille
 {
 
-const	int		OPTION_COUNT = 3;
-const	Uint16	OPTION_VERSION = 2;
-const	char	OPTION_NAMES[OPTION_COUNT][14] = {"Card captions", "Fast game", "Animations"};
-enum	{OPTION_CARD_CAPTIONS = 0, OPTION_FAST_GAME, OPTION_ANIMATIONS};
+const	Uint16	STATS_VERSION = 1;
 
-class	Options
+enum	{OUTCOME_WON = 0, OUTCOME_DRAW, OUTCOME_LOST, OUTCOME_NOT_OVER};
+
+class	Stats
 {
 public:
-			Options		(void):	SavedOptionVersion (0), Opts (5)	{}
-			~Options	(void)										{}
-	bool	GetOpt		(int Option)								const;
-	bool	ReadOpts	(void);
-	bool	SaveOpts	(void)										const;
-	bool	SetOpt		(int Option, bool Switch);
-	bool	SwitchOpt	(int Option);
+			Stats			(void);
+	void	GetStats		(Uint16 &HighHand, Uint16 &HighGame, Uint32 &Draws, Uint32 &Losses, Uint32 &Wins);
+	void	ProcessHand		(Uint8 Outcome, Uint16 HandScore, Uint16 GameScore);
 private:
-	Uint16	SavedOptionVersion;
-	char	Opts;
+	bool	Load			(void);
+	bool	Save			(void);
+	Uint16	HighGameScore,
+			HighHandScore;
+	Uint32	DrawCount,
+			LossCount,
+			WinCount;
 };
 
 }
