@@ -35,14 +35,22 @@ class	Stats
 {
 public:
 			Stats			(void);
-	void	GetStats		(Uint16 &HighHand, Uint16 &HighGame, Uint32 &Draws, Uint32 &Losses, Uint32 &Wins);
+	void	GetStats		(Uint16 &HighHand, Uint16 &HighGame, Uint32 &AverageHand, Uint32 &AverageGame, Uint32 &Draws, Uint32 &Losses, Uint32 &Wins);
 	void	ProcessHand		(Uint8 Outcome, Uint16 HandScore, Uint16 GameScore);
 private:
 	bool	Load			(void);
 	bool	Save			(void);
-	Uint16	HighGameScore,
-			HighHandScore;
-	Uint32	DrawCount,
+
+	Uint8	RunningHandCount;
+
+	Uint16	AverageGameScore,
+			AverageHandScore,
+			HighGameScore,
+			HighHandScore,
+			RunningHandScore;
+
+	Uint32	RunningGameScore,
+			DrawCount,
 			LossCount,
 			WinCount;
 };

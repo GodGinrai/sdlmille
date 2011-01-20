@@ -1271,7 +1271,7 @@ void	Game::OnClick			(int X, int Y)
 				ShowModal(MODAL_GAME_MENU);
 			else if ((X >= 130) && (X <= 190) && (Y >= 281) && (Y <= 311))	//Clicked Confirm
 			{
-				Reset();
+				Reset(false);
 				for (int i = 0; i < PLAYER_COUNT; ++i)
 					RunningScores[i] = 0;
 
@@ -1290,7 +1290,7 @@ void	Game::OnClick			(int X, int Y)
 			if ((Y >= 300) && (Y <= 355))	//Clicked Play
 			{
 				ShowLoading();
-				Reset();
+				Reset(false);
 				LastScene = SCENE_MAIN;
 				Scene =		SCENE_GAME_PLAY;
 				Restore();
@@ -1298,7 +1298,7 @@ void	Game::OnClick			(int X, int Y)
 			if ((Y >= 370) && (Y <= 415))	//Clicked Learn
 			{
 				ShowLoading();
-				Reset();
+				Reset(false);
 				LastScene = SCENE_MAIN;
 				Scene =		SCENE_LEARN_1;
 			}
@@ -1355,7 +1355,7 @@ void	Game::OnClick			(int X, int Y)
 
 	else if (Scene == SCENE_GAME_OVER)	//Score screen, start new game on click
 	{
-		Reset();
+		Reset(true);
 		LastScene = Scene;
 		Scene = SCENE_GAME_PLAY;
 		Save();
@@ -2125,9 +2125,10 @@ void	Game::Pop				(Uint8 Index)
 		Players[Current].Pop(Index);	//If it's not already popped, pop it
 }
 
-void	Game::Reset				(void)
+void	Game::Reset				(bool SaveStats)
 {
-	PlayerStats.ProcessHand(Outcome, ScoreBreakdown[0][9], ScoreBreakdown[0][11]);
+	if (SaveStats)
+		PlayerStats.ProcessHand(Outcome, ScoreBreakdown[0][9], ScoreBreakdown[0][11]);
 
 	//Reset my stuff
 	if (SourceDeck)

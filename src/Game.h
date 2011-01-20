@@ -95,7 +95,7 @@ private:
 	void		OnPlay			(Uint8 Index);
 	void		OnRender		(SDL_Surface *Target, bool Force = false, bool Flip = true);
 	void		Pop				(Uint8 Index);
-	void		Reset			(void);
+	void		Reset			(bool SaveStats = false);
 	void		ResetPortal		(void);
 	bool		Restore			(void);
 	bool		Save			(void);
