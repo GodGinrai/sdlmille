@@ -27,15 +27,20 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 namespace	_SDLMille
 {
 
+const	int		STAT_CAPTIONS_SIZE	= 7,
+				AVERAGE_EVERY = 20;	/*	Playing one perfect hand per minute, 8 hours a day, it would take over 100 years
+										to overload AverageHandScore	*/
 const	Uint16	STATS_VERSION = 1;
 
+const	char	STAT_CAPTIONS[STAT_CAPTIONS_SIZE][40] =
+					{	"High Hand Score", "High Game Score", "Average Hand Score", "Average Game Score", "Draws", "Losses", "Wins"	};
 enum	{OUTCOME_WON = 0, OUTCOME_DRAW, OUTCOME_LOST, OUTCOME_NOT_OVER};
 
 class	Stats
 {
 public:
 			Stats			(void);
-	void	GetStats		(Uint16 &HighHand, Uint16 &HighGame, Uint32 &AverageHand, Uint32 &AverageGame, Uint32 &Draws, Uint32 &Losses, Uint32 &Wins);
+	void	GetStats		(Uint32 &HighHand, Uint32 &HighGame, Uint32 &AverageHand, Uint32 &AverageGame, Uint32 &Draws, Uint32 &Losses, Uint32 &Wins);
 	void	ProcessHand		(Uint8 Outcome, Uint16 HandScore, Uint16 GameScore);
 private:
 	bool	Load			(void);
@@ -43,13 +48,15 @@ private:
 
 	Uint8	RunningHandCount;
 
-	Uint16	AverageGameScore,
-			AverageHandScore,
-			HighGameScore,
+	Uint16	HighGameScore,
 			HighHandScore,
 			RunningHandScore;
 
-	Uint32	RunningGameScore,
+	Uint32	AverageGameScore,
+			AverageHandScore,
+			GameAveragesDone,
+			HandAveragesDone,
+			RunningGameScore,
 			DrawCount,
 			LossCount,
 			WinCount;

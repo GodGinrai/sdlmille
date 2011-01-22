@@ -1547,8 +1547,9 @@ void	Game::OnEvent			(SDL_Event * Event)
 		{
 			//return;
 
-			OnRender(Window, true, false);
-			SDL_SaveBMP(Window, "screenshot.bmp");
+			ShowModal(MODAL_STATS);
+			//OnRender(Window, true, false);
+			//SDL_SaveBMP(Window, "screenshot.bmp");
 			/*
 			for (int i = 0; i < CARD_NULL_NULL; ++i)
 				printf("%2u %2u\n", i, ExposedCards[i]);
@@ -2283,6 +2284,9 @@ void	Game::ShowMessage		(const char * Msg, bool SetDirty)
 
 bool	Game::ShowModal			(Uint8 ModalName)
 {
+	Uint32	Statistics[7];
+	Uint32	*ArrayPtr = Statistics;
+
 	if (ModalName < MODAL_NONE)
 	{
 		Modal = ModalName;
@@ -2318,6 +2322,12 @@ bool	Game::ShowModal			(Uint8 ModalName)
 			ModalSurface.SetImage("gfx/modals/quit.png");
 			ModalSurface.Render(60, 165, Window);
 			break;
+		case	MODAL_STATS:
+			PlayerStats.GetStats(Statistics[0], Statistics[1], Statistics[2], Statistics[3], Statistics[4], Statistics[5], Statistics[6]);
+			for (int i = 0; i < STAT_CAPTIONS_SIZE; ++i)
+				printf("%s %u\n", STAT_CAPTIONS[i], Statistics[i]);
+
+			Modal = MODAL_NONE;
 		}		
 
 		SDL_Flip(Window);
