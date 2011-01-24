@@ -33,20 +33,22 @@ const	int		STAT_CAPTIONS_SIZE	= 7,
 const	Uint16	STATS_VERSION = 1;
 
 const	char	STAT_CAPTIONS[STAT_CAPTIONS_SIZE][40] =
-					{	"High Hand Score", "High Game Score", "Average Hand Score", "Average Game Score", "Draws", "Losses", "Wins"	};
+					{	"Wins", "Losses", "Draws", "High Game", "Average Game", "High Hand", "Average Hand"	};
 enum	{OUTCOME_WON = 0, OUTCOME_DRAW, OUTCOME_LOST, OUTCOME_NOT_OVER};
 
 class	Stats
 {
 public:
 			Stats			(void);
-	void	GetStats		(Uint32 &HighHand, Uint32 &HighGame, Uint32 &AverageHand, Uint32 &AverageGame, Uint32 &Draws, Uint32 &Losses, Uint32 &Wins);
+	void	GetStats		(Uint32 &Wins, Uint32 &Losses, Uint32 &Draws, Uint32 &HighGame, Uint32 &AverageGame, Uint32 &HighHand, Uint32 &AverageHand);
 	void	ProcessHand		(Uint8 Outcome, Uint16 HandScore, Uint16 GameScore);
 private:
 	bool	Load			(void);
 	bool	Save			(void);
 
-	Uint8	RunningHandCount;
+	Uint8	GameRemainder,
+			HandRemainder,
+			RunningHandCount;
 
 	Uint16	HighGameScore,
 			HighHandScore,

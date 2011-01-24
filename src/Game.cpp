@@ -437,239 +437,285 @@ void	Game::ComputerSmartMove	(void)
 {
 	Uint8	ArrayIndex = 0,
 			MatchingCard = 0,
-			Opponent = 1 - Current,
-			Processed[CARD_NULL_NULL];
+			Opponent = 1 - Current;
+
+	Uint32	EndTicks = 0,
+			StartTicks = SDL_GetTicks();
+
 	int		TripLength = (Extended) ? 1000 : 700,
+			CardsLeft = 0,
 			MyMileage = Players[Current].GetMileage(),
 			MyRemaining = TripLength - MyMileage,
 			OpponentMileage = Players[Opponent].GetMileage(),
 			OpponentLead = OpponentMileage - MyMileage,
 			OpponentRemaining = TripLength - OpponentMileage,
+			SafetiesInHand = 0,
+			UnknownSafeties = 0,
 			Weight[HAND_SIZE][2];
-	bool	MyselfLimited = Players[Current].IsLimited(),
+
+	bool	MileageSaved = false,
+			MyselfLimited = Players[Current].IsLimited(),
 			MyselfOneMoveAway = false,
 			MyselfRolling = Players[Current].IsRolling(),
+			NonZeroFound = false,
 			OpponentLimited = Players[Opponent].IsLimited(),
 			OpponentOneMoveAway = false,
 			OpponentRolling = Players[Opponent].IsRolling();
 
-	for (int i = 0; i < CARD_NULL_NULL; ++i)
-		Processed[i] = 0;
+	char	DebugMessage[MESSAGE_SIZE];
+
+	if (SourceDeck != 0)
+		CardsLeft = SourceDeck->CardsLeft();
+
+	for (int i = 0; i < SAFETY_COUNT; ++i)
+	{
+		if (InHand(i + SAFETY_OFFSET))
+			++SafetiesInHand;
+		else if (ExposedCards[i + SAFETY_OFFSET] < 1)
+			++UnknownSafeties;
+	}
 
 	for (int i = 0; i < HAND_SIZE; ++i)
 	{
-		Uint8	Type = Players[Current].GetType(i),
-				Value = Players[Current].GetValue(i);
+		Uint8	Type	= Players[Current].GetType(i),
+				Value	= Players[Current].GetValue(i);
 
 		Weight[i][0] = i;
 		Weight[i][1] = 0;
 
-		if (Type == CARD_SAFETY)
+		if (Value < CARD_NULL_NULL)
 		{
-			MatchingCard = Value - SAFETY_OFFSET;
+			if (Type == CARD_SAFETY)
+			{
+				MatchingCard = Value - SAFETY_OFFSET;
 
-			if (Card::GetMatchingSafety(Players[Current].GetQualifiedCoupFourre()) == Value)
-			{
-				// This is a coup fourre
-				Weight[i][1] += 100;
-				printf("A0: Coup Fourre\n");
-			}
-			else if (IsOneCardAway(Opponent))
-			{
-				// Opponent could end the game. Play safeties now
-				Weight[i][1] += 90;
-				printf("A10: Game almost over\n");
-			}
-			else if (KnownCards(MatchingCard) == EXISTING_CARDS[MatchingCard])
-			{
-				if ((Value != CARD_SAFETY_RIGHT_OF_WAY) || (KnownCards(CARD_HAZARD_STOP) == EXISTING_CARDS[CARD_HAZARD_STOP]))
+				if (Card::GetMatchingSafety(Players[Current].GetQualifiedCoupFourre()) == Value)
 				{
-					// No more hazards to go with it. No use in saving it
-					Weight[i][1] += 50;
-					printf("A20: No more hazards\n");
+					// This is a coup fourre
+					Weight[i][1] += 100;
+					printf("A0: Coup Fourre\n");
 				}
-			}
-		}
-		else if (Type == CARD_REMEDY)
-		{
-			Uint8	TopCard = CARD_NULL_NULL;
-
-			// Get corresponding hazard
-			MatchingCard = Value - 5;
-			TopCard = Players[Current].GetTopCard((MatchingCard == CARD_HAZARD_SPEED_LIMIT));
-
-			if (Players[Current].HasSafety(Card::GetMatchingSafety(MatchingCard)))
-			{
-				// We have the safety, our remedy is useless
-				Weight[i][1] -= 100;
-				printf("B0: We have the safety\n");
-			}
-			else if ((TopCard == MatchingCard) || ((Value == CARD_REMEDY_ROLL) && ((Card::GetTypeFromValue(TopCard) == CARD_REMEDY) || TopCard == CARD_NULL_NULL)))
-			{
-				// A remedy for our current hazard
-				Weight[i][1] += 50;
-				printf("B10: Remedy for current hazard\n");
-			}
-			else if (KnownCards(MatchingCard) == EXISTING_CARDS[MatchingCard])
-			{
-				printf("B20: Exhausted hazard\n");
-				// Matching hazard has been exhausted. No use in keeping the remedy
-				if (Value != CARD_REMEDY_ROLL)
-					//We need to keep roll cards on hand even if there are no more stop cards
-					Weight[i][1] -= 100;
-				else
-					Weight[i][1] += 10;
-			}
-			else if (InHand(Value) >= (EXISTING_CARDS[MatchingCard] - ExposedCards[MatchingCard]))
-			{
-				printf("B30: More remedies than remaining hazards\n");
-				if (Value != CARD_REMEDY_ROLL)
-					// We have more than we need.
-					Weight[i][1] -= 100;
-				else
-					Weight[i][1] += 10;
-			}
-			else if (Value == CARD_REMEDY_ROLL)
-			{
-				if (!Players[Current].HasSafety(CARD_SAFETY_RIGHT_OF_WAY) && !InHand(CARD_SAFETY_RIGHT_OF_WAY))
+				else if (IsOneCardAway(Current) || IsOneCardAway(Opponent))
 				{
-					// Roll cards are more valuable than other remedies.
-					Weight[i][1] += 40;
+					// Game could end. Play safeties now.
+					Weight[i][1] += 95;
+					printf("A10: Game almost over\n");
+				}
+				else if (KnownCards(MatchingCard) == EXISTING_CARDS[MatchingCard])
+				{
+					if ((Value != CARD_SAFETY_RIGHT_OF_WAY) || (KnownCards(CARD_HAZARD_STOP) == EXISTING_CARDS[CARD_HAZARD_STOP]))
+					{
+						// No more hazards to go with it. No use in saving it
+						Weight[i][1] += 50;
+						printf("A20: No more hazards\n");
+					}
+				}
+				else if ((SafetiesInHand + UnknownSafeties) <= (CardsLeft + 1))
+				{
+					printf("A40: Play safeties so we can snatch up the last few cards\n");
+					Weight[i][1] += 90;
+				}
+				else
+					printf("A30: General safety\n");
+			}
+			else if (Type == CARD_REMEDY)
+			{
+				Uint8	TopCard = CARD_NULL_NULL;
+
+				// Get corresponding hazard
+				MatchingCard = Value - 5;
+				TopCard = Players[Current].GetTopCard((MatchingCard == CARD_HAZARD_SPEED_LIMIT));
+
+				if (Players[Current].HasSafety(Card::GetMatchingSafety(MatchingCard)))
+				{
+					// We have the safety, our remedy is useless
+					Weight[i][1] -= 100;
+					printf("B0: We have the safety\n");
+				}
+				else if ((TopCard == MatchingCard) || ((Value == CARD_REMEDY_ROLL) && !MyselfRolling && (Card::GetTypeFromValue(TopCard) != CARD_HAZARD)))
+				{
+					// A remedy for our current situation
+					Weight[i][1] += 50;
+					printf("B10: Remedy for current hazard\n");
+				}
+				else if (KnownCards(MatchingCard) == EXISTING_CARDS[MatchingCard])
+				{
+					printf("B20: Exhausted hazard\n");
+					// Matching hazard has been exhausted. No use in keeping the remedy
+					if (Value != CARD_REMEDY_ROLL)
+						//We need to keep roll cards on hand even if there are no more stop cards
+						Weight[i][1] -= 100;
+					else
+						Weight[i][1] += 10;
+				}
+				else if (InHand(Value) > (EXISTING_CARDS[MatchingCard] - KnownCards(MatchingCard)))
+				{
+					printf("B30: More remedies than remaining hazards\n");
+					if (Value != CARD_REMEDY_ROLL)
+						// We have more than we need.
+						Weight[i][1] -= 100;
+					else
+						Weight[i][1] += 10;
+				}
+				else if (Value == CARD_REMEDY_ROLL)
+				{
+					if (InHand(CARD_SAFETY_RIGHT_OF_WAY))
+						Weight[i][1] += 20;
+					else
+						Weight[i][1] += 40;
+
 					printf("B40: Roll card without RoW safety\n");
 				}
-			}
-			else
-			{
-				printf("B50: General remedy\n");
-				// Doesn't help us right now, but we might need it later
-				Weight[i][1] += 30;
-			}
-		}
-		else if (Type == CARD_HAZARD)
-		{
-			MatchingCard = Value + 5;
-
-			if (Players[Opponent].HasSafety(Card::GetMatchingSafety(Value)))
-			{
-				printf("C0: Opponent has safety\n");
-				// Hazard is useless
-				Weight[i][1] -= 100;
-			}
-			else
-			{
-				if (IsOneCardAway(Opponent) || (OpponentMileage == 0) || (OpponentRemaining <= 200) || (OpponentLead >= 200))
-				{
-					printf("C10: Must stop opponent\n");
-					// We need to stop the opponent if possible
-					Weight[i][1] += 60;
-				}
 				else
 				{
-					printf("C20: General hazard\n");
-					// No pressing need right now
-					Weight[i][1] += 40;
-				}
-
-				if (!CouldHoldCard(Opponent, MatchingCard))
-				{
-					printf("C30: Opponent could not hold remedy\n");
-					// Opponent could not hold the remedy
-					Weight[i][1] += 10;
-				}
-
-				if (!CouldHoldCard(Opponent, Card::GetMatchingSafety(Value)))
-				{
-					printf("C40: Opponent could not hold safety\n");
-					// Opponent could not hold the safety
-					Weight[i][1] += 15;
+					printf("B50: General remedy\n");
+					// Doesn't help us right now, but we might need it later
+					Weight[i][1] += 30;
 				}
 			}
-		}
-		else if (Type == CARD_MILEAGE)
-		{
-			Uint8	MileValue	= Card::GetMileValue(Value),
-					My200Count	= Players[Current].GetPileCount(CARD_MILEAGE_200);
-
-			if (MileValue > MyRemaining)
+			else if (Type == CARD_HAZARD)
 			{
-				printf("D0: Goes past end of trip\n");
-				// Would take us past end of trip
-				if (Extended)
-					// Card is totally useless
+				MatchingCard = Value + 5;
+
+				if (Players[Opponent].HasSafety(Card::GetMatchingSafety(Value)))
+				{
+					printf("C0: Opponent has safety\n");
+					// Hazard is useless
 					Weight[i][1] -= 100;
+				}
 				else
-					// Card is mostly useless
-					Weight[i][1] -= 50;
-			}
-			else if (MileValue == MyRemaining)
-			{
-				printf("D10: Takes us exactly to end of hand\n");
-				// Card could win us the hand
-				Weight[i][1] += 50;
-
-				if ((Value != CARD_MILEAGE_200) || (My200Count > 0))
-					// Prefer not to play 200 if we haven't already
-					Weight[i][1] += 40;
-			}
-			else if (MyRemaining <= 200)
-			{
-				// We have to be careful in the last part of the trip
-				int	MileBalance = MyRemaining - MileValue;
-
-				if (MileBalance <= 100)
 				{
-					// Hand could be one in two plays, including this play
-					if (InHand(Card::GetCardFromMileage(MileBalance)) > 0)
+					if (IsOneCardAway(Opponent) || (OpponentMileage == 0) || (OpponentRemaining <= 200) || (OpponentLead >= 200))
 					{
-						printf("D20: Complimentary mileage to finish trip\n");
-						// We have the mileage necessary to do so
-						Weight[i][1] += 50;
-					}
-					else if (MileBalance == 25)
-					{
-						printf("D30: Leaves us with only 25 miles left\n");
-						// Prefer not to end up with only 25 miles remaining
-						Weight[i][1] -= 10;
+						printf("C10: Must stop opponent\n");
+						// We need to stop the opponent if possible
+						Weight[i][1] += 60;
 					}
 					else
 					{
-						printf("D40: Gets us within 100 miles\n");
-						Weight[i][1] += 20;
+						printf("C20: General hazard\n");
+						// No pressing need right now
+						Weight[i][1] += 40;
 					}
+
+					if (!CouldHoldCard(Opponent, MatchingCard))
+					{
+						printf("C30: Opponent could not hold remedy\n");
+						// Opponent could not hold the remedy
+						Weight[i][1] += 10;
+					}
+
+					if (!CouldHoldCard(Opponent, Card::GetMatchingSafety(Value)))
+					{
+						printf("C40: Opponent could not hold safety\n");
+						// Opponent could not hold the safety
+						Weight[i][1] += 15;
+					}
+				}
+			}
+			else if (Type == CARD_MILEAGE)
+			{
+				Uint8	MileValue	= Card::GetMileValue(Value),
+						My200Count	= Players[Current].GetPileCount(CARD_MILEAGE_200);
+
+				if (MileValue > MyRemaining)
+				{
+					printf("D0: Goes past end of trip\n");
+					// Would take us past end of trip
+					if (Extended)
+						// Card is totally useless
+						Weight[i][1] -= 100;
+					else
+						// Card is mostly useless
+						Weight[i][1] -= 50;
+				}
+				else if (MileValue == MyRemaining)
+				{
+					printf("D10: Takes us exactly to end of hand\n");
+					// Card could win us the hand
+					Weight[i][1] += 50;
+
+					if ((Value != CARD_MILEAGE_200) || (My200Count > 0))
+						// Prefer not to play 200 if we haven't already
+						Weight[i][1] += 40;
+				}
+				else if (MyRemaining <= 200)
+				{
+					// We have to be careful in the last part of the trip
+					int	MileBalance = MyRemaining - MileValue;
+
+					if (MileBalance <= 100)
+					{
+						// Hand could be one in two plays, including this play
+						if (MileBalance == MileValue)
+						{
+							if (InHand(Value) > 1)
+							{
+								Weight[i][1] += 50;
+								printf("D20: Complimentary mileage to finish trip\n");
+							}
+						}
+						else if (InHand(Card::GetCardFromMileage(MileBalance)) > 0)
+						{
+							printf("D20: Complimentary mileage to finish trip\n");
+							Weight[i][1] += 50;
+						}
+						else if (MileBalance > 25)
+						{
+							printf("D40: Gets us close, but not too close\n");
+							if (MileBalance > 50)
+								Weight[i][1] += 25;
+							else
+								Weight[i][1] += 20;
+						}
+					}
+					else
+					{
+						printf("D50: Nearing end; balance greater than 100\n");
+						// Give some weight to it, but not much. Would require at least two more plays after this one
+						Weight[i][1] += 10;
+					}
+				}
+				else if ((MyMileage == 0) && (MileValue == 25) && !InHand(CARD_MILEAGE_50) && !MyselfRolling && !MileageSaved && !Players[Current].HasSafety(CARD_SAFETY_RIGHT_OF_WAY) && !InHand(CARD_SAFETY_RIGHT_OF_WAY) && (KnownCards(CARD_HAZARD_SPEED_LIMIT) < EXISTING_CARDS[CARD_HAZARD_SPEED_LIMIT]))
+				{
+					printf("D51: Saving 25 because there's no 50\n");
+					MileageSaved = true;
+				}
+				else if ((MyMileage == 0) && (MileValue == 50) && !MyselfRolling && !MileageSaved && !Players[Current].HasSafety(CARD_SAFETY_RIGHT_OF_WAY) && !InHand(CARD_SAFETY_RIGHT_OF_WAY) && (KnownCards(CARD_HAZARD_SPEED_LIMIT) < EXISTING_CARDS[CARD_HAZARD_SPEED_LIMIT]))
+				{
+					printf("D52: Saving 50\n");
+					MileageSaved = true;
 				}
 				else
 				{
-					printf("D50: Nearing end; balance greater than 100\n");
-					// Give some weight to it, but not much. Would require at least two more plays after this one
-					Weight[i][1] += 10;
-				}
-			}
-			else
-			{
-				printf("D60: Weighted on mileage\n");
-				// Weight based on mileage
-				Weight[i][1] += (MileValue / 25) * 6;
+					printf("D60: Weighted on mileage\n");
+					// Weight based on mileage
+					Weight[i][1] += (MileValue / 25) * 6;
 
-				if (Value == CARD_MILEAGE_200)
+					if (Value == CARD_MILEAGE_200)
+					{
+						if (My200Count < 1)
+							// Prefer not to play
+							Weight[i][1] /= 4;
+					}
+				}
+
+				if ((Value == CARD_MILEAGE_200) && (My200Count > 1))
 				{
-					if (My200Count < 1)
-						// Prefer not to play
-						Weight[i][1] /= 4;
+					printf("Can't play any more 200's\n");
+					// Useless card
+					Weight[i][1] = -100;
 				}
 			}
 
-			if ((Value == CARD_MILEAGE_200) && (My200Count > 1))
-			{
-				printf("Can't play any more 200's\n");
-				// Useless card
-				Weight[i][1] = -100;
-			}
-		}
+			if (Type == CARD_MILEAGE)
+				printf("%u %u %i %u\n", i, Value, Weight[i][1], Card::GetMileValue(Value));
+			else
+				printf("%u %u %i %s\n", i, Value, Weight[i][1], CARD_CAPTIONS[Value]);
 
-		if (Type == CARD_MILEAGE)
-			printf("%u %u %i %u\n", i, Value, Weight[i][1], Card::GetMileValue(Value));
-		else
-			printf("%u %u %i %s\n", i, Value, Weight[i][1], CARD_CAPTIONS[Value]); 
+			if (Weight[i][1] != 0)
+				NonZeroFound = true;
+		}
 	}
 
 	printf("\n");
@@ -707,7 +753,7 @@ void	Game::ComputerSmartMove	(void)
 	{
 		Uint8 Index = Weight[i][0];
 
-		if (IsValidPlay(Index) && (Weight[i][1] != 0))
+		if (IsValidPlay(Index) && ((Weight[i][1] != 0) || (!NonZeroFound)))
 		{
 			Pop(Index);
 			Pop(Index);
@@ -723,7 +769,7 @@ void	Game::ComputerSmartMove	(void)
 		{
 			Uint8 Index = Weight[i][0];
 
-			if ((Players[Current].GetValue(Index) < CARD_NULL_NULL) && (Weight[i][1] != 0))
+			if ((Players[Current].GetValue(Index) < CARD_NULL_NULL) && ((Weight[i][1] != 0) || (!NonZeroFound)))
 			{
 				Pop(Index);
 
@@ -732,6 +778,10 @@ void	Game::ComputerSmartMove	(void)
 			}
 		}
 	}
+
+	EndTicks = SDL_GetTicks();
+	sprintf(DebugMessage, "Computer move took %u ms", (EndTicks - StartTicks));
+	ShowMessage(DebugMessage);
 }
 
 bool	Game::CouldHoldCard		(Uint8 PlayerIndex, Uint8 Value)			const
@@ -1250,6 +1300,9 @@ void	Game::OnClick			(int X, int Y)
 							Modal = MODAL_NONE;
 							Dirty = true;
 							break;
+						case 2:
+							ShowModal(MODAL_STATS);
+							break;
 						}
 					}
 				}
@@ -1279,7 +1332,18 @@ void	Game::OnClick			(int X, int Y)
 
 				Modal = MODAL_NONE;
 			}
-		}	
+		}
+		else if (Modal == MODAL_STATS)
+		{
+			if ((X >= 251) && (X <= 277))
+			{
+				if ((Y >= 83) && (Y <= 109))	// Clicked the X button
+				{
+					Modal = MODAL_NONE;
+					Dirty = true;
+				}
+			}
+		}
 		return;
 	}
 
@@ -2285,7 +2349,6 @@ void	Game::ShowMessage		(const char * Msg, bool SetDirty)
 bool	Game::ShowModal			(Uint8 ModalName)
 {
 	Uint32	Statistics[7];
-	Uint32	*ArrayPtr = Statistics;
 
 	if (ModalName < MODAL_NONE)
 	{
@@ -2324,10 +2387,17 @@ bool	Game::ShowModal			(Uint8 ModalName)
 			break;
 		case	MODAL_STATS:
 			PlayerStats.GetStats(Statistics[0], Statistics[1], Statistics[2], Statistics[3], Statistics[4], Statistics[5], Statistics[6]);
-			for (int i = 0; i < STAT_CAPTIONS_SIZE; ++i)
-				printf("%s %u\n", STAT_CAPTIONS[i], Statistics[i]);
 
-			Modal = MODAL_NONE;
+			ModalSurface.Render(40, 80, Window);
+
+			for (int i = 0; i < STAT_CAPTIONS_SIZE; ++i)
+			{
+				MenuSurfaces[i][0].SetText(STAT_CAPTIONS[i], GameOverBig, &White);
+				MenuSurfaces[i][1].SetInteger(Statistics[i], GameOverBig, true, &White);
+
+				MenuSurfaces[i][0].Render(50, 120 + (i * 40), Window);
+				MenuSurfaces[i][1].Render(220, 120 + (i * 40), Window);
+			}
 		}		
 
 		SDL_Flip(Window);

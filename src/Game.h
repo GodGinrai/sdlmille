@@ -30,7 +30,7 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 namespace _SDLMille
 {
 
-const Uint8 MENU_ITEM_COUNT = 2,
+const Uint8 MENU_ITEM_COUNT = 3,
 			PLAYER_COUNT = 2,
 			SCORE_CATEGORY_COUNT = 12,
 			SCORE_COLUMN_COUNT = 3,
@@ -43,7 +43,7 @@ const	char	CARD_CAPTIONS[CARD_SAFETY_RIGHT_OF_WAY + 1][20] = {
 const	int		HAND_COORDS[] =	{	146,
 									146,
 									3	};
-const	char	MENU_ITEM_NAMES[MENU_ITEM_COUNT][10] = {"New game", "Main menu"};
+const	char	MENU_ITEM_NAMES[MENU_ITEM_COUNT][11] = {"New game", "Main menu", "Statistics"};
 const	char	SCORE_CAT_NAMES[SCORE_CATEGORY_COUNT][15] = {
 					"Mileage", "Safeties", "All 4", "Coup Fourres", "Completed Trip", "Delayed Action", "Safe Trip",
 					"Extension", "Shutout", "Subtotal", "Previous", "Total"	};
@@ -54,7 +54,7 @@ const	char	TUTORIAL_TEXT[][MESSAGE_SIZE] = {
 					"Click it again to play.",
 					"Or click here to discard.",
 					"Enjoy the game!"	};
-const	char	VERSION_TEXT[] = "0.5.4 (beta3)";
+const	char	VERSION_TEXT[] = "0.5.4-1 (beta4 test1)";
 const	int		SAVE_FORMAT_VER = 7;
 
 enum	{ANIMATION_PLAY = 0, ANIMATION_DISCARD, ANIMATION_RETURN, ANIMATION_COUP_FOURRE_BOUNCE, ANIMATION_INVALID};

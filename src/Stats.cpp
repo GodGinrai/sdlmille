@@ -24,16 +24,16 @@ namespace	_SDLMille
 
 	Stats::Stats	(void)
 {
-	AverageGameScore = AverageHandScore = DrawCount = HighGameScore = HighHandScore = GameAveragesDone =
-	HandAveragesDone = LossCount = RunningGameScore = RunningHandCount = RunningHandScore = WinCount = 0;
+	AverageGameScore = AverageHandScore = DrawCount = GameAveragesDone = GameRemainder = HandRemainder = HandAveragesDone =
+	HighGameScore = HighHandScore = LossCount = RunningGameScore = RunningHandCount = RunningHandScore = WinCount = 0;
 }
 
-void	Stats::GetStats		(Uint32 &HighHand, Uint32 &HighGame, Uint32 &AverageHand, Uint32 &AverageGame, Uint32 &Draws, Uint32 &Losses, Uint32 &Wins)
+void	Stats::GetStats		(Uint32 &Wins, Uint32 &Losses, Uint32 &Draws, Uint32 &HighGame, Uint32 &AverageGame, Uint32 &HighHand, Uint32 &AverageHand)
 {
+	Load();
+
 	Uint32	GameCount = DrawCount + LossCount + WinCount,
 			RunningGameCount = (GameCount % AVERAGE_EVERY);
-
-	Load();
 
 	HighGame = HighGameScore;
 	HighHand = HighHandScore;
@@ -45,7 +45,10 @@ void	Stats::GetStats		(Uint32 &HighHand, Uint32 &HighGame, Uint32 &AverageHand, 
 		double	PortionDone = RunningHandCount / (double) AVERAGE_EVERY;
 
 		if (HandAveragesDone > 0)
+		{
 			AverageHand *= HandAveragesDone;
+			AverageHand += HandRemainder;
+		}
 
 		AverageHand += (RunningHandScore / RunningHandCount) * PortionDone;
 		AverageHand /= (double) (HandAveragesDone + PortionDone);
@@ -58,7 +61,10 @@ void	Stats::GetStats		(Uint32 &HighHand, Uint32 &HighGame, Uint32 &AverageHand, 
 		double	PortionDone = RunningGameCount / (double) AVERAGE_EVERY;
 
 		if (GameAveragesDone > 0)
+		{
 			AverageGame *= GameAveragesDone;
+			AverageGame += GameRemainder;
+		}
 
 		AverageGame += (RunningGameScore / RunningGameCount) * PortionDone;
 		AverageGame /= (double) (GameAveragesDone + PortionDone);
@@ -85,11 +91,15 @@ void	Stats::ProcessHand	(Uint8 Outcome, Uint16 HandScore, Uint16 GameScore)
 	if (RunningHandCount == AVERAGE_EVERY)
 	{
 		if (HandAveragesDone > 0)
+		{
 			AverageHandScore *= HandAveragesDone;
+			AverageHandScore += HandRemainder;
+		}
 
 		AverageHandScore += (RunningHandScore / AVERAGE_EVERY);
 
 		++HandAveragesDone;
+		HandRemainder = AverageHandScore % AVERAGE_EVERY;
 		AverageHandScore /= HandAveragesDone;
 
 		RunningHandCount = 0;
@@ -123,11 +133,15 @@ void	Stats::ProcessHand	(Uint8 Outcome, Uint16 HandScore, Uint16 GameScore)
 		if ((GameCount % AVERAGE_EVERY) == 0)
 		{
 			if (GameAveragesDone > 0)
+			{
 				AverageGameScore *= GameAveragesDone;
+				AverageGameScore += GameRemainder;
+			}
 
 			AverageGameScore += (RunningGameScore / AVERAGE_EVERY);
 
 			++GameAveragesDone;
+			GameRemainder = AverageGameScore % AVERAGE_EVERY;
 			AverageGameScore /= GameAveragesDone;
 
 			RunningGameScore = 0;
@@ -161,6 +175,8 @@ bool	Stats::Load		(void)
 				if (SavedStatsVersion == STATS_VERSION)
 				{
 					StatsFile.read((char*) &RunningHandCount, sizeof(Uint8));
+					StatsFile.read((char*) &GameRemainder, sizeof(Uint8));
+					StatsFile.read((char*) &HandRemainder, sizeof(Uint8));
 					StatsFile.read((char*) &HighGameScore, sizeof(Uint16));
 					StatsFile.read((char*) &HighHandScore, sizeof(Uint16));
 					StatsFile.read((char*) &AverageGameScore, sizeof(Uint32));
@@ -197,6 +213,8 @@ bool	Stats::Save		(void)
 
 		StatsFile.write((char*) &STATS_VERSION, sizeof(Uint16));
 		StatsFile.write((char*) &RunningHandCount, sizeof(Uint8));
+		StatsFile.write((char*) &GameRemainder, sizeof(Uint8));
+		StatsFile.write((char*) &HandRemainder, sizeof(Uint8));
 		StatsFile.write((char*) &HighGameScore, sizeof(Uint16));
 		StatsFile.write((char*) &HighHandScore, sizeof(Uint16));
 		StatsFile.write((char*) &AverageGameScore, sizeof(Uint32));
