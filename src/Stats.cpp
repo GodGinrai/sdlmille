@@ -42,16 +42,19 @@ void	Stats::GetStats		(Uint32 &Wins, Uint32 &Losses, Uint32 &Draws, Uint32 &High
 
 	if (RunningHandCount > 0)
 	{
-		double	PortionDone = RunningHandCount / (double) AVERAGE_EVERY;
+		double	PortionDone = RunningHandCount / (double) AVERAGE_EVERY,
+				WorkingAverage = AverageHand;
 
 		if (HandAveragesDone > 0)
 		{
-			AverageHand *= HandAveragesDone;
-			AverageHand += HandRemainder;
+			WorkingAverage *= HandAveragesDone;
+			WorkingAverage += HandRemainder;
 		}
 
-		AverageHand += (RunningHandScore / RunningHandCount) * PortionDone;
-		AverageHand /= (double) (HandAveragesDone + PortionDone);
+		WorkingAverage += (RunningHandScore / RunningHandCount) * PortionDone;
+		WorkingAverage /= (double) (HandAveragesDone + PortionDone);
+
+		AverageHand = WorkingAverage;
 	}
 
 	AverageGame = AverageGameScore;

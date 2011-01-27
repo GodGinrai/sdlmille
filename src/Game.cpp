@@ -449,6 +449,7 @@ void	Game::ComputerSmartMove	(void)
 			OpponentMileage = Players[Opponent].GetMileage(),
 			OpponentLead = OpponentMileage - MyMileage,
 			OpponentRemaining = TripLength - OpponentMileage,
+			OutstandingStopHazards = 0,
 			SafetiesInHand = 0,
 			UnknownSafeties = 0,
 			Weight[HAND_SIZE][2];
@@ -474,6 +475,16 @@ void	Game::ComputerSmartMove	(void)
 		else if (ExposedCards[i + SAFETY_OFFSET] < 1)
 			++UnknownSafeties;
 	}
+
+	for (int i = 0; i <= CARD_HAZARD_STOP; ++i)
+	{
+		if (i == CARD_HAZARD_SPEED_LIMIT)
+			continue;
+
+		OutstandingStopHazards += (EXISTING_CARDS[i] - KnownCards(i));
+	}
+
+	printf("%u outstanding stop hazards\n\n", OutstandingStopHazards);
 
 	for (int i = 0; i < HAND_SIZE; ++i)
 	{
@@ -510,13 +521,15 @@ void	Game::ComputerSmartMove	(void)
 						printf("A20: No more hazards\n");
 					}
 				}
-				else if ((SafetiesInHand + UnknownSafeties) <= (CardsLeft + 1))
+				else if ((SafetiesInHand + UnknownSafeties) >= (CardsLeft + 1))
 				{
 					printf("A40: Play safeties so we can snatch up the last few cards\n");
 					Weight[i][1] += 90;
 				}
 				else
 					printf("A30: General safety\n");
+
+				//	5 paths for safeties
 			}
 			else if (Type == CARD_REMEDY)
 			{
@@ -532,7 +545,30 @@ void	Game::ComputerSmartMove	(void)
 					Weight[i][1] -= 100;
 					printf("B0: We have the safety\n");
 				}
-				else if ((TopCard == MatchingCard) || ((Value == CARD_REMEDY_ROLL) && !MyselfRolling && (Card::GetTypeFromValue(TopCard) != CARD_HAZARD)))
+				else if (Value == CARD_REMEDY_ROLL)
+				{
+					if (!MyselfRolling && ((Card::GetTypeFromValue(TopCard) == CARD_REMEDY) || (TopCard == CARD_HAZARD_STOP)))
+					{
+						printf("B02: We can roll\n");
+						Weight[i][1] += 50;
+					}
+					else if (InHand(CARD_REMEDY_ROLL) > std::min(3, OutstandingStopHazards))
+					{
+						printf("B04: More than min(3, OutstandingStopHazards) roll cards\n");
+						Weight[i][1] -= 100;
+					}
+					else if (InHand(CARD_SAFETY_RIGHT_OF_WAY))
+					{
+						printf("B06: Roll card with RoW in hand\n");
+						Weight[i][1] += 20;
+					}
+					else
+					{
+						printf("B08: Roll card without RoW in hand\n");
+						Weight[i][1] += 40;
+					}
+				}
+				else if (TopCard == MatchingCard)
 				{
 					// A remedy for our current situation
 					Weight[i][1] += 50;
@@ -542,29 +578,19 @@ void	Game::ComputerSmartMove	(void)
 				{
 					printf("B20: Exhausted hazard\n");
 					// Matching hazard has been exhausted. No use in keeping the remedy
-					if (Value != CARD_REMEDY_ROLL)
-						//We need to keep roll cards on hand even if there are no more stop cards
-						Weight[i][1] -= 100;
-					else
-						Weight[i][1] += 10;
+					Weight[i][1] -= 100;
 				}
 				else if (InHand(Value) > (EXISTING_CARDS[MatchingCard] - KnownCards(MatchingCard)))
 				{
 					printf("B30: More remedies than remaining hazards\n");
-					if (Value != CARD_REMEDY_ROLL)
-						// We have more than we need.
-						Weight[i][1] -= 100;
-					else
-						Weight[i][1] += 10;
+					// We have more than we need.
+					Weight[i][1] -= 100;
 				}
-				else if (Value == CARD_REMEDY_ROLL)
+				else if (InHand(Value + 5) > 0)
 				{
-					if (InHand(CARD_SAFETY_RIGHT_OF_WAY))
-						Weight[i][1] += 20;
-					else
-						Weight[i][1] += 40;
-
-					printf("B40: Roll card without RoW safety\n");
+					printf("B40: We have the safety\n");
+					// We hold the safety; the remedy is less valuable.
+					Weight[i][1] += 20;
 				}
 				else
 				{
@@ -572,6 +598,8 @@ void	Game::ComputerSmartMove	(void)
 					// Doesn't help us right now, but we might need it later
 					Weight[i][1] += 30;
 				}
+
+				//	10 paths for remedies
 			}
 			else if (Type == CARD_HAZARD)
 			{
@@ -612,6 +640,8 @@ void	Game::ComputerSmartMove	(void)
 						Weight[i][1] += 15;
 					}
 				}
+
+				//	5 paths for hazards
 			}
 			else if (Type == CARD_MILEAGE)
 			{
@@ -647,17 +677,14 @@ void	Game::ComputerSmartMove	(void)
 					if (MileBalance <= 100)
 					{
 						// Hand could be one in two plays, including this play
-						if (MileBalance == MileValue)
+						if ((MileBalance == MileValue) && (InHand(Value) > 1))
 						{
-							if (InHand(Value) > 1)
-							{
-								Weight[i][1] += 50;
-								printf("D20: Complimentary mileage to finish trip\n");
-							}
-						}
-						else if (InHand(Card::GetCardFromMileage(MileBalance)) > 0)
-						{
+							Weight[i][1] += 50;
 							printf("D20: Complimentary mileage to finish trip\n");
+						}
+						else if ((MileBalance != MileValue) && (InHand(Card::GetCardFromMileage(MileBalance)) > 0))
+						{
+							printf("D22: Complimentary mileage to finish trip\n");
 							Weight[i][1] += 50;
 						}
 						else if (MileBalance > 25)
@@ -706,19 +733,21 @@ void	Game::ComputerSmartMove	(void)
 					// Useless card
 					Weight[i][1] = -100;
 				}
+
+				//	13 paths for mileage
 			}
 
 			if (Type == CARD_MILEAGE)
-				printf("%u %u %i %u\n", i, Value, Weight[i][1], Card::GetMileValue(Value));
+				printf("%u %u %i %u\n\n", i, Value, Weight[i][1], Card::GetMileValue(Value));
 			else
-				printf("%u %u %i %s\n", i, Value, Weight[i][1], CARD_CAPTIONS[Value]);
+				printf("%u %u %i %s\n\n", i, Value, Weight[i][1], CARD_CAPTIONS[Value]);
 
 			if (Weight[i][1] != 0)
 				NonZeroFound = true;
 		}
 	}
 
-	printf("\n");
+	printf("\n\n\n");
 
 	for (int i = 0; i < (HAND_SIZE - 1); ++i)
 	{
@@ -2276,13 +2305,19 @@ bool	Game::Restore			(void)
 		int SaveVersion = 0;
 		SaveFile.read((char *) &SaveVersion, sizeof(int));
 
-		if (SaveVersion == SAVE_FORMAT_VER)
+		if ((SaveVersion >= 7) && (SaveVersion <= 8))
 		{
 			SaveFile.read((char *) &Current, sizeof(Uint8));
 			SaveFile.read((char *) &RunningScores, sizeof(int) * 2);
 			SaveFile.read((char *) &DiscardTop, sizeof(Uint8));
 			SaveFile.read((char *) &Extended, sizeof(bool));
 			SaveFile.read((char *) &ExtensionDeclined, sizeof(bool));
+
+			if (SaveVersion >= 8)
+			{
+				for (int i = 0; i < CARD_NULL_NULL; ++i)
+					SaveFile.read((char *) &ExposedCards[i], sizeof(Uint8));
+			}
 
 			SourceDeck->Restore(SaveFile);
 
@@ -2316,6 +2351,11 @@ bool	Game::Save				(void)
 		SaveFile.write((char *) &DiscardTop, sizeof(Uint8));
 		SaveFile.write((char *) &Extended, sizeof(bool));
 		SaveFile.write((char *) &ExtensionDeclined, sizeof(bool));
+		
+		/* Added in version 8 (beta4) */
+		for (int i = 0; i < CARD_NULL_NULL; ++i)
+			SaveFile.write((char *) &ExposedCards[i], sizeof(Uint8));
+		/* End added in version 8 */
 		
 		SourceDeck->Save(SaveFile);
 
