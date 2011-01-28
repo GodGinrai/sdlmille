@@ -437,6 +437,8 @@ void	Game::ComputerSmartMove	(void)
 {
 	Uint8	ArrayIndex = 0,
 			MatchingCard = 0,
+			MyTopCard = Players[Current].GetTopCard(),
+			MyTopCardType = Card::GetTypeFromValue(MyTopCard),
 			Opponent = 1 - Current;
 
 	Uint32	EndTicks = 0,
@@ -512,24 +514,45 @@ void	Game::ComputerSmartMove	(void)
 					Weight[i][1] += 95;
 					printf("A10: Game almost over\n");
 				}
-				else if (KnownCards(MatchingCard) == EXISTING_CARDS[MatchingCard])
-				{
-					if ((Value != CARD_SAFETY_RIGHT_OF_WAY) || (KnownCards(CARD_HAZARD_STOP) == EXISTING_CARDS[CARD_HAZARD_STOP]))
-					{
-						// No more hazards to go with it. No use in saving it
-						Weight[i][1] += 50;
-						printf("A20: No more hazards\n");
-					}
-				}
 				else if ((SafetiesInHand + UnknownSafeties) >= (CardsLeft + 1))
 				{
 					printf("A40: Play safeties so we can snatch up the last few cards\n");
 					Weight[i][1] += 90;
 				}
+				else if (Value == CARD_SAFETY_RIGHT_OF_WAY)
+				{
+					if ((OutstandingStopHazards == 0) || ((KnownCards(CARD_HAZARD_STOP) == EXISTING_CARDS[CARD_HAZARD_STOP]) && (KnownCards(CARD_HAZARD_SPEED_LIMIT) == EXISTING_CARDS[CARD_HAZARD_SPEED_LIMIT])))
+					{
+						// No hazards left. No value in keeping it.
+						printf("A12: RoW, no hazards left\n");
+						Weight[i][1] += 50;
+					}
+					else if ((OpponentLead >= 200) || (OpponentRemaining <= 200))
+					{
+						if (!MyselfRolling && ((MyTopCardType == CARD_REMEDY) || (MyTopCard == CARD_HAZARD_STOP)) && (InHand(CARD_REMEDY_ROLL) < 1))
+						{
+							// Get us rolling
+							Weight[i][1] += 60;
+							printf("A14: RoW to get rolling. Have no roll cards\n");
+						}
+						else if (MyselfLimited && (InHand(CARD_REMEDY_END_LIMIT) < 1))
+						{
+							// Unlimit ourselves
+							Weight[i][1] += 60;
+							printf("A16: RoW to remove limit. Have no end-limit card\n");
+						}
+					}
+				}
+				else if (KnownCards(MatchingCard) == EXISTING_CARDS[MatchingCard])
+				{
+					// No more hazards to go with it. No use in saving it
+					Weight[i][1] += 50;
+					printf("A20: No more hazards\n");
+				}
 				else
 					printf("A30: General safety\n");
 
-				//	5 paths for safeties
+				//	8 paths for safeties
 			}
 			else if (Type == CARD_REMEDY)
 			{
@@ -547,7 +570,7 @@ void	Game::ComputerSmartMove	(void)
 				}
 				else if (Value == CARD_REMEDY_ROLL)
 				{
-					if (!MyselfRolling && ((Card::GetTypeFromValue(TopCard) == CARD_REMEDY) || (TopCard == CARD_HAZARD_STOP)))
+					if (!MyselfRolling && ((Card::GetTypeFromValue(TopCard) == CARD_REMEDY) || (TopCard == CARD_HAZARD_STOP) || (TopCard == CARD_NULL_NULL)))
 					{
 						printf("B02: We can roll\n");
 						Weight[i][1] += 50;
@@ -645,8 +668,9 @@ void	Game::ComputerSmartMove	(void)
 			}
 			else if (Type == CARD_MILEAGE)
 			{
-				Uint8	MileValue	= Card::GetMileValue(Value),
-						My200Count	= Players[Current].GetPileCount(CARD_MILEAGE_200);
+				Uint8	MileValue		= Card::GetMileValue(Value),
+						My200Count		= Players[Current].GetPileCount(CARD_MILEAGE_200),
+						My200Remaining	= 2 - My200Count;
 
 				if (MileValue > MyRemaining)
 				{
@@ -658,6 +682,96 @@ void	Game::ComputerSmartMove	(void)
 					else
 						// Card is mostly useless
 						Weight[i][1] -= 50;
+				}
+				else if (Value == CARD_MILEAGE_200)
+				{
+					if (My200Remaining < 1)
+					{
+						//Useless. Cannot be played.
+						Weight[i][1] -= 100;
+						printf("D02: Unusuable 200");
+					}
+					else if (!MyselfRolling && (InHand(CARD_MILEAGE_200) > My200Remaining))
+					{
+						// More 200's than we can use
+						Weight[i][1] -= 100;
+						printf("D12: More than we can use\n");
+					}
+					else if (MyRemaining >= 200)
+					{
+						if (MyRemaining == 200)
+						{
+							if (My200Count == 0)
+							{
+								if (InHand(CARD_MILEAGE_100) > 1)
+								{
+									if (IsOneCardAway(Opponent))
+									{
+										// Finish this game up before the opponent has a chance
+										Weight[i][1] += 90;
+										printf("D04: 200 to finish trip, opponent one card away\n");
+									}
+									else
+									{
+										// The 100's will weight in at 25. We don't want to supercede them.
+										Weight[i][1] += 20;
+										printf("D06: Deferring to 2x 100 in hand\n");
+									}
+								}
+								else if (InHand(CARD_MILEAGE_100) > 0)
+								{
+									// Prefer not to play 200 since we have 100 in hand
+									Weight[i][1] += 20;
+								}
+								else
+								{
+									//Play it, we don't have any 100's.
+									Weight[i][1] += 90;
+									printf("D08: First 200, with no 100's in hand\n");
+								}
+							}
+							else
+							{
+								// No sense in holding back, since we've already played a 200
+								Weight[i][1] += 90;
+								printf("D09: Not our first 200, no reason to hold back\n");
+							}
+
+						}
+						else if (MyRemaining == 225)
+						{
+							// Prefer a 25 over this
+							Weight[i][1] += 5;
+							printf("D05: Would leave us with only 25 left\n");
+						}
+						else if ((OpponentLead >= 200) || (My200Count > 0))
+						{
+							// We need to catch up, or we've already played a 200
+							Weight[i][1] += 48;
+							printf("D07: We need to catch up, or we've already played\n");
+						}
+						else
+						{
+							// No need to play it yet. Equal with 25.
+							Weight[i][1] += 6;
+							printf("D03: No need to play it\n");
+						}
+					}
+					else
+					{
+						printf("D01: Goes past end of trip\n");
+
+						if (Extended)
+						{
+							// Totally useless
+							Weight[i][1] -= 100;
+						}
+						else
+						{
+							// Mostly useless
+							Weight[i][1] -= 50;
+						}
+					}
 				}
 				else if (MileValue == MyRemaining)
 				{
@@ -694,6 +808,11 @@ void	Game::ComputerSmartMove	(void)
 								Weight[i][1] += 25;
 							else
 								Weight[i][1] += 20;
+						}
+						else
+						{
+							printf("D42: Gets us too close\n");
+							Weight[i][1] -= 10;
 						}
 					}
 					else
@@ -842,6 +961,9 @@ bool	Game::CouldHoldCard		(Uint8 PlayerIndex, Uint8 Value)			const
 				else
 					ReturnValue = true;
 			}
+			else if (IsCurrentPlayer)
+				// Card is not in our hand
+				ReturnValue = false;
 			else
 				// We don't have the card, opponent may
 				ReturnValue = true;

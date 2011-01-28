@@ -61,16 +61,19 @@ void	Stats::GetStats		(Uint32 &Wins, Uint32 &Losses, Uint32 &Draws, Uint32 &High
 
 	if (RunningGameCount > 0)
 	{
-		double	PortionDone = RunningGameCount / (double) AVERAGE_EVERY;
+		double	WorkingAverage = AverageGame,
+				PortionDone = RunningGameCount / (double) AVERAGE_EVERY;
 
 		if (GameAveragesDone > 0)
 		{
-			AverageGame *= GameAveragesDone;
-			AverageGame += GameRemainder;
+			WorkingAverage *= GameAveragesDone;
+			WorkingAverage += GameRemainder;
 		}
 
-		AverageGame += (RunningGameScore / RunningGameCount) * PortionDone;
-		AverageGame /= (double) (GameAveragesDone + PortionDone);
+		WorkingAverage += (RunningGameScore / RunningGameCount) * PortionDone;
+		WorkingAverage /= (double) (GameAveragesDone + PortionDone);
+
+		AverageGame = WorkingAverage;
 	}
 
 	Draws = DrawCount;

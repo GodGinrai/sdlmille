@@ -55,7 +55,7 @@ const	char	TUTORIAL_TEXT[][MESSAGE_SIZE] = {
 					"Click it again to play.",
 					"Or click here to discard.",
 					"Enjoy the game!"	};
-const	char	VERSION_TEXT[] = "0.5.4-2 (beta4 test2)";
+const	char	VERSION_TEXT[] = "0.5.4-3 (beta4 test3)";
 const	int		SAVE_FORMAT_VER = 8;
 
 enum	{ANIMATION_PLAY = 0, ANIMATION_DISCARD, ANIMATION_RETURN, ANIMATION_COUP_FOURRE_BOUNCE, ANIMATION_INVALID};
