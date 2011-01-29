@@ -61,6 +61,9 @@ bool		Tableau::EnableAnimation;
 
 void	Tableau::Animate		(Uint8 PlayerIndex, SDL_Surface *Target)
 {
+	return;
+	EnableAnimation = false;
+
 	static	bool	BattleArea = false,
 					LimitArea = false;
 
@@ -403,8 +406,8 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 	static	Uint8		LastStatus =	0xFF;
 			bool		WasDirty =		Dirty;
 
-	if ((Card::GetTypeFromValue(TopCard) == CARD_HAZARD) && (TopCard != CARD_HAZARD_STOP) && HasSafety(Card::GetMatchingSafety(TopCard)))
-		SetTopCard(TopCard + 5);
+	//if ((Card::GetTypeFromValue(TopCard) == CARD_HAZARD) && (TopCard != CARD_HAZARD_STOP) && HasSafety(Card::GetMatchingSafety(TopCard)))
+	//	SetTopCard(TopCard + 5);
 
 	if (Target != 0)
 	{
@@ -551,6 +554,20 @@ bool	Tableau::Save			(std::ofstream &SaveFile)
 	}
 
 	return false;
+}
+
+void	Tableau::UpdateTopCard	(bool IncludeRollCard, bool IncludeEndLimit)
+{
+	Dirty = true;
+
+	if ((Card::GetTypeFromValue(TopCard) == CARD_HAZARD) && (HasSafety(Card::GetMatchingSafety(TopCard))) && (TopCard != CARD_HAZARD_STOP))
+		TopCard += 5;
+
+	if (IncludeRollCard && IsRolling() && (TopCard != CARD_REMEDY_ROLL))
+		TopCard = CARD_REMEDY_ROLL;
+
+	if (IncludeEndLimit && (LimitCard = CARD_HAZARD_SPEED_LIMIT) && HasSafety(CARD_SAFETY_RIGHT_OF_WAY))
+		LimitCard = CARD_REMEDY_END_LIMIT;
 }
 
 /* Private Methods */

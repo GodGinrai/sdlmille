@@ -61,6 +61,7 @@ public:
 	bool		Save			(std::ofstream &SaveFile);
 	void		SetSource		(Deck * ArgSource);
 	void		UnPop			(Uint8 Index);
+	void		UpdateTopCard	(bool IncludeRollCard, bool IncludeEndLimit);
 private:
 	Tableau		MyTableau;
 	Hand		PlayerHand;
@@ -146,6 +147,11 @@ inline	void	Player::Pop				(Uint8 Index)
 inline	void	Player::UnPop			(Uint8 Index)
 {
 	PlayerHand.UnPop(Index);
+}
+
+inline	void	Player::UpdateTopCard	(bool IncludeRollCard, bool IncludeEndLimit)
+{
+	MyTableau.UpdateTopCard(IncludeRollCard, IncludeEndLimit);
 }
 
 }

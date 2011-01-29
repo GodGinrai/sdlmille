@@ -62,6 +62,7 @@ public:
 	void		Reset			(void);
 	bool		Restore			(std::ifstream &SaveFile);
 	bool		Save			(std::ofstream &SaveFile);
+	void		UpdateTopCard	(bool IncludeRollCard, bool IncludeEndLimit);
 
 static	Surface	ShadowSurface,
 				ShadowSurfaceCF;

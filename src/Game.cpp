@@ -166,7 +166,7 @@ void	Game::Animate			(Uint8 Index, Uint8 AnimationType, Uint8 Value)
 	if (AnimationType >= ANIMATION_INVALID)
 		return;
 
-	if ((AnimationType == ANIMATION_COUP_FOURRE_BOUNCE) || ((Index < HAND_SIZE) && (Index == FindPopped()) && (IsValidPlay(Index) || (AnimationType != ANIMATION_PLAY))))
+	if ((AnimationType >= ANIMATION_COUP_FOURRE_BOUNCE) || ((Index < HAND_SIZE) && (Index == FindPopped()) && (IsValidPlay(Index) || (AnimationType != ANIMATION_PLAY))))
 	{
 		Animating = true;
 
@@ -183,7 +183,7 @@ void	Game::Animate			(Uint8 Index, Uint8 AnimationType, Uint8 Value)
 
 		SDL_Surface	*Backdrop = 0;
 
-		if (AnimationType != ANIMATION_COUP_FOURRE_BOUNCE)
+		if (AnimationType < ANIMATION_COUP_FOURRE_BOUNCE)
 		{
 			Value = Players[Current].GetValue(Index);
 			Players[Current].Detach(Index);
@@ -193,7 +193,7 @@ void	Game::Animate			(Uint8 Index, Uint8 AnimationType, Uint8 Value)
 
 		if (Type < CARD_NULL)
 		{
-			if (Dragging && (AnimationType != ANIMATION_COUP_FOURRE_BOUNCE))
+			if (Dragging && (AnimationType < ANIMATION_COUP_FOURRE_BOUNCE))
 			{
 				StartX = (DragX - 20) / Dimensions::ScaleFactor;
 				StartY = (DragY - 67) / Dimensions::ScaleFactor;
@@ -202,6 +202,17 @@ void	Game::Animate			(Uint8 Index, Uint8 AnimationType, Uint8 Value)
 			{
 				if (AnimationType == ANIMATION_COUP_FOURRE_BOUNCE)
 					Tableau::GetTargetCoords(Value, Current, StartX, StartY, false);
+				else if (AnimationType == ANIMATION_SAFETY_SPAWN)
+				{
+					Uint8	SafetyValue = 0;
+
+					if (Value == CARD_REMEDY_ROLL)
+						SafetyValue = CARD_SAFETY_RIGHT_OF_WAY;
+					else
+						SafetyValue = Value + 5;
+
+					Tableau::GetTargetCoords(SafetyValue, Current, StartX, StartY, false);
+				}
 				else
 				{
 					if (Current == 0)
@@ -226,7 +237,7 @@ void	Game::Animate			(Uint8 Index, Uint8 AnimationType, Uint8 Value)
 				DestX = 3;
 				DestY = Dimensions::FirstRowY;
 			}
-			else if (AnimationType == ANIMATION_PLAY)
+			else if ((AnimationType == ANIMATION_PLAY) || (AnimationType == ANIMATION_SAFETY_SPAWN))
 				Tableau::GetTargetCoords(Value, Target, DestX, DestY, CoupFourre, PileCount);
 			else
 				Hand::GetIndexCoords(Index, DestX, DestY);
@@ -1336,13 +1347,6 @@ bool	Game::IsValidPlay		(Uint8 Index)						const
 		}
 		else
 		{
-			if (TopCardType == CARD_HAZARD)
-			{
-				if (Players[Current].HasSafety(Card::GetMatchingSafety(TopCard)))
-					// Remedy is superfluous; we already have the safety
-					return false;
-			}
-
 			if (Value == CARD_REMEDY_END_LIMIT)
 			{
 				if (!Players[Current].IsLimited())
@@ -1351,7 +1355,13 @@ bool	Game::IsValidPlay		(Uint8 Index)						const
 			}
 			else
 			{
-				if (TopCardType != CARD_HAZARD)
+				if (TopCardType == CARD_HAZARD)
+				{
+					if (Players[Current].HasSafety(Card::GetMatchingSafety(TopCard)))
+						// Remedy is superfluous; we already have the safety
+						return false;
+				}
+				else
 					// Other remedies can only be played on top of hazards
 					return false;
 
@@ -2109,7 +2119,7 @@ void	Game::OnLoop			(void)
 	}
 }
 
-void	Game::OnPlay			(Uint8 Index)
+void	Game::OnPlay			(Uint8 Index, bool PlayerChange)
 {
 	// DiscardedCard places the correct card on top of the discard pile after a Coup Fourre.
 	Uint8 DiscardedCard = CARD_NULL_NULL;
@@ -2129,7 +2139,7 @@ void	Game::OnPlay			(Uint8 Index)
 
 		Dirty = true;	// Graphics will need to be re-drawn now
 
-		if (Type != CARD_SAFETY)
+		if ((Type != CARD_SAFETY) && PlayerChange)
 			ChangePlayer();
 		else	//Playing a safety gives us another turn.
 		{
@@ -2330,12 +2340,69 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 
 void	Game::Pop				(Uint8 Index)
 {
+	Uint8	QualifiedCoupFourre	= Players[Current].GetQualifiedCoupFourre(),
+			TopCard				= Players[Current].GetTopCard(),
+			TopCardType			= Card::GetTypeFromValue(TopCard),
+			Type				= Players[Current].GetType(Index),
+			Value				= Players[Current].GetValue(Index);
+
+	bool	EarlyPlay	= false,
+			HasRoW		= Players[Current].HasSafety(CARD_SAFETY_RIGHT_OF_WAY);
+
 	if (Players[Current].IsPopped(Index) && IsValidPlay(Index))
 	{
 		// If the card is already popped, then play it (if it's a valid play)
 		Animate(Index, ANIMATION_PLAY);
+		if (HasRoW && (Type == CARD_REMEDY))
+		{
+			EarlyPlay = true;
+			OnPlay(Index, false);
+		}
+		else if ((Type == CARD_SAFETY) && (Value != CARD_SAFETY_RIGHT_OF_WAY) && (Value == Card::GetMatchingSafety(TopCard)) && (Value != Card::GetMatchingSafety(QualifiedCoupFourre)))
+		{
+			printf("Spawned remedy\n");
+			EarlyPlay = true;
+			OnPlay(Index, false);
+			Animate(0, ANIMATION_SAFETY_SPAWN, TopCard + 5);
+		}
+
+		Players[Current].UpdateTopCard(false, false);
+
+		TopCard = Players[Current].GetTopCard();
+
+		if (HasRoW || (Value == CARD_SAFETY_RIGHT_OF_WAY))
+		{
+			if (Value == CARD_SAFETY_RIGHT_OF_WAY)
+			{
+				EarlyPlay = true;
+				OnPlay(Index, false);
+			}
+
+			if (Players[Current].IsRolling() && (TopCard != CARD_REMEDY_ROLL) && (QualifiedCoupFourre != CARD_HAZARD_STOP))
+			{
+				printf("Spawned roll card\n");
+				Animate(0, ANIMATION_SAFETY_SPAWN, CARD_REMEDY_ROLL);
+			}
+			
+			Players[Current].UpdateTopCard(true, false);
+
+			if ((Players[Current].GetTopCard(true) == CARD_HAZARD_SPEED_LIMIT) && (QualifiedCoupFourre != CARD_HAZARD_SPEED_LIMIT))
+			{
+				printf("Spawned end-limit\n");
+				Animate(0, ANIMATION_SAFETY_SPAWN, CARD_REMEDY_END_LIMIT);
+			}
+
+			Players[Current].UpdateTopCard(true, true);
+		}
 		Players[Current].UnPop(Index);
-		OnPlay(Index);
+
+		if (HasRoW && (Type == CARD_REMEDY))
+			ChangePlayer();
+
+		if (EarlyPlay)
+			Save();
+		else
+			OnPlay(Index);
 	}
 	else
 		Players[Current].Pop(Index);	//If it's not already popped, pop it
