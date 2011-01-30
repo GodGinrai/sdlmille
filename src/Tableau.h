@@ -44,8 +44,8 @@ class Tableau
 public:
 				Tableau			(void);
 				~Tableau		(void);
-	void		Animate			(Uint8 PlayerIndex, SDL_Surface *Target);
-	bool		AnimationRunning	(void)														const;
+	//void		Animate			(Uint8 PlayerIndex, SDL_Surface *Target);
+	//bool		AnimationRunning	(void)														const;
 	void		BlitWithShadow	(Surface &CardSurface, int X, int Y, SDL_Surface *Target, bool CoupFourre = false);
 	int			GetMileage		(void)															const;
 	Uint8		GetPileCount	(Uint8 Value)													const;
@@ -81,7 +81,7 @@ static	Surface	MileageSurfaces[MILEAGE_PILES];
 	Uint8		CardCount[MILEAGE_PILES],
 				LimitCard, OldLimitCard,
 				TopCard, OldTopCard;
-	bool		Animating,
+	bool		//Animating,
 				CoupFourres[SAFETY_COUNT],
 				Dirty,
 				Safeties[SAFETY_COUNT];
@@ -89,10 +89,10 @@ static	Surface	MileageSurfaces[MILEAGE_PILES];
 static	TTF_Font	*MyFont;
 };
 
-inline	bool	Tableau::AnimationRunning	(void)	const
-{
-	return Animating;
-}
+//inline	bool	Tableau::AnimationRunning	(void)	const
+//{
+//	return Animating;
+//}
 
 inline	int		Tableau::GetMileage			(void)	const
 {

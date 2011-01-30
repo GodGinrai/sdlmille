@@ -69,10 +69,10 @@ public:
 private:
 	/* Methods */
 	void		Animate			(Uint8 Index, Uint8 AnimationType, Uint8 Value = CARD_NULL_NULL);
-	bool		AnimationRunning	(void)				const;
+	//bool		AnimationRunning	(void)				const;
 	void		ChangePlayer	(void);
 	bool		CheckForChange	(Uint8 &Old, Uint8 &New);
-	void		CheckTableau	(SDL_Surface *Target);
+	//void		CheckTableau	(SDL_Surface *Target);
 	void		ClearMessage	(void);
 	bool		CouldHoldCard	(Uint8 PlayerIndex, Uint8 Value)	const;
 	bool		ComputerDecideExtension	(void)			const;
@@ -89,6 +89,7 @@ private:
 	bool		IsOneCardAway	(Uint8 PlayerIndex)		const;
 	bool		IsValidPlay		(Uint8 Index)			const;
 	Uint8		KnownCards		(Uint8 Value)			const;
+	bool		MayHaveRoW		(Uint8 PlayerIndex)		const;
 	void		OnClick			(int X, int Y);
 	void		OnEvent			(SDL_Event * Event);
 	bool		OnInit			(void);

@@ -32,7 +32,7 @@ class Player
 {
 public:
 				Player				(void);
-	bool		AnimationRunning	(void)					const;
+	//bool		AnimationRunning	(void)					const;
 	Uint8		CardsInHand			(void)					const;
 	bool		Discard			(Uint8 Index);
 	void		Detach			(Uint8 Index);
@@ -69,10 +69,10 @@ private:
 	Deck *		SourceDeck;
 };
 
-inline	bool	Player::AnimationRunning	(void)			const
-{
-	return MyTableau.AnimationRunning();
-}
+//inline	bool	Player::AnimationRunning	(void)			const
+//{
+//	return MyTableau.AnimationRunning();
+//}
 
 inline	void	Player::Detach			(Uint8 Index)
 {

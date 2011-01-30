@@ -42,7 +42,7 @@ bool		Tableau::EnableAnimation;
 		CoupFourres[i] = false;
 	}
 	
-	Animating = false;
+	//Animating = false;
 	Dirty = true;
 	EnableAnimation = true;
 	Mileage = 0;
@@ -59,6 +59,7 @@ bool		Tableau::EnableAnimation;
 	}
 }
 
+/*
 void	Tableau::Animate		(Uint8 PlayerIndex, SDL_Surface *Target)
 {
 	return;
@@ -167,6 +168,7 @@ void	Tableau::Animate		(Uint8 PlayerIndex, SDL_Surface *Target)
 
 	Dirty = true;
 }
+*/
 
 void		Tableau::BlitWithShadow	(Surface &CardSurface, int X, int Y, SDL_Surface *Target, bool CoupFourre)
 {
@@ -484,12 +486,12 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 		}
 	}
 
-	if (Animating)
-		Animate(PlayerIndex, Target);
-	else if (IsRolling() && HasSafety(CARD_SAFETY_RIGHT_OF_WAY) && (TopCard != CARD_REMEDY_ROLL))
-		Animate(PlayerIndex, Target);
-	else if ((LimitCard == CARD_HAZARD_SPEED_LIMIT) && (HasSafety(CARD_SAFETY_RIGHT_OF_WAY)))
-		Animate(PlayerIndex, Target);
+	//if (Animating)
+	//	Animate(PlayerIndex, Target);
+	//else if (IsRolling() && HasSafety(CARD_SAFETY_RIGHT_OF_WAY) && (TopCard != CARD_REMEDY_ROLL))
+	//	Animate(PlayerIndex, Target);
+	//else if ((LimitCard == CARD_HAZARD_SPEED_LIMIT) && (HasSafety(CARD_SAFETY_RIGHT_OF_WAY)))
+	//	Animate(PlayerIndex, Target);
 
 	return WasDirty;
 }
@@ -509,7 +511,7 @@ void	Tableau::Reset			(void)
 
 	Mileage = 0;
 
-	Animating = false;
+	//Animating = false;
 
 	Dirty = true;
 }
