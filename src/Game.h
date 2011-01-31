@@ -104,6 +104,7 @@ private:
 	void		ShowLoading		(void);
 	void		ShowMessage		(const char * Msg, bool SetDirty = true);
 	bool		ShowModal		(Uint8 ModalName);
+	Uint8		UnknownCards	(Uint8 Value);
 
 	/* Properties */
 	SDL_Surface	*Window;
@@ -164,6 +165,11 @@ private:
 			SCENE_LEGAL, SCENE_INVALID };
 	enum {	MODAL_EXTENSION = 0, MODAL_GAME_MENU, MODAL_NEW_GAME, MODAL_STATS, MODAL_NONE };
 };
+
+inline	Uint8		Game::UnknownCards	(Uint8 Value)
+{
+	return (EXISTING_CARDS[Value] - KnownCards(Value));
+}
 
 }
 

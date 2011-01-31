@@ -561,6 +561,10 @@ void	Game::ComputerSmartMove	(void)
 							printf("A50: RoW to remove limit. Have no end-limit card\n");
 						}
 					}
+					else
+					{
+						printf("A52: General Right-of-Way safety\n");
+					}
 				}
 				else if (KnownCards(MatchingCard) == EXISTING_CARDS[MatchingCard])
 				{
@@ -643,12 +647,12 @@ void	Game::ComputerSmartMove	(void)
 					{
 						// We hold more than 1
 						printf("B42: Reduced weight because we hold more than one\n");
-						Weight[i][1] -=5;
+						Weight[i][1] -= 5;
 					}
-					else if (KnownCards(Value) == EXISTING_CARDS[Value])
+					else if (UnknownCards(Value) < 2)
 					{
-						// No more remedies left. Better hold on to it.
-						printf("B44: Increased weight because there are no more in the draw pile\n");
+						// Slim chance of getting another one. Better hold on to it.
+						printf("B44: Increased weight because it's almost exhausted\n");
 						Weight[i][1] += 10;
 					}
 					else if (KnownCount > 0)
@@ -677,7 +681,6 @@ void	Game::ComputerSmartMove	(void)
 					{
 						// Leave value at 0 so we'll save it, but not play it
 						printf("C03: Saving speed limit\n");
-						continue;
 					}
 					else
 					{
@@ -688,6 +691,8 @@ void	Game::ComputerSmartMove	(void)
 				}
 				else
 				{
+					int KnownCount = KnownCards(MatchingCard);
+
 					if (IsOneCardAway(Opponent) || (!IsOneCardAway(Current) && ((OpponentMileage == 0) || (OpponentRemaining <= 200) || (OpponentLead >= 200))))
 					{
 						// We need to stop the opponent if possible
@@ -696,15 +701,15 @@ void	Game::ComputerSmartMove	(void)
 					}
 					else
 					{
-						int KnownCount = KnownCards(MatchingCard);
-
 						// No pressing need right now
 						printf("C20: General hazard\n");
 						Weight[i][1] += 40;
+					}
 
+					if (KnownCount > 0)
+					{
 						// Hazard becomes more valuable with fewer outstanding remedies.
-						if (KnownCount > 0)
-							printf("C20: Increased weight by %u known remedies\n", KnownCount);
+						printf("C20: Increased weight by %u known remedies\n", KnownCount);
 						Weight[i][1] += KnownCount;
 					}
 
@@ -1575,6 +1580,7 @@ void	Game::OnClick			(int X, int Y)
 		{
 			LastScene = Scene;
 			Scene = SCENE_LEGAL;
+			Overlay[2].Clear();
 			return;
 		}
 	}
