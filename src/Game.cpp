@@ -2608,40 +2608,33 @@ bool	Game::Save				(void)
 {
 	using namespace std;
 
-	#ifdef	ANDROID_DEVICE
-		FILE *Dummy = fopen("game.sav", "w");
-
-		if (Dummy == 0)
-			return false;
-		else
-			fclose(Dummy);
-	#endif
-
 	bool	Success		= false;
 
-	ofstream	SaveFile	("game.sav", ios::out | ios::binary);
+	FILE	*SaveFile	= fopen("game.sav", "wb");
 
 	if (SaveFile != 0)
 	{
-		SaveFile.seekp(0);
-		SaveFile.write((char *) &SAVE_FORMAT_VER, sizeof(int));
-		SaveFile.write((char *) &Current, sizeof(Uint8));
-		SaveFile.write((char *) RunningScores, sizeof(int) * PLAYER_COUNT);
-		SaveFile.write((char *) &DiscardTop, sizeof(Uint8));
-		SaveFile.write((char *) &Extended, sizeof(bool));
-		SaveFile.write((char *) &ExtensionDeclined, sizeof(bool));
+		fwrite(&SAVE_FORMAT_VER, sizeof(int), 1, SaveFile);
+		fwrite(&Current, sizeof(Uint8), 1, SaveFile);
+		fwrite(RunningScores, sizeof(int), PLAYER_COUNT, SaveFile);
+		fwrite(&DiscardTop, sizeof(Uint8), 1, SaveFile);
+		fwrite(&Extended, sizeof(bool), 1, SaveFile);
+		fwrite(&ExtensionDeclined, sizeof(bool), 1, SaveFile);
 		
 		/* Added in version 8 (beta4) */
-		SaveFile.write((char *) ExposedCards, sizeof(Uint8) * CARD_NULL_NULL);
+		fwrite(ExposedCards, sizeof(Uint8), CARD_NULL_NULL, SaveFile);
 		/* End added in version 8 */
 		
+		/*
 		SourceDeck->Save(SaveFile);
 
 		for (int i = 0; i < PLAYER_COUNT; ++i)
 			Players[i].Save(SaveFile);
+		*/
 
-		Success = SaveFile.good();
-		SaveFile.close();
+		Success = true;
+
+		fclose(SaveFile);
 	}
 
 	return Success;	
