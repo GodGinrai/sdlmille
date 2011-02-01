@@ -60,8 +60,8 @@ public:
 	bool		OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force = false);
 	void		OnPlay			(Uint8 Value, bool CoupFourre, bool SpeedLimit);
 	void		Reset			(void);
-	bool		Restore			(std::ifstream &SaveFile);
-	bool		Save			(std::ofstream &SaveFile);
+	bool		Restore			(FILE *SaveFile);
+	bool		Save			(FILE *SaveFile);
 	void		UpdateTopCard	(bool IncludeRollCard, bool IncludeEndLimit);
 
 static	Surface	ShadowSurface,

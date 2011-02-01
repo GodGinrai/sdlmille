@@ -45,8 +45,8 @@ static	void		GetIndexCoords	(Uint8 Index, int &X, int &Y);
 	bool		OnRender	(SDL_Surface * Target, bool Force = false);
 	void		Pop			(Uint8 Index);
 	void		Reset		(void);
-	bool		Restore		(std::ifstream &SaveFile);
-	bool		Save		(std::ofstream &SaveFile);
+	bool		Restore		(FILE *SaveFile);
+	bool		Save		(FILE *SaveFile);
 	void		UnPop		(Uint8 Index);
 private:
 	Card		ThisHand[HAND_SIZE];

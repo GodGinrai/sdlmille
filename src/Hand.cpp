@@ -247,22 +247,34 @@ void	Hand::Reset		(void)
 	Dirty = true;
 }
 
-bool	Hand::Restore	(std::ifstream &SaveFile)
+bool	Hand::Restore	(FILE *SaveFile)
 {
 	bool	Success = true;
-	for (int i = 0; i < HAND_SIZE; ++i)
-		Success &= ThisHand[i].Restore(SaveFile);
+
+	if (SaveFile != 0)
+	{
+		for (int i = 0; i < HAND_SIZE; ++i)
+			Success &= ThisHand[i].Restore(SaveFile);
+	}
+	else
+		Success = false;
 
 	return Success;
 }
 
-bool	Hand::Save		(std::ofstream &SaveFile)
+bool	Hand::Save		(FILE *SaveFile)
 {
 	bool	Success = true;
-	for (int i = 0; i < HAND_SIZE; ++i)
-		Success &= ThisHand[i].Save(SaveFile);
 
-	return Success;
+	if (SaveFile != 0)
+	{
+		for (int i = 0; i < HAND_SIZE; ++i)
+			Success &= ThisHand[i].Save(SaveFile);
+
+		return Success;
+	}
+
+	return false;
 }
 
 void	Hand::UnPop		(Uint8 Index)

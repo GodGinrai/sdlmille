@@ -48,29 +48,31 @@ bool	Deck::Empty		(void)	const
 	return !(Marker < DECK_SIZE);
 }
 
-bool	Deck::Restore	(std::ifstream &SaveFile)
+bool	Deck::Restore	(FILE *SaveFile)
 {
-	if (SaveFile.is_open())
+	if (SaveFile != 0)
 	{
-		SaveFile.read((char *) &Marker, sizeof(Uint8));
-		for (int i = Marker; i < DECK_SIZE; ++i)
-			SaveFile.read((char *) &Order[i], sizeof(Uint8));
+		fread(&Marker, sizeof(Uint8), 1, SaveFile);
 
-		return SaveFile.good();
+		if (Marker < DECK_SIZE)
+			fread(&Order[Marker], sizeof(Uint8), DECK_SIZE - Marker, SaveFile);
+
+		return true;
 	}
 
 	return false;
 }
 
-bool	Deck::Save		(std::ofstream &SaveFile)
+bool	Deck::Save		(FILE *SaveFile)
 {
-	if (SaveFile.is_open())
+	if (SaveFile != 0)
 	{
-		SaveFile.write((char *) &Marker, sizeof(Uint8));
-		for (int i = Marker; i < DECK_SIZE; ++i)
-			SaveFile.write((char *) &Order[i], sizeof(Uint8));
+		fwrite(&Marker, sizeof(Uint8), 1, SaveFile);
 
-		return SaveFile.good();
+		if (Marker < DECK_SIZE)
+			fwrite(&Order[Marker], sizeof(Uint8), DECK_SIZE - Marker, SaveFile);
+
+		return true;
 	}
 
 	return false;

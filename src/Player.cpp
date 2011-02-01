@@ -168,29 +168,29 @@ void	Player::Reset			(void)
 	MyTableau.Reset();
 }
 
-bool	Player::Restore			(std::ifstream &SaveFile)
+bool	Player::Restore			(FILE *SaveFile)
 {
-	if (SaveFile.is_open())
+	if (SaveFile != 0)
 	{
-		SaveFile.read((char *) &QualifiedCoupFourre, sizeof(Uint8));
+		fread(&QualifiedCoupFourre, sizeof(Uint8), 1, SaveFile);
 		MyTableau.Restore(SaveFile);
 		PlayerHand.Restore(SaveFile);
 
-		return SaveFile.good();
+		return true;
 	}
 
 	return false;
 }
 
-bool	Player::Save			(std::ofstream &SaveFile)
+bool	Player::Save			(FILE * SaveFile)
 {
-	if (SaveFile.is_open())
+	if (SaveFile != 0)
 	{
-		SaveFile.write((char *) &QualifiedCoupFourre, sizeof(Uint8));
+		fwrite(&QualifiedCoupFourre, sizeof(Uint8), 1, SaveFile);
 		MyTableau.Save(SaveFile);
 		PlayerHand.Save(SaveFile);
 
-		return SaveFile.good();
+		return true;
 	}
 
 	return false;

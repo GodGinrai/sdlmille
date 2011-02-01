@@ -2564,40 +2564,38 @@ bool	Game::Restore			(void)
 
 	if (stat("game.sav", &Info) == 0)
 	{
-		ifstream SaveFile ("game.sav", ios::in | ios::binary);
+		FILE *SaveFile = fopen("game.sav", "rb");
 
-		if (SaveFile.is_open())
+		if (SaveFile != 0)
 		{
-			SaveFile.seekg(0);
-
 			int SaveVersion = 0;
-			SaveFile.read((char *) &SaveVersion, sizeof(int));
+			fread(&SaveVersion, sizeof(int), 1, SaveFile);
 
 			if ((SaveVersion >= 7) && (SaveVersion <= 8))
 			{
-				SaveFile.read((char *) &Current, sizeof(Uint8));
-				SaveFile.read((char *) &RunningScores, sizeof(int) * 2);
-				SaveFile.read((char *) &DiscardTop, sizeof(Uint8));
-				SaveFile.read((char *) &Extended, sizeof(bool));
-				SaveFile.read((char *) &ExtensionDeclined, sizeof(bool));
+				fread(&Current, sizeof(Uint8), 1, SaveFile);
+				fread(RunningScores, sizeof(int), 2, SaveFile);
+				fread(&DiscardTop, sizeof(Uint8), 1, SaveFile);
+				fread(&Extended, sizeof(bool), 1, SaveFile);
+				fread(&ExtensionDeclined, sizeof(bool), 1, SaveFile);
 
 				if (SaveVersion >= 8)
-				{
-					for (int i = 0; i < CARD_NULL_NULL; ++i)
-						SaveFile.read((char *) &ExposedCards[i], sizeof(Uint8));
-				}
+					fread(ExposedCards, sizeof(Uint8), CARD_NULL_NULL, SaveFile);
 
-				SourceDeck->Restore(SaveFile);
-
+				
+				if (SourceDeck != 0)
+					SourceDeck->Restore(SaveFile);
+				/*
 				for (int i = 0; i < PLAYER_COUNT; ++i)
 					Players[i].Restore(SaveFile);
+				*/
 				
-				Success = SaveFile.good();
+				Success = true;
 			}
 			else
 				Success = false;
 
-			SaveFile.close();
+			fclose(SaveFile);
 		}
 	}
 
@@ -2625,12 +2623,11 @@ bool	Game::Save				(void)
 		fwrite(ExposedCards, sizeof(Uint8), CARD_NULL_NULL, SaveFile);
 		/* End added in version 8 */
 		
-		/*
-		SourceDeck->Save(SaveFile);
+		if (SourceDeck != 0)
+			SourceDeck->Save(SaveFile);
 
 		for (int i = 0; i < PLAYER_COUNT; ++i)
 			Players[i].Save(SaveFile);
-		*/
 
 		Success = true;
 

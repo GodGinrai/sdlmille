@@ -46,8 +46,8 @@ public:
 			Uint8			GetType				(void)									const;
 	static	Uint8			GetTypeFromValue	(Uint8 ArgValue);
 			Uint8			GetValue			(void)									const;
-			bool			Restore				(std::ifstream &SaveFile);
-			bool			Save				(std::ofstream &SaveFile);
+			bool			Restore				(FILE *SaveFile);
+			bool			Save				(FILE *SaveFile);
 private:
 			void			Set					(Uint8 ArgValue);
 

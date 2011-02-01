@@ -516,43 +516,43 @@ void	Tableau::Reset			(void)
 	Dirty = true;
 }
 
-bool	Tableau::Restore		(std::ifstream &SaveFile)
+bool	Tableau::Restore		(FILE *SaveFile)
 {
-	if (SaveFile.is_open())
+	if (SaveFile != 0)
 	{
-		SaveFile.read((char *) CardCount, sizeof(Uint8) * MILEAGE_PILES);
-		SaveFile.read((char *) &LimitCard, sizeof(Uint8));
-		SaveFile.read((char *) &OldLimitCard, sizeof(Uint8));
-		SaveFile.read((char *) &TopCard, sizeof(Uint8));
-		SaveFile.read((char *) &OldTopCard, sizeof(Uint8));
+		fread(CardCount, sizeof(Uint8), MILEAGE_PILES, SaveFile);
+		fread(&LimitCard, sizeof(Uint8), 1, SaveFile);
+		fread(&OldLimitCard, sizeof(Uint8), 1, SaveFile);
+		fread(&TopCard, sizeof(Uint8), 1, SaveFile);
+		fread(&OldTopCard, sizeof(Uint8), 1, SaveFile);
 
-		SaveFile.read((char *) CoupFourres, sizeof(bool) * SAFETY_COUNT);
-		SaveFile.read((char *) Safeties, sizeof(bool) * SAFETY_COUNT);
+		fread(CoupFourres, sizeof(bool), SAFETY_COUNT, SaveFile);
+		fread(Safeties, sizeof(bool), SAFETY_COUNT, SaveFile);
 
-		SaveFile.read((char *) &Mileage, sizeof(Uint32));
+		fread(&Mileage, sizeof(Uint32), 1, SaveFile);
 
-		return SaveFile.good();
+		return true;
 	}
 
 	return false;
 }
 
-bool	Tableau::Save			(std::ofstream &SaveFile)
+bool	Tableau::Save			(FILE *SaveFile)
 {
-	if (SaveFile.is_open())
+	if (SaveFile != 0)
 	{
-		SaveFile.write((char *) CardCount, sizeof(Uint8) * MILEAGE_PILES);
-		SaveFile.write((char *) &LimitCard, sizeof(Uint8));
-		SaveFile.write((char *) &OldLimitCard, sizeof(Uint8));
-		SaveFile.write((char *) &TopCard, sizeof(Uint8));
-		SaveFile.write((char *) &OldTopCard, sizeof(Uint8));
+		fwrite(CardCount, sizeof(Uint8), MILEAGE_PILES, SaveFile);
+		fwrite(&LimitCard, sizeof(Uint8), 1, SaveFile);
+		fwrite(&OldLimitCard, sizeof(Uint8), 1, SaveFile);
+		fwrite(&TopCard, sizeof(Uint8), 1, SaveFile);
+		fwrite(&OldTopCard, sizeof(Uint8), 1, SaveFile);
 
-		SaveFile.write((char *) CoupFourres, sizeof(bool) * SAFETY_COUNT);
-		SaveFile.write((char *) Safeties, sizeof(bool) * SAFETY_COUNT);
+		fwrite(CoupFourres, sizeof(bool), SAFETY_COUNT, SaveFile);
+		fwrite(Safeties, sizeof(bool), SAFETY_COUNT, SaveFile);
 
-		SaveFile.write((char *) &Mileage, sizeof(Uint32));
+		fwrite(&Mileage, sizeof(Uint32), 1, SaveFile);
 
-		return SaveFile.good();
+		return true;
 	}
 
 	return false;

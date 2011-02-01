@@ -192,27 +192,33 @@ Uint8			Card::GetTypeFromValue	(Uint8 V)
 	return CARD_NULL;
 }
 
-bool			Card::Restore			(std::ifstream &SaveFile)
+bool			Card::Restore			(FILE *SaveFile)
 {
-	if (SaveFile.is_open())
+	if (SaveFile != 0)
 	{
-		SaveFile.read((char *) &Value, sizeof(Uint8));
-		SaveFile.read((char *) &Type, sizeof(Uint8));
+		fread(&Value, sizeof(Uint8), 1, SaveFile);
+		fread(&Type, sizeof(Uint8), 1, SaveFile);
 
-		return SaveFile.good();
+		if (Type != GetTypeFromValue(Value))
+		{
+			Type = GetTypeFromValue(Value);
+			return false;
+		}
+		else
+			return true;
 	}
 
 	return false;
 }
 
-bool			Card::Save				(std::ofstream &SaveFile)
+bool			Card::Save				(FILE *SaveFile)
 {
-	if (SaveFile.is_open())
+	if (SaveFile != 0)
 	{
-		SaveFile.write((char *) &Value, sizeof(Uint8));
-		SaveFile.write((char *) &Type, sizeof(Uint8));
+		fwrite(&Value, sizeof(Uint8), 1, SaveFile);
+		fwrite(&Type, sizeof(Uint8), 1, SaveFile);
 
-		return SaveFile.good();
+		return true;
 	}
 
 	return false;
