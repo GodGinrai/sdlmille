@@ -154,7 +154,7 @@ void	Game::Animate			(Uint8 Index, Uint8 AnimationType, Uint8 Value)
 			LastLocalBlit = 0,
 			Duration;
 	int		TargetFrames = 
-			#ifdef WEBOS_DEVICE
+			#ifdef SOFTWARE_MODE
 			12;
 			#else
 			50;
@@ -257,7 +257,7 @@ void	Game::Animate			(Uint8 Index, Uint8 AnimationType, Uint8 Value)
 			IncX = DeltaX / (double) TargetFrames;
 			IncY = DeltaY / (double) TargetFrames;
 
-			#ifdef WEBOS_DEVICE
+			#ifdef SOFTWARE_MODE
 			Backdrop = SDL_CreateRGBSurface(SDL_SWSURFACE, Dimensions::ScreenWidth, Dimensions::ScreenHeight, Window->format->BitsPerPixel, 0, 0, 0, 0);
 			#else
 			Backdrop = SDL_CreateRGBSurface(SDL_HWSURFACE, Dimensions::ScreenWidth, Dimensions::ScreenHeight, Window->format->BitsPerPixel, 0, 0, 0, 0);
@@ -272,7 +272,7 @@ void	Game::Animate			(Uint8 Index, Uint8 AnimationType, Uint8 Value)
 
 				IgnoreEvents();
 
-				#ifndef	WEBOS_DEVICE
+				#ifndef	SOFTWARE_MODE
 				if (SDL_GetTicks() < (LastLocalBlit + (250 / TargetFrames)))
 					continue;
 				#endif
@@ -533,7 +533,7 @@ void	Game::ComputerSmartMove	(void)
 					Weight[i][1] += 95;
 					printf("A10: Game almost over\n");
 				}
-				else if (SafetiesInHand >= (CardsLeft - UnknownSafeties - 1))
+				else if (SafetiesInHand >= (CardsLeft - UnknownSafeties + 1))
 				{
 					printf("A20: Play safeties so we can snatch up the last few cards\n");
 					Weight[i][1] += 90;
@@ -546,9 +546,9 @@ void	Game::ComputerSmartMove	(void)
 						printf("A30: RoW, no hazards left\n");
 						Weight[i][1] += 50;
 					}
-					else if ((OpponentLead >= 200) || (OpponentRemaining <= 200))
+					else if ((OpponentLead > 200) || (OpponentRemaining <= 200))
 					{
-						if (!MyselfRolling && ((MyTopCardType == CARD_REMEDY) || (MyTopCard == CARD_HAZARD_STOP)) && (InHand(CARD_REMEDY_ROLL) < 1))
+						if (!MyselfRolling && ((MyTopCardType == CARD_REMEDY) || (MyTopCard == CARD_HAZARD_STOP) || (MyTopCard == CARD_NULL_NULL)) && (InHand(CARD_REMEDY_ROLL) < 1))
 						{
 							// Get us rolling
 							Weight[i][1] += 60;
@@ -561,9 +561,21 @@ void	Game::ComputerSmartMove	(void)
 							printf("A50: RoW to remove limit. Have no end-limit card\n");
 						}
 					}
+					else if (!MyselfRolling && ((MyTopCardType == CARD_REMEDY) || (MyTopCard == CARD_HAZARD_STOP) || (MyTopCard == CARD_NULL_NULL)) && (UnknownCards(CARD_REMEDY_ROLL) <= 0) && (InHand(CARD_REMEDY_ROLL) < 1))
+					{
+						// No more roll cards. Play the RoW
+						printf("A52: No more roll cards. Playing RoW\n");
+						Weight[i][1] += 60;
+					}
+					else if (MyselfLimited && (UnknownCards(CARD_REMEDY_END_LIMIT) <= 0) && (InHand(CARD_REMEDY_END_LIMIT) < 1))
+					{
+						// No more speed remedies. Play the RoW
+						printf("A54: No more speed remedies. Playing RoW\n");
+						Weight[i][1] += 60;
+					}
 					else
 					{
-						printf("A52: General Right-of-Way safety\n");
+						printf("A56: General Right-of-Way safety\n");
 					}
 				}
 				else if (KnownCards(MatchingCard) == EXISTING_CARDS[MatchingCard])
@@ -572,13 +584,19 @@ void	Game::ComputerSmartMove	(void)
 					Weight[i][1] += 50;
 					printf("A60: No more hazards\n");
 				}
+				else if ((Players[Current].GetTopCard(false) == (Value - 10)) && ((InHand(Value - 5) < 1) && ((OpponentLead > 200) || (OpponentRemaining <= 200) || (UnknownCards(Value - 5) <= 0))))
+				{
+					// Get us out of the jam
+					printf("A70: Getting out of a jam\n");
+					Weight[i][1] += 60;
+				}
 				else
 				{
 					// Leave weight at 0 to save card
-					printf("A70: General safety\n");
+					printf("A80: General safety\n");
 				}
 
-				//	8 paths for safeties
+				//	11 paths for safeties
 			}
 			else if (Type == CARD_REMEDY)
 			{
@@ -647,7 +665,7 @@ void	Game::ComputerSmartMove	(void)
 					{
 						// We hold more than 1
 						printf("B42: Reduced weight because we hold more than one\n");
-						Weight[i][1] -= 5;
+						Weight[i][1] -= 10;
 					}
 					else if (UnknownCards(Value) < 2)
 					{
@@ -675,7 +693,7 @@ void	Game::ComputerSmartMove	(void)
 					printf("C00: Opponent has safety\n");
 					Weight[i][1] -= 100;
 				}
-				else if ((Value == CARD_HAZARD_SPEED_LIMIT) && (OpponentMileage == 0) && (MayHaveRoW(Opponent)))
+				else if ((Value == CARD_HAZARD_SPEED_LIMIT) && !OpponentRolling && (OpponentMileage == 0) && (MayHaveRoW(Opponent)))
 				{
 					if (InHand(CARD_HAZARD_SPEED_LIMIT) == 1)
 					{
@@ -684,8 +702,8 @@ void	Game::ComputerSmartMove	(void)
 					}
 					else
 					{
-						// We don't want to risk giving the opponent a coup fourre
-						printf("C06: Don't risk giving RoW with speed limit\n");
+						// We don't want to give away our chance at a shutout
+						printf("C06: Don't risk giving away the shutout\n");
 						Weight[i][1] -= 50;
 					}
 				}
@@ -725,6 +743,13 @@ void	Game::ComputerSmartMove	(void)
 						// Opponent could not hold the safety
 						printf("C40: Opponent could not hold safety\n");
 						Weight[i][1] += 15;
+					}
+
+					if ((Value == CARD_HAZARD_SPEED_LIMIT) && OpponentRolling)
+					{
+						// Prefer to play a stop hazard over just a speed limit
+						printf("C50: Reduced weight for speed limit because opponent is rolling\n");
+						Weight[i][1] -= 5;
 					}
 				}
 
@@ -846,7 +871,7 @@ void	Game::ComputerSmartMove	(void)
 						else
 						{
 							// Would leave us with only 25 miles left.
-							if (InHand(CARD_MILEAGE_25) > 1)
+							if (InHand(Value) > 1)
 							{
 								printf("D48: Balance of 25, more than one in hand\n");
 								Weight[i][1] -= 25;
@@ -883,7 +908,7 @@ void	Game::ComputerSmartMove	(void)
 					Weight[i][1] += (MileValue / 25) * 6;
 				}
 
-				if (IsOneCardAway(Opponent) && (MileValue <= MyRemaining))
+				if (MyselfRolling && IsOneCardAway(Opponent) && (MileValue <= MyRemaining))
 				{
 					// Game is almost over. Play some mileage to help even the score
 					printf("D90: Opponent could close it up. Play some mileage now\n");
@@ -942,7 +967,7 @@ void	Game::ComputerSmartMove	(void)
 	{
 		Uint8 Index = Weight[i][0];
 
-		if (IsValidPlay(Index) && ((Weight[i][1] != 0) || (!NonZeroFound)))
+		if ((Weight[i][1] >= 0) && IsValidPlay(Index) && ((Weight[i][1] != 0) || (!NonZeroFound)))
 		{
 			EndTicks = SDL_GetTicks();
 			Pop(Index);
@@ -1863,7 +1888,7 @@ bool	Game::OnInit			(void)
 		if(SDL_Init(SDL_INIT_VIDEO) < 0)
 			return false;
 
-		#if defined WEBOS_DEVICE
+		#ifdef SOFTWARE_MODE
 		if(!(Window = SDL_SetVideoMode(0, 0, 0, SDL_SWSURFACE)))
 		#else
 		if(!(Window = SDL_SetVideoMode(320, 480, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)))

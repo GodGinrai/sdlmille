@@ -81,7 +81,7 @@ void	Tableau::Animate		(Uint8 PlayerIndex, SDL_Surface *Target)
 					EndLimitX,
 					EndLimitY;
 
-	#ifdef	WEBOS_DEVICE
+	#ifdef	SOFTWARE_MODE
 			int		Divisor = 35;
 	#else
 			int		Divisor = 70;
@@ -568,7 +568,7 @@ void	Tableau::UpdateTopCard	(bool IncludeRollCard, bool IncludeEndLimit)
 	if (IncludeRollCard && IsRolling() && (TopCard != CARD_REMEDY_ROLL))
 		TopCard = CARD_REMEDY_ROLL;
 
-	if (IncludeEndLimit && (LimitCard = CARD_HAZARD_SPEED_LIMIT) && HasSafety(CARD_SAFETY_RIGHT_OF_WAY))
+	if (IncludeEndLimit && (LimitCard == CARD_HAZARD_SPEED_LIMIT) && HasSafety(CARD_SAFETY_RIGHT_OF_WAY))
 		LimitCard = CARD_REMEDY_END_LIMIT;
 }
 
