@@ -2558,41 +2558,47 @@ bool	Game::Restore			(void)
 {
 	using namespace std;
 
+	struct	stat	Info;
+
 	bool Success = false;
-	ifstream SaveFile ("game.sav", ios::in | ios::binary);
 
-	if (SaveFile.is_open())
+	if (stat("game.sav", &Info) == 0)
 	{
-		SaveFile.seekg(0);
+		ifstream SaveFile ("game.sav", ios::in | ios::binary);
 
-		int SaveVersion = 0;
-		SaveFile.read((char *) &SaveVersion, sizeof(int));
-
-		if ((SaveVersion >= 7) && (SaveVersion <= 8))
+		if (SaveFile.is_open())
 		{
-			SaveFile.read((char *) &Current, sizeof(Uint8));
-			SaveFile.read((char *) &RunningScores, sizeof(int) * 2);
-			SaveFile.read((char *) &DiscardTop, sizeof(Uint8));
-			SaveFile.read((char *) &Extended, sizeof(bool));
-			SaveFile.read((char *) &ExtensionDeclined, sizeof(bool));
+			SaveFile.seekg(0);
 
-			if (SaveVersion >= 8)
+			int SaveVersion = 0;
+			SaveFile.read((char *) &SaveVersion, sizeof(int));
+
+			if ((SaveVersion >= 7) && (SaveVersion <= 8))
 			{
-				for (int i = 0; i < CARD_NULL_NULL; ++i)
-					SaveFile.read((char *) &ExposedCards[i], sizeof(Uint8));
+				SaveFile.read((char *) &Current, sizeof(Uint8));
+				SaveFile.read((char *) &RunningScores, sizeof(int) * 2);
+				SaveFile.read((char *) &DiscardTop, sizeof(Uint8));
+				SaveFile.read((char *) &Extended, sizeof(bool));
+				SaveFile.read((char *) &ExtensionDeclined, sizeof(bool));
+
+				if (SaveVersion >= 8)
+				{
+					for (int i = 0; i < CARD_NULL_NULL; ++i)
+						SaveFile.read((char *) &ExposedCards[i], sizeof(Uint8));
+				}
+
+				SourceDeck->Restore(SaveFile);
+
+				for (int i = 0; i < PLAYER_COUNT; ++i)
+					Players[i].Restore(SaveFile);
+				
+				Success = SaveFile.good();
 			}
+			else
+				Success = false;
 
-			SourceDeck->Restore(SaveFile);
-
-			for (int i = 0; i < PLAYER_COUNT; ++i)
-				Players[i].Restore(SaveFile);
-			
-			Success = SaveFile.good();
+			SaveFile.close();
 		}
-		else
-			Success = false;
-
-		SaveFile.close();
 	}
 
 	return Success;	
@@ -2602,22 +2608,31 @@ bool	Game::Save				(void)
 {
 	using namespace std;
 
-	bool Success = false;
-	ofstream SaveFile ("game.sav", ios::out | ios::binary);
+	#ifdef	ANDROID_DEVICE
+		FILE *Dummy = fopen("game.sav", "w");
 
-	if (SaveFile.is_open())
+		if (Dummy == 0)
+			return false;
+		else
+			fclose(Dummy);
+	#endif
+
+	bool	Success		= false;
+
+	ofstream	SaveFile	("game.sav", ios::out | ios::binary);
+
+	if (SaveFile != 0)
 	{
 		SaveFile.seekp(0);
 		SaveFile.write((char *) &SAVE_FORMAT_VER, sizeof(int));
 		SaveFile.write((char *) &Current, sizeof(Uint8));
-		SaveFile.write((char *) &RunningScores, sizeof(int) * PLAYER_COUNT);
+		SaveFile.write((char *) RunningScores, sizeof(int) * PLAYER_COUNT);
 		SaveFile.write((char *) &DiscardTop, sizeof(Uint8));
 		SaveFile.write((char *) &Extended, sizeof(bool));
 		SaveFile.write((char *) &ExtensionDeclined, sizeof(bool));
 		
 		/* Added in version 8 (beta4) */
-		for (int i = 0; i < CARD_NULL_NULL; ++i)
-			SaveFile.write((char *) &ExposedCards[i], sizeof(Uint8));
+		SaveFile.write((char *) ExposedCards, sizeof(Uint8) * CARD_NULL_NULL);
 		/* End added in version 8 */
 		
 		SourceDeck->Save(SaveFile);
