@@ -1828,7 +1828,10 @@ void	Game::OnEvent			(SDL_Event * Event)
 									Dragging = true;
 
 									Uint8 Value = Players[Current].GetValue(DownIndex);
-									Pop(DownIndex);
+
+									if ((DownIndex != FindPopped())
+										Pop(DownIndex);
+
 									Players[0].Detach(DownIndex);
 									FloatSurface.SetImage(Card::GetFileFromValue(Value, (Value == Card::GetMatchingSafety(Players[Current].GetQualifiedCoupFourre()))));
 								}
