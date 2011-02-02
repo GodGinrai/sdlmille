@@ -1829,7 +1829,7 @@ void	Game::OnEvent			(SDL_Event * Event)
 
 									Uint8 Value = Players[Current].GetValue(DownIndex);
 
-									if ((DownIndex != FindPopped())
+									if (DownIndex != FindPopped())
 										Pop(DownIndex);
 
 									Players[0].Detach(DownIndex);
