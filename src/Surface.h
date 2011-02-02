@@ -28,6 +28,7 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 #if defined	ANDROID_DEVICE
 #define	SOFTWARE_MODE
 #include <android/log.h>
+#define LOG_TAG "com.webosnerd.sdlmille"
 #define DEBUG_PRINT(s) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, s)
 #elif defined DEBUG
 #define DEBUG_PRINT(s) printf(s)

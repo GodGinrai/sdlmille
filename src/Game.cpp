@@ -1512,7 +1512,7 @@ void	Game::OnClick			(int X, int Y)
 					if (Index < OPTION_COUNT)	//Clicked an option toggle
 					{
 						GameOptions.SwitchOpt(Index);
-						ShowModal(Modal);
+						OnRender(Window, true, false);
 						return;
 					}
 					else if (Index < (OPTION_COUNT + MENU_ITEM_COUNT)) //Clicked a menu item
@@ -1891,7 +1891,7 @@ bool	Game::OnInit			(void)
 			return false;
 
 		#ifdef SOFTWARE_MODE
-		if(!(Window = SDL_SetVideoMode(320, 480, 0, SDL_SWSURFACE)))
+		if(!(Window = SDL_SetVideoMode(0, 0, 0, SDL_SWSURFACE)))
 		#else
 		if(!(Window = SDL_SetVideoMode(320, 480, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)))
 		#endif
@@ -2247,6 +2247,9 @@ void	Game::OnPlay			(Uint8 Index, bool PlayerChange)
 
 void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 {
+	static	Uint32	LastRender	= 0;
+			Uint32	TickCount	= SDL_GetTicks();
+
 	bool	RefreshedSomething =	false, // We only flip the display if something changed
 			SceneChanged =			false; // Control variable. Do we need to call OnInit()?
 
@@ -2256,8 +2259,6 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 
 	++FrameCount;
 
-	Uint32 TickCount = SDL_GetTicks();
-
 	if ((LastReset + 333) < TickCount)
 	{
 		LastReset = TickCount;
@@ -2266,6 +2267,13 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 		RefreshedSomething = true;
 	}
 	#endif
+
+	if (LastRender < (TickCount - 1000))
+	{
+		DEBUG_PRINT("Forced render\n");
+		Force = true;
+		LastRender = TickCount;
+	}
 
 	if ((Modal == MODAL_NONE) || Force)	//Don't re-render during modal, unless forced
 	{
@@ -2409,6 +2417,9 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 
 			FloatSurface.Render(DragX - 20, DragY - 67, Target, SCALE_NONE);
 		}
+
+		if (Modal < MODAL_NONE)
+			ShowModal(Modal);
 	}
 
 	#ifdef DEBUG
@@ -2677,7 +2688,7 @@ bool	Game::ShowModal			(Uint8 ModalName)
 			ModalSurface.Render(74, 193, Window);
 			break;
 		case MODAL_GAME_MENU:
-			OnRender(Window, true, false); //Re-render the background, but don't flip it.
+			//OnRender(Window, true, false); //Re-render the background, but don't flip it.
 
 			ModalSurface.SetImage("gfx/modals/menu_top.png");
 			ModalSurface.Render(40, 80, Window);
