@@ -161,7 +161,7 @@ void	Stats::ProcessHand	(Uint8 Outcome, Uint16 HandScore, Uint16 GameScore)
 
 bool	Stats::Load		(void)
 {
-	using namespace std;
+	//using namespace std;
 
 	struct	stat	Info;
 			Uint16	SavedStatsVersion = 0;
@@ -170,36 +170,33 @@ bool	Stats::Load		(void)
 
 	if (stat("stats.dat", &Info) == 0)	//File exists
 	{
-		ifstream	StatsFile ("stats.dat", ios::in | ios::binary);
+		FILE *StatsFile = fopen("stats.dat", "rb");
 		
-		if (StatsFile.is_open())
+		if (StatsFile != 0)
 		{
-			StatsFile.seekg(0);
-			StatsFile.read((char *) &SavedStatsVersion, sizeof(Uint16));
-			if (StatsFile.good())
-			{
-				if (SavedStatsVersion == STATS_VERSION)
-				{
-					StatsFile.read((char*) &RunningHandCount, sizeof(Uint8));
-					StatsFile.read((char*) &GameRemainder, sizeof(Uint8));
-					StatsFile.read((char*) &HandRemainder, sizeof(Uint8));
-					StatsFile.read((char*) &HighGameScore, sizeof(Uint16));
-					StatsFile.read((char*) &HighHandScore, sizeof(Uint16));
-					StatsFile.read((char*) &AverageGameScore, sizeof(Uint32));
-					StatsFile.read((char*) &AverageHandScore, sizeof(Uint32));
-					StatsFile.read((char*) &RunningHandScore, sizeof(Uint16));
-					StatsFile.read((char*) &RunningGameScore, sizeof(Uint32));
-					StatsFile.read((char*) &GameAveragesDone, sizeof(Uint32));
-					StatsFile.read((char*) &HandAveragesDone, sizeof(Uint32));
-					StatsFile.read((char*) &DrawCount, sizeof(Uint32));
-					StatsFile.read((char*) &LossCount, sizeof(Uint32));
-					StatsFile.read((char*) &WinCount, sizeof(Uint32));
+			fread(&SavedStatsVersion, sizeof(Uint16), 1, StatsFile);
 
-					Success = StatsFile.good();
-				}
+			if (SavedStatsVersion == STATS_VERSION)
+			{
+				fread(&RunningHandCount, sizeof(Uint8), 1, StatsFile);
+				fread(&GameRemainder, sizeof(Uint8), 1, StatsFile);
+				fread(&HandRemainder, sizeof(Uint8), 1, StatsFile);
+				fread(&HighGameScore, sizeof(Uint16), 1, StatsFile);
+				fread(&HighHandScore, sizeof(Uint16), 1, StatsFile);
+				fread(&AverageGameScore, sizeof(Uint32), 1, StatsFile);
+				fread(&AverageHandScore, sizeof(Uint32), 1, StatsFile);
+				fread(&RunningHandScore, sizeof(Uint16), 1, StatsFile);
+				fread(&RunningGameScore, sizeof(Uint32), 1, StatsFile);
+				fread(&GameAveragesDone, sizeof(Uint32), 1, StatsFile);
+				fread(&HandAveragesDone, sizeof(Uint32), 1, StatsFile);
+				fread(&DrawCount, sizeof(Uint32), 1, StatsFile);
+				fread(&LossCount, sizeof(Uint32), 1, StatsFile);
+				fread(&WinCount, sizeof(Uint32), 1, StatsFile);
 			}
 
-			StatsFile.close();
+			fclose(StatsFile);
+
+			Success = true;
 		}
 	}
 
@@ -208,32 +205,33 @@ bool	Stats::Load		(void)
 
 bool	Stats::Save		(void)
 {
-	using namespace std;
+	//using namespace std;
 
 	bool Success = false;
-	ofstream StatsFile ("stats.dat", ios::out | ios::binary);
+	
+	FILE *StatsFile = fopen("stats.dat", "wb");
 
-	if (StatsFile.is_open())
+	if (StatsFile != 0)
 	{
-		StatsFile.seekp(0);
+		fwrite(&STATS_VERSION, sizeof(Uint16), 1, StatsFile);
+		fwrite(&RunningHandCount, sizeof(Uint8), 1, StatsFile);
+		fwrite(&GameRemainder, sizeof(Uint8), 1, StatsFile);
+		fwrite(&HandRemainder, sizeof(Uint8), 1, StatsFile);
+		fwrite(&HighGameScore, sizeof(Uint16), 1, StatsFile);
+		fwrite(&HighHandScore, sizeof(Uint16), 1, StatsFile);
+		fwrite(&AverageGameScore, sizeof(Uint32), 1, StatsFile);
+		fwrite(&AverageHandScore, sizeof(Uint32), 1, StatsFile);
+		fwrite(&RunningHandScore, sizeof(Uint16), 1, StatsFile);
+		fwrite(&RunningGameScore, sizeof(Uint32), 1, StatsFile);
+		fwrite(&GameAveragesDone, sizeof(Uint32), 1, StatsFile);
+		fwrite(&HandAveragesDone, sizeof(Uint32), 1, StatsFile);
+		fwrite(&DrawCount, sizeof(Uint32), 1, StatsFile);
+		fwrite(&LossCount, sizeof(Uint32), 1, StatsFile);
+		fwrite(&WinCount, sizeof(Uint32), 1, StatsFile);
+		
+		fclose(StatsFile);
 
-		StatsFile.write((char*) &STATS_VERSION, sizeof(Uint16));
-		StatsFile.write((char*) &RunningHandCount, sizeof(Uint8));
-		StatsFile.write((char*) &GameRemainder, sizeof(Uint8));
-		StatsFile.write((char*) &HandRemainder, sizeof(Uint8));
-		StatsFile.write((char*) &HighGameScore, sizeof(Uint16));
-		StatsFile.write((char*) &HighHandScore, sizeof(Uint16));
-		StatsFile.write((char*) &AverageGameScore, sizeof(Uint32));
-		StatsFile.write((char*) &AverageHandScore, sizeof(Uint32));
-		StatsFile.write((char*) &RunningHandScore, sizeof(Uint16));
-		StatsFile.write((char*) &RunningGameScore, sizeof(Uint32));
-		StatsFile.write((char*) &GameAveragesDone, sizeof(Uint32));
-		StatsFile.write((char*) &HandAveragesDone, sizeof(Uint32));
-		StatsFile.write((char*) &DrawCount, sizeof(Uint32));
-		StatsFile.write((char*) &LossCount, sizeof(Uint32));
-		StatsFile.write((char*) &WinCount, sizeof(Uint32));
-
-		Success = StatsFile.good();
+		Success = true;
 	}
 
 	return Success;

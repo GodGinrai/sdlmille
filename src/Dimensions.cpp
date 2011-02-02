@@ -49,7 +49,7 @@ void	Dimensions::SetDimensions	(int Width, int Height)
 		
 	PadLeft = (ScreenWidth - (320 * ScaleFactor)) / 2;
 
-	TableauHeight = (ScreenHeight - 130) / (ScaleFactor * 2);
+	TableauHeight = (ScreenHeight - (130 * ScaleFactor)) / (ScaleFactor * 2);
 	EffectiveTableauHeight = TableauHeight * ScaleFactor;
 
 	FirstRowY = (TableauHeight * 2) + 8;

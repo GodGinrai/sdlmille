@@ -1710,22 +1710,7 @@ void	Game::OnEvent			(SDL_Event * Event)
 
 	if (Event != 0)
 	{
-		if (Event->type == SDL_QUIT)
-			Running = false;
-		else if (Event->type == SDL_MOUSEBUTTONDOWN)
-		{
-			if (Event->button.which == 0)
-			{
-				MouseDown = true;
-
-				DownX = Event->button.x;
-				DownY = Event->button.y;
-
-				if (Scene == SCENE_GAME_PLAY)
-					DownIndex = Hand::GetIndex(DownX / Dimensions::ScaleFactor, DownY / Dimensions::ScaleFactor) - 1;
-			}
-		}
-		else if (Event->type == SDL_MOUSEBUTTONUP)	//Mouse click
+		if (Event->type == SDL_MOUSEBUTTONUP)	//Mouse click
 		{
 			if (Event->button.which == 0)
 			{
@@ -1774,6 +1759,19 @@ void	Game::OnEvent			(SDL_Event * Event)
 				}
 
 				OnClick(X, Y);
+			}
+		}
+		else if (Event->type == SDL_MOUSEBUTTONDOWN)
+		{
+			if (Event->button.which == 0)
+			{
+				MouseDown = true;
+
+				DownX = Event->button.x;
+				DownY = Event->button.y;
+
+				if (Scene == SCENE_GAME_PLAY)
+					DownIndex = Hand::GetIndex(DownX / Dimensions::ScaleFactor, DownY / Dimensions::ScaleFactor) - 1;
 			}
 		}
 		else if (Event->type == SDL_MOUSEMOTION)
@@ -1844,7 +1842,7 @@ void	Game::OnEvent			(SDL_Event * Event)
 		}
 		else if (Event->type == SDL_KEYUP)	//Debugging purposes
 		{
-			//return;
+			return;
 
 			ShowModal(MODAL_STATS);
 			//OnRender(Window, true, false);
@@ -1875,6 +1873,8 @@ void	Game::OnEvent			(SDL_Event * Event)
 			Current = OldPlayer;
 			*/
 		}
+		else if (Event->type == SDL_QUIT)
+			Running = false;
 	}
 }
 

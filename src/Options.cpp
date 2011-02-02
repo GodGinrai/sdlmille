@@ -32,7 +32,7 @@ bool	Options::GetOpt		(int Option)				const
 
 bool	Options::ReadOpts	(void)
 {
-	using namespace std;
+	//using namespace std;
 
 	struct	stat	Info;
 	bool	Success = false;
@@ -40,32 +40,20 @@ bool	Options::ReadOpts	(void)
 
 	if (stat("options.dat", &Info) == 0)	//File exists
 	{
-		ifstream	OptsFile ("options.dat", ios::in | ios::binary);
+		FILE *OptsFile = fopen("options.dat", "rb");
 		
-		if (OptsFile.is_open())
+		if (OptsFile != 0)
 		{
-			OptsFile.seekg(0);
-			OptsFile.read((char *) &SavedOptionVersion, sizeof(Uint16));
-			if (OptsFile.good())
-			{
-				if (SavedOptionVersion == OPTION_VERSION)
-				{
-					OptsFile.read(&Opts, 1);
-					Success = OptsFile.good();
-				}
-			}
-			else
-			{
-				//Upgrading from beta2 or earlier, without version number
-				OptsFile.clear();
-				OptsFile.seekg(0);
-				OptsFile.read(&Opts, 1);
+			Uint16	SavedOptionVersion = 0;
 
-				if (OptsFile.good())
-					SetOpt(OPTION_ANIMATIONS, true);
+			fread(&SavedOptionVersion, sizeof(Uint16), 1, OptsFile);
+			if (SavedOptionVersion == OPTION_VERSION)
+			{
+				fread(&Opts, sizeof(char), 1, OptsFile);
+				Success = true;
 			}
 
-			OptsFile.close();
+			fclose(OptsFile);
 		}
 	}
 
@@ -74,18 +62,18 @@ bool	Options::ReadOpts	(void)
 
 bool	Options::SaveOpts	(void)						const
 {
-	using namespace std;
+	//using namespace std;
 
 	bool Success = false;
-	ofstream OptsFile ("options.dat", ios::out | ios::binary);
 
-	if (OptsFile.is_open())
+	FILE *OptsFile = fopen("options.dat", "wb");
+
+	if (OptsFile != 0)
 	{
-		OptsFile.seekp(0);
-		OptsFile.write((char *) &OPTION_VERSION, sizeof(Uint16));
-		OptsFile.write(&Opts, 1);
-		Success = OptsFile.good();
-		OptsFile.close();
+		fwrite(&OPTION_VERSION, sizeof(Uint16), 1, OptsFile);
+		fwrite(&Opts, sizeof(char), 1, OptsFile);
+		Success = true;
+		fclose(OptsFile);
 	}
 
 	return Success;	

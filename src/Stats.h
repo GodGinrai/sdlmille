@@ -21,7 +21,7 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 #define	_SDLMILLE_STATS_H
 
 #include <sys/stat.h>
-#include <fstream>
+//#include <fstream>
 #include <SDL.h>
 
 namespace	_SDLMille
