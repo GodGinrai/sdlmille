@@ -25,8 +25,14 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 #define	SOFTWARE_MODE
 #endif
 
-#ifdef	ANDROID_DEVICE
+#if defined	ANDROID_DEVICE
 #define	SOFTWARE_MODE
+#include <android/log.h>
+#define DEBUG_PRINT(s) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, s)
+#elif defined DEBUG
+#define DEBUG_PRINT(s) printf(s)
+#else
+#define DEBUG_PRINT(s) //
 #endif
 
 #ifndef _SDLMILLE_SURFACE_H

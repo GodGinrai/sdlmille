@@ -127,16 +127,10 @@ bool	Game::OnExecute			(void)
 		while (SDL_PollEvent(&Event))
 			OnEvent(&Event);
 
-		// We have to render twice because the computer moves during OnLoop() and we
-		// want to render the human's move before the 500ms delay. Hopefully this will
-		// be fixed soon.
-
 		OnRender(Window, false, true);
 		OnLoop();
-		OnRender(Window, false, true);
 
-		//if (!AnimationRunning())
-			SDL_Delay(25);
+		SDL_Delay(25);
 	}
 	
 	return true;
@@ -1706,6 +1700,11 @@ void	Game::OnClick			(int X, int Y)
 
 void	Game::OnEvent			(SDL_Event * Event)
 {
+	char	DebugStr[31];
+
+	sprintf(DebugStr, "OnEvent() %u\n", SDL_GetTicks());
+	DEBUG_PRINT(DebugStr);
+
 	int	X = 0, Y = 0;
 
 	if (Event != 0)
@@ -1892,7 +1891,7 @@ bool	Game::OnInit			(void)
 			return false;
 
 		#ifdef SOFTWARE_MODE
-		if(!(Window = SDL_SetVideoMode(0, 0, 0, SDL_SWSURFACE)))
+		if(!(Window = SDL_SetVideoMode(320, 480, 0, SDL_SWSURFACE)))
 		#else
 		if(!(Window = SDL_SetVideoMode(320, 480, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)))
 		#endif
@@ -2104,6 +2103,11 @@ bool	Game::OnInit			(void)
 
 void	Game::OnLoop			(void)
 {
+	char	DebugStr[31];
+
+	sprintf(DebugStr, "OnLoop() %u\n", SDL_GetTicks());
+	DEBUG_PRINT(DebugStr);
+
 	if (Message[0] != '\0')	//Clear message if necessary
 	{
 		if (((SDL_GetTicks() - 4000) > MessagedAt) && !IN_DEMO && (Scene != SCENE_GAME_OVER))
@@ -2588,10 +2592,9 @@ bool	Game::Restore			(void)
 				
 				if (SourceDeck != 0)
 					SourceDeck->Restore(SaveFile);
-				/*
+
 				for (int i = 0; i < PLAYER_COUNT; ++i)
 					Players[i].Restore(SaveFile);
-				*/
 				
 				Success = true;
 			}
