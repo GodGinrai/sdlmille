@@ -17,23 +17,28 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 (See file LICENSE for full text of license)
 */
 
-#define	ANDROID_DEVICE
+//#define	ANDROID_DEVICE
 //#define	WEBOS_DEVICE
 //#define DEBUG
 
 #ifdef	WEBOS_DEVICE
-#define	SOFTWARE_MODE
+	#define	SOFTWARE_MODE
 #endif
 
-#if defined	ANDROID_DEVICE
-#define	SOFTWARE_MODE
-#include <android/log.h>
-#define LOG_TAG "com.webosnerd.sdlmille"
-#define DEBUG_PRINT(s) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, s)
-#elif defined DEBUG
-#define DEBUG_PRINT(s) printf(s)
+#ifdef	ANDROID_DEVICE
+	#define	SOFTWARE_MODE
+#endif
+
+#ifdef	DEBUG
+	#ifdef	ANDROID_DEVICE
+		#include <android/log.h>
+		#define LOG_TAG "com.webosnerd.sdlmille"
+		#define DEBUG_PRINT(s) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, s)
+	#else
+		#define DEBUG_PRINT(s) printf(s)
+	#endif
 #else
-#define DEBUG_PRINT(s) //
+	#define DEBUG_PRINT(s) //
 #endif
 
 #ifndef _SDLMILLE_SURFACE_H

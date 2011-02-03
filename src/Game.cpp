@@ -1709,6 +1709,10 @@ void	Game::OnEvent			(SDL_Event * Event)
 
 	if (Event != 0)
 	{
+		#ifdef	ANDROID_DEVICE
+			Dirty = true;
+		#endif
+
 		if (Event->type == SDL_MOUSEBUTTONUP)	//Mouse click
 		{
 			if (Event->button.which == 0)
@@ -2317,7 +2321,7 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 			Background.Render(0, 0, Target);
 
 			if (Scene == SCENE_MAIN)
-				LogoSurface.Render(Dimensions::ScreenWidth - LogoSurface.GetWidth(), Dimensions::ScreenHeight - LogoSurface.GetHeight(), Target);
+				LogoSurface.Render(Dimensions::ScreenWidth - LogoSurface.GetWidth(), Dimensions::ScreenHeight - LogoSurface.GetHeight(), Target, SCALE_NONE);
 			else if ((Scene == SCENE_GAME_PLAY) || IN_DEMO)
 			{
 				Overlay[0].Render(0, Dimensions::EffectiveTableauHeight - 1, Target, SCALE_NONE);
