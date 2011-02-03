@@ -139,7 +139,8 @@ private:
 				Scores[PLAYER_COUNT],
 				RunningScores[PLAYER_COUNT],
 				ScoreBreakdown[PLAYER_COUNT][SCORE_CATEGORY_COUNT];
-	Uint32		FrozenAt,
+	Uint32		EventCount,
+				FrozenAt,
 				MessagedAt;
 	bool		Animating,
 				Dirty,

@@ -52,6 +52,7 @@ namespace _SDLMille
 
 	OldDiscardTop = DiscardTop = CARD_NULL_NULL;
 
+	EventCount = 0;
 	FrozenAt = 0;
 	MessagedAt = 0;
 
@@ -1710,7 +1711,7 @@ void	Game::OnEvent			(SDL_Event * Event)
 	if (Event != 0)
 	{
 		#ifdef	ANDROID_DEVICE
-			Dirty = true;
+			++EventCount;
 		#endif
 
 		if (Event->type == SDL_MOUSEBUTTONUP)	//Mouse click
@@ -2270,6 +2271,14 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 		FrameCount = 0;
 		RefreshedSomething = true;
 	}
+	#endif
+
+	#ifdef	ANDROID_DEVICE
+		if (EventCount > 0)
+		{
+			--EventCount;
+			Dirty = true;
+		}
 	#endif
 
 	if (LastRender < (TickCount - 1000))
