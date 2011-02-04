@@ -1090,16 +1090,22 @@ bool	Game::Discard			(void)
 
 bool	Game::EndOfGame			(void)								const
 {
-	if (Players[0].IsOutOfCards() && Players[1].IsOutOfCards())	//Both players are out of cards
-		return true;
+	bool	ReturnValue	= true;
 
 	for (int i = 0; i < PLAYER_COUNT; ++i)
 	{
-		if (Players[i].GetMileage() == ((Extended) ? 1000 : 700))	//A player has completed the trip
-			return true;
+		ReturnValue &= Players[i].IsOutOfCards();	// Players are all out of cards
 	}
 
-	return false;
+	if (!ReturnValue)
+	{
+		for (int i = 0; i < PLAYER_COUNT; ++i)
+		{
+			ReturnValue |= (Players[i].GetMileage() == ((Extended) ? 1000 : 700));	// A player has completed the trip
+		}
+	}
+
+	return ReturnValue;
 }
 
 Uint8	Game::FindPopped		(void)								const
@@ -1596,7 +1602,7 @@ void	Game::OnClick			(int X, int Y)
 				Scene =		SCENE_LEARN_1;
 			}
 		}
-		if ((X >= (Dimensions::ScreenWidth - LogoSurface.GetWidth())) && (Y >= (Dimensions::ScreenHeight - LogoSurface.GetHeight())))		//Clicked GPL logo
+		if ((X >= ((Dimensions::ScreenWidth - LogoSurface.GetWidth()) / Dimensions::ScaleFactor)) && (Y >= ((Dimensions::ScreenHeight - LogoSurface.GetHeight()) / Dimensions::ScaleFactor)))		//Clicked GPL logo
 		{
 			LastScene = Scene;
 			Scene = SCENE_LEGAL;
@@ -1925,7 +1931,7 @@ bool	Game::OnInit			(void)
 
 	if (Scene == SCENE_MAIN)
 	{
-		Background.SetImage("gfx/scenes/main.png");
+		Background.SetImage("gfx/scenes/green_bg.png");
 		if (!Background)
 			return false;
 
@@ -1934,7 +1940,8 @@ bool	Game::OnInit			(void)
 		else
 			LogoSurface.SetImage("gfx/gpl_sideways.png");
 
-		Overlay[0].SetImage("gfx/loading.png");
+		Overlay[0].SetImage("gfx/overlays/main.png");
+		Overlay[1].SetImage("gfx/loading.png");
 
 		return true;
 	}
@@ -1997,12 +2004,16 @@ bool	Game::OnInit			(void)
 	{
 		ClearMessage();
 
-		Background.SetImage("gfx/scenes/green_bg.png");
-
 		if (Outcome == OUTCOME_WON)
+		{
+			Background.SetImage("gfx/scenes/black_bg.png");
 			Overlay[0].SetImage("gfx/overlays/game_over_won.jpg");
+		}
 		else
+		{
+			Background.SetImage("gfx/scenes/green_bg.png");
 			Overlay[0].SetImage("gfx/overlays/game_over.png");
+		}
 
 		switch (Outcome)
 		{
@@ -2330,7 +2341,10 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 			Background.Render(0, 0, Target);
 
 			if (Scene == SCENE_MAIN)
+			{
+				Overlay[0].Render(0, 0, Target);
 				LogoSurface.Render(Dimensions::ScreenWidth - LogoSurface.GetWidth(), Dimensions::ScreenHeight - LogoSurface.GetHeight(), Target, SCALE_NONE);
+			}
 			else if ((Scene == SCENE_GAME_PLAY) || IN_DEMO)
 			{
 				Overlay[0].Render(0, Dimensions::EffectiveTableauHeight - 1, Target, SCALE_NONE);
@@ -2338,14 +2352,14 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 
 				DiscardSurface.Render(3, Dimensions::FirstRowY, Target);
 				DrawCardSurface.Render(3, Dimensions::SecondRowY, Target);
-				DrawTextSurface.Render(23 - (DrawTextSurface.GetWidth() / 2), Dimensions::SecondRowY + 33, Target);
+				DrawTextSurface.Render(3 + (((41 * Dimensions::ScaleFactor) - DrawTextSurface.GetWidth()) / 2), Dimensions::SecondRowY + 35, Target, SCALE_Y);
 			}
 			else if (Scene == SCENE_GAME_OVER)
 			{
 				int X = 0, Y = 0;
 
-				Overlay[0].Render(0, (Dimensions::ScreenHeight - Overlay[0].GetHeight()) / 2, Target);
-				Overlay[1].Render((Dimensions::ScreenWidth - Overlay[1].GetWidth()) / 2, Dimensions::ScreenHeight - Overlay[1].GetHeight() - 12, Target);
+				Overlay[0].Render(0, (Dimensions::ScreenHeight - Overlay[0].GetHeight()) / 2, Target, SCALE_NONE);
+				Overlay[1].Render((Dimensions::ScreenWidth - Overlay[1].GetWidth()) / 2, Dimensions::ScreenHeight - Overlay[1].GetHeight() - 12, Target, SCALE_NONE);
 
 				for (int i = 0; i < (SCORE_CATEGORY_COUNT + 1); ++i)
 				{
@@ -2670,7 +2684,7 @@ bool	Game::Save				(void)
 
 void	Game::ShowLoading		(void)
 {
-	Overlay[0].Render((Dimensions::ScreenWidth - Overlay[0].GetWidth()) / 2, (Dimensions::ScreenHeight - Overlay[0].GetHeight()) / 2, Window, SCALE_NONE);
+	Overlay[1].Render((Dimensions::ScreenWidth - Overlay[0].GetWidth()) / 2, (Dimensions::ScreenHeight - Overlay[0].GetHeight()) / 2, Window, SCALE_NONE);
 	SDL_Flip(Window);
 }
 

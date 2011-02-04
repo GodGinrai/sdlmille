@@ -169,7 +169,7 @@ bool	Hand::OnRender	(SDL_Surface * Target, bool Force)
 				Dirty = false;
 			}
 
-			Overlay.Render(0, Dimensions::TableauHeight * 2, Target);
+			Overlay.Render(0, Dimensions::EffectiveTableauHeight * 2, Target, SCALE_NONE);
 
 			for (int i = 0; i < (HAND_SIZE + 1); ++i)
 			{

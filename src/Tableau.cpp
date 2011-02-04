@@ -482,7 +482,7 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 				}
 			}
 
-			MileageTextSurface.Render(65 - MileageTextSurface.GetWidth(), Y + (Dimensions::TableauHeight - 25), Target);
+			MileageTextSurface.Render(65 - MileageTextSurface.GetWidth(), Y + (Dimensions::TableauHeight - 25), Target, SCALE_Y);
 		}
 	}
 
