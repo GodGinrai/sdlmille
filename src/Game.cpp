@@ -35,7 +35,7 @@ namespace _SDLMille
 	Window = 0;
 	GameOverSmall = GameOverBig = DrawFont = 0;
 
-	Modal = MODAL_NONE;
+	LastModal = Modal = MODAL_NONE;
 	Scene = SCENE_MAIN;
 	LastScene = SCENE_INVALID;
 	DownIndex = 0xFF;
@@ -447,8 +447,7 @@ void	Game::ComputerSmartMove	(void)
 			MyTopCardType = Card::GetTypeFromValue(MyTopCard),
 			Opponent = 1 - Current;
 
-	Uint32	EndTicks = 0,
-			StartTicks = SDL_GetTicks();
+	Uint32	EndTicks = SDL_GetTicks() + ((GameOptions.GetOpt(OPTION_FAST_GAME)) ? 200 : 500);
 
 	int		TripLength = (Extended) ? 1000 : 700,
 			CardsLeft = 0,
@@ -964,7 +963,7 @@ void	Game::ComputerSmartMove	(void)
 
 		if ((Weight[i][1] >= 0) && IsValidPlay(Index) && ((Weight[i][1] != 0) || (!NonZeroFound)))
 		{
-			EndTicks = SDL_GetTicks();
+			DelayUntil(EndTicks);
 			Pop(Index);
 			Pop(Index);
 
@@ -983,7 +982,7 @@ void	Game::ComputerSmartMove	(void)
 
 			if ((Players[Current].GetValue(Index) < CARD_NULL_NULL) && ((Weight[i][1] != 0) || (!NonZeroFound)))
 			{
-				EndTicks = SDL_GetTicks();
+				DelayUntil(EndTicks);
 
 				Pop(Index);
 
@@ -992,9 +991,6 @@ void	Game::ComputerSmartMove	(void)
 			}
 		}
 	}
-
-	sprintf(DebugMessage, "Computer move took %u ms", (EndTicks - StartTicks));
-	ShowMessage(DebugMessage);
 }
 
 bool	Game::CouldHoldCard		(Uint8 PlayerIndex, Uint8 Value)			const
@@ -1519,7 +1515,7 @@ void	Game::OnClick			(int X, int Y)
 					if (Index < OPTION_COUNT)	//Clicked an option toggle
 					{
 						GameOptions.SwitchOpt(Index);
-						OnRender(Window, true, false);
+						Dirty = true;
 						return;
 					}
 					else if (Index < (OPTION_COUNT + MENU_ITEM_COUNT)) //Clicked a menu item
@@ -1915,203 +1911,257 @@ bool	Game::OnInit			(void)
 		SDL_WM_SetCaption("SDL Mille", "SDL Mille");
 	}
 
-	if (IN_TUTORIAL)
+	if (Modal < MODAL_NONE)
 	{
-		ArrowSurfaces[0].SetImage("gfx/arrowl.png");
-		ArrowSurfaces[1].SetImage("gfx/arrowr.png");
-		if (Scene >= SCENE_LEARN_2)
+		ShadowSurface.SetImage("gfx/modals/shadow.png");	//Render shadow
+
+		if (Modal == MODAL_EXTENSION)
 		{
-			HandSurface.SetImage("gfx/hand.png");
-			ShowMessage(TUTORIAL_TEXT[Scene - SCENE_LEARN_2]);
+			ModalSurface.SetImage("gfx/modals/extension.png");
+
+			return true;
 		}
-	}
-
-	if (Message[0] != '\0')
-		MessageSurface.SetText(Message, GameOverBig, &Black);
-
-	if (Scene == SCENE_MAIN)
-	{
-		Background.SetImage("gfx/scenes/green_bg.png");
-		if (!Background)
-			return false;
-
-		if (Dimensions::ScreenHeight > 440)
-			LogoSurface.SetImage("gfx/gpl.png");
-		else
-			LogoSurface.SetImage("gfx/gpl_sideways.png");
-
-		Overlay[0].SetImage("gfx/overlays/main.png");
-		Overlay[1].SetImage("gfx/loading.png");
-
-		return true;
-	}
-
-	else if ((Scene == SCENE_GAME_PLAY) || (Scene == SCENE_LEARN_2))
-	{
-		Background.Clear();
-
-		Overlay[0].SetImage("gfx/overlays/game_play_1.png");
-
-		DiscardSurface.SetImage(Card::GetFileFromValue(DiscardTop));
-		TargetSurface.SetImage("gfx/drop_target.png");
-
-		if ((SourceDeck != 0) && (SourceDeck->Empty()))
-			DrawCardSurface.SetImage(Card::GetFileFromValue(CARD_NULL_NULL));
-		else
-			DrawCardSurface.SetImage("gfx/card_bg.png");
-
-		if (DrawFont)
+		else if ((Modal == MODAL_GAME_MENU) || (Modal == MODAL_STATS))
 		{
-			DrawTextSurface.SetInteger(DeckCount, DrawFont, true, &White);
-			if ((Current == 0) && (FindPopped() < HAND_SIZE))
+			ModalSurface.SetImage("gfx/modals/menu_top.png");
+
+			if (Modal == MODAL_GAME_MENU)
 			{
-				Uint8	Value = Players[Current].GetValue(FindPopped());
-				if (Value < CARD_MILEAGE_25)
-					CaptionSurface.SetText(CARD_CAPTIONS[Players[Current].GetValue(FindPopped())], DrawFont);
-				else
-					CaptionSurface.SetText("MILEAGE", DrawFont);
+				for (int i = 0; i < (OPTION_COUNT + MENU_ITEM_COUNT); ++i)	//Render options and other menu items
+				{
+					if (i < OPTION_COUNT)
+					{
+						MenuSurfaces[i][0].SetText(OPTION_NAMES[i], GameOverBig, &White);
+						MenuSurfaces[i][1].SetText((GameOptions.GetOpt(i)) ? "ON" : "OFF", GameOverBig, &White);
+					}
+					else
+						MenuSurfaces[i][0].SetText(MENU_ITEM_NAMES[i - OPTION_COUNT], GameOverBig, &White);
+				}
 			}
 			else
-				CaptionSurface.Clear();
+			{
+				Uint32	Statistics[7];
+
+				PlayerStats.GetStats(Statistics[0], Statistics[1], Statistics[2], Statistics[3], Statistics[4], Statistics[5], Statistics[6]);
+
+				for (int i = 0; i < STAT_CAPTIONS_SIZE; ++i)
+				{
+					MenuSurfaces[i][0].SetText(STAT_CAPTIONS[i], GameOverBig, &White);
+					MenuSurfaces[i][1].SetInteger(Statistics[i], GameOverBig, true, &White);
+				}
+			}
+
+			return true;
 		}
-
-		if (Scene == SCENE_GAME_PLAY)
-			MenuSurface.SetImage("gfx/menu.png");
-		else
-			OrbSurface.SetImage("gfx/orb.png");
-
-		return true;
-	}
-
-	else if (Scene == SCENE_LEARN_1)
-	{
-		ResetPortal();
-
-		Background.SetImage("gfx/scenes/green_bg.png");
-		Overlay[0].SetImage("gfx/overlays/learn_1.png");
-
-		if (!Background)
-			return false;
-
-		if (GameOverBig)
-			Overlay[1].SetText("Drag to scroll.", GameOverBig, &White, &Black);
-
-
-		return true;
-	}
-
-	else if (Scene == SCENE_GAME_OVER)
-	{
-		ClearMessage();
-
-		if (Outcome == OUTCOME_WON)
+		else if (Modal == MODAL_NEW_GAME)
 		{
-			Background.SetImage("gfx/scenes/black_bg.png");
-			Overlay[0].SetImage("gfx/overlays/game_over_won.jpg");
+			ModalSurface.SetImage("gfx/modals/quit.png");
+
+			return true;
 		}
-		else
+
+		return false;
+	}
+	else
+	{
+		if (IN_TUTORIAL)
+		{
+			ArrowSurfaces[0].SetImage("gfx/arrowl.png");
+			ArrowSurfaces[1].SetImage("gfx/arrowr.png");
+			if (Scene >= SCENE_LEARN_2)
+			{
+				HandSurface.SetImage("gfx/hand.png");
+				ShowMessage(TUTORIAL_TEXT[Scene - SCENE_LEARN_2]);
+			}
+		}
+
+		if (Message[0] != '\0')
+			MessageSurface.SetText(Message, GameOverBig, &Black);
+
+		if (Scene == SCENE_MAIN)
 		{
 			Background.SetImage("gfx/scenes/green_bg.png");
-			Overlay[0].SetImage("gfx/overlays/game_over.png");
+			if (!Background)
+				return false;
+
+			if (Dimensions::ScreenHeight > 440)
+				LogoSurface.SetImage("gfx/gpl.png");
+			else
+				LogoSurface.SetImage("gfx/gpl_sideways.png");
+
+			Overlay[0].SetImage("gfx/overlays/main.png");
+			Overlay[1].SetImage("gfx/loading.png");
+
+			return true;
 		}
 
-		switch (Outcome)
+		else if ((Scene == SCENE_GAME_PLAY) || (Scene == SCENE_LEARN_2))
 		{
-		case	OUTCOME_WON:
-			Overlay[1].SetText("Congrats! Click to start next game.", GameOverSmall, &White, &Black);
-			break;
-		case	OUTCOME_DRAW:
-			Overlay[1].SetText("It's a draw! Click to start next game.", GameOverSmall, &White);
-			break;
-		case	OUTCOME_LOST:
-			Overlay[1].SetText("Aw, shucks! Click to start next game.", GameOverSmall, &White);
-			break;
-		default:
-			Overlay[1].SetText("Click to start next hand!", GameOverSmall, &White);
+			Background.Clear();
+
+			Overlay[0].SetImage("gfx/overlays/game_play_1.png");
+
+			DiscardSurface.SetImage(Card::GetFileFromValue(DiscardTop));
+			TargetSurface.SetImage("gfx/drop_target.png");
+
+			if ((SourceDeck != 0) && (SourceDeck->Empty()))
+				DrawCardSurface.SetImage(Card::GetFileFromValue(CARD_NULL_NULL));
+			else
+				DrawCardSurface.SetImage("gfx/card_bg.png");
+
+			if (DrawFont)
+			{
+				DrawTextSurface.SetInteger(DeckCount, DrawFont, true, &White);
+				if ((Current == 0) && (FindPopped() < HAND_SIZE))
+				{
+					Uint8	Value = Players[Current].GetValue(FindPopped());
+					if (Value < CARD_MILEAGE_25)
+						CaptionSurface.SetText(CARD_CAPTIONS[Players[Current].GetValue(FindPopped())], DrawFont);
+					else
+						CaptionSurface.SetText("MILEAGE", DrawFont);
+				}
+				else
+					CaptionSurface.Clear();
+			}
+
+			if (Scene == SCENE_GAME_PLAY)
+				MenuSurface.SetImage("gfx/menu.png");
+			else
+				OrbSurface.SetImage("gfx/orb.png");
+
+			return true;
 		}
 
-		if (GameOverBig)
+		else if (Scene == SCENE_LEARN_1)
 		{
-			ScoreSurfaces[0][1].Clear();
-			ScoreSurfaces[0][2].Clear();
+			ResetPortal();
+
+			Background.SetImage("gfx/scenes/green_bg.png");
+			Overlay[0].SetImage("gfx/overlays/learn_1.png");
+
+			if (!Background)
+				return false;
+
+			if (GameOverBig)
+				Overlay[1].SetText("Drag to scroll.", GameOverBig, &White, &Black);
+
+
+			return true;
+		}
+
+		else if (Scene == SCENE_GAME_OVER)
+		{
+			ClearMessage();
 
 			if (Outcome == OUTCOME_WON)
 			{
-				ScoreSurfaces[0][1].SetText("Human", GameOverBig, &White, &Black);
-				ScoreSurfaces[0][2].SetText("CPU", GameOverBig, &White, &Black);
+				Background.SetImage("gfx/scenes/black_bg.png");
+				Overlay[0].SetImage("gfx/overlays/game_over_won.jpg");
 			}
 			else
 			{
-				ScoreSurfaces[0][1].SetText("Human", GameOverBig);
-				ScoreSurfaces[0][2].SetText("CPU", GameOverBig);
+				Background.SetImage("gfx/scenes/green_bg.png");
+				Overlay[0].SetImage("gfx/overlays/game_over.png");
 			}
 
-			for (int i = 1; i < (SCORE_CATEGORY_COUNT + 1); ++i)
+			switch (Outcome)
 			{
-				bool ShowRow = false;
+			case	OUTCOME_WON:
+				Overlay[1].SetText("Congrats! Click to start next game.", GameOverSmall, &White, &Black);
+				break;
+			case	OUTCOME_DRAW:
+				Overlay[1].SetText("It's a draw! Click to start next game.", GameOverSmall, &White);
+				break;
+			case	OUTCOME_LOST:
+				Overlay[1].SetText("Aw, shucks! Click to start next game.", GameOverSmall, &White);
+				break;
+			default:
+				Overlay[1].SetText("Click to start next hand!", GameOverSmall, &White);
+			}
 
-				for (int j = 0; j < SCORE_COLUMN_COUNT; ++j)
+			if (GameOverBig)
+			{
+				ScoreSurfaces[0][1].Clear();
+				ScoreSurfaces[0][2].Clear();
+
+				if (Outcome == OUTCOME_WON)
 				{
-					ScoreSurfaces[i][j].Clear();
+					ScoreSurfaces[0][1].SetText("Human", GameOverBig, &White, &Black);
+					ScoreSurfaces[0][2].SetText("CPU", GameOverBig, &White, &Black);
+				}
+				else
+				{
+					ScoreSurfaces[0][1].SetText("Human", GameOverBig);
+					ScoreSurfaces[0][2].SetText("CPU", GameOverBig);
+				}
 
-					if (j == 0)
+				for (int i = 1; i < (SCORE_CATEGORY_COUNT + 1); ++i)
+				{
+					bool ShowRow = false;
+
+					for (int j = 0; j < SCORE_COLUMN_COUNT; ++j)
 					{
-						if (Outcome == OUTCOME_WON)
+						ScoreSurfaces[i][j].Clear();
+
+						if (j == 0)
 						{
-							for (int k = 0; k < PLAYER_COUNT; ++k)
+							if (Outcome == OUTCOME_WON)
 							{
-								if (ScoreBreakdown[k][i - 1] != 0)
+								for (int k = 0; k < PLAYER_COUNT; ++k)
 								{
-									ShowRow = true;
-									break;
+									if (ScoreBreakdown[k][i - 1] != 0)
+									{
+										ShowRow = true;
+										break;
+									}
 								}
+
+								if (ShowRow)
+									ScoreSurfaces[i][j].SetText(SCORE_CAT_NAMES[i - 1], GameOverBig, &White, &Black);
 							}
-
-							if (ShowRow)
-								ScoreSurfaces[i][j].SetText(SCORE_CAT_NAMES[i - 1], GameOverBig, &White, &Black);
+							else
+							{
+								ShowRow = true;
+								ScoreSurfaces[i][j].SetText(SCORE_CAT_NAMES[i - 1], GameOverBig);
+							}
 						}
 						else
 						{
-							ShowRow = true;
-							ScoreSurfaces[i][j].SetText(SCORE_CAT_NAMES[i - 1], GameOverBig);
-						}
-					}
-					else
-					{
-						int Score = ScoreBreakdown[j - 1][i - 1];
+							int Score = ScoreBreakdown[j - 1][i - 1];
 
-						if (Outcome == OUTCOME_WON)
-						{
-							if ((Score != 0) && ShowRow)
-								ScoreSurfaces[i][j].SetInteger(Score, GameOverBig, (i >= (SCORE_CATEGORY_COUNT - 2)), &White, &Black);
+							if (Outcome == OUTCOME_WON)
+							{
+								if ((Score != 0) && ShowRow)
+									ScoreSurfaces[i][j].SetInteger(Score, GameOverBig, (i >= (SCORE_CATEGORY_COUNT - 2)), &White, &Black);
+							}
+							else
+								ScoreSurfaces[i][j].SetInteger(Score, GameOverBig, (i >= (SCORE_CATEGORY_COUNT - 2)));
 						}
-						else
-							ScoreSurfaces[i][j].SetInteger(Score, GameOverBig, (i >= (SCORE_CATEGORY_COUNT - 2)));
 					}
 				}
 			}
+
+			return true;
 		}
 
-		return true;
-	}
+		else if (Scene == SCENE_LEGAL)
+		{
+			SDL_Color	VersionRed = {230, 0, 11, 0};
 
-	else if (Scene == SCENE_LEGAL)
-	{
-		SDL_Color	VersionRed = {230, 0, 11, 0};
+			ResetPortal();
 
-		ResetPortal();
+			Background.Clear();
 
-		Background.Clear();
+			Overlay[0].SetImage("gfx/overlays/legal.png");
 
-		Overlay[0].SetImage("gfx/overlays/legal.png");
+			if (GameOverBig)
+				Overlay[1].SetText("Drag to scroll.", GameOverBig, &White, &Black);
 
-		if (GameOverBig)
-			Overlay[1].SetText("Drag to scroll.", GameOverBig, &White, &Black);
+			if (GameOverSmall)
+				VersionSurface.SetText(VERSION_TEXT, GameOverSmall, &VersionRed);
 
-		if (GameOverSmall)
-			VersionSurface.SetText(VERSION_TEXT, GameOverSmall, &VersionRed);
-
-		return true;
+			return true;
+		}
 	}
 
 	return false;
@@ -2295,105 +2345,105 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 	if (LastRender < (TickCount - 1000))
 	{
 		DEBUG_PRINT("Forced render\n");
-		Force = true;
+		Dirty = true;
 		LastRender = TickCount;
 	}
 
-	if ((Modal == MODAL_NONE) || Force)	//Don't re-render during modal, unless forced
+	//if ((Modal == MODAL_NONE) || Force)	//Don't re-render during modal, unless forced
+	//{
+	// If the scene, discard pile, or deck count have changed, we need to do a refresh
+	SceneChanged |= CheckForChange(OldDeckCount, DeckCount);
+	SceneChanged |= CheckForChange(OldDiscardTop, DiscardTop);
+	SceneChanged |= CheckForChange(LastScene, Scene);
+	SceneChanged |= CheckForChange(LastModal, Modal);
+
+	// Also if we're otherwise dirty
+	Force |= Dirty;
+
+	//Re-render the background if the hand has changed
+	if ((Scene == SCENE_GAME_PLAY) && Players[0].IsDirty())
 	{
-		// If the scene, discard pile, or deck count have changed, we need to do a refresh
-		SceneChanged |= CheckForChange(OldDeckCount, DeckCount);
-		SceneChanged |= CheckForChange(OldDiscardTop, DiscardTop);
-		SceneChanged |= CheckForChange(LastScene, Scene);
-
-		// Also if we're otherwise dirty
-		Force |= Dirty;
-
-		//Re-render the background if the hand has changed
-		if ((Scene == SCENE_GAME_PLAY) && Players[0].IsDirty())
-		{
-			if (GameOptions.GetOpt(OPTION_CARD_CAPTIONS)) //With captions, we need to re-init
-				SceneChanged = true;
-			else	//Without captions, we just need to re-render
-				Force = true;
-		}
-
-		if (SceneChanged)
+		if (GameOptions.GetOpt(OPTION_CARD_CAPTIONS)) //With captions, we need to re-init
+			SceneChanged = true;
+		else	//Without captions, we just need to re-render
 			Force = true;
+	}
 
-		if ((Scene == SCENE_GAME_PLAY) || IN_DEMO)
+	if ((Modal < MODAL_NONE) && Dirty)
+		SceneChanged = true;
+
+	if (SceneChanged)
+		Force = true;
+
+	if ((Scene == SCENE_GAME_PLAY) || IN_DEMO)
+	{
+		for (int i = (PLAYER_COUNT - 1); i >= 0; --i)
+			RefreshedSomething |= Players[i].OnRender(Target, i, Force);
+	}
+
+	if (Force)
+	{
+		if (SceneChanged || (Message[0] != '\0'))
+			OnInit(); //Refresh our surfaces
+
+		Force = true;
+		RefreshedSomething = true;
+	
+		// Render the appropriate surfaces
+		Background.Render(0, 0, Target);
+
+		if (Scene == SCENE_MAIN)
 		{
-			for (int i = (PLAYER_COUNT - 1); i >= 0; --i)
-				RefreshedSomething |= Players[i].OnRender(Target, i, Force);
+			Overlay[0].Render(0, 0, Target);
+			LogoSurface.Render(Dimensions::ScreenWidth - LogoSurface.GetWidth(), Dimensions::ScreenHeight - LogoSurface.GetHeight(), Target, SCALE_NONE);
 		}
-
-
-		if (Force)
+		else if ((Scene == SCENE_GAME_PLAY) || IN_DEMO)
 		{
-			if (SceneChanged || (Message[0] != '\0'))
-				OnInit(); //Refresh our surfaces
+			Overlay[0].Render(0, Dimensions::EffectiveTableauHeight - 1, Target, SCALE_NONE);
+			Overlay[0].Render(0, (Dimensions::EffectiveTableauHeight * 2) - 1, Target, SCALE_NONE);
 
-			Force = true;
-			RefreshedSomething = true;
+			DiscardSurface.Render(3, Dimensions::FirstRowY, Target);
+			DrawCardSurface.Render(3, Dimensions::SecondRowY, Target);
+			DrawTextSurface.Render(3 + (((41 * Dimensions::ScaleFactor) - DrawTextSurface.GetWidth()) / 2), Dimensions::SecondRowY + 35, Target, SCALE_Y);
+		}
+		else if (Scene == SCENE_GAME_OVER)
+		{
+			int X = 0, Y = 0;
 
-		
-			// Render the appropriate surfaces
-			Background.Render(0, 0, Target);
+			Overlay[0].Render(0, (Dimensions::ScreenHeight - Overlay[0].GetHeight()) / 2, Target, SCALE_NONE);
+			Overlay[1].Render((Dimensions::ScreenWidth - Overlay[1].GetWidth()) / 2, Dimensions::ScreenHeight - Overlay[1].GetHeight() - 12, Target, SCALE_NONE);
 
-			if (Scene == SCENE_MAIN)
+			for (int i = 0; i < (SCORE_CATEGORY_COUNT + 1); ++i)
 			{
-				Overlay[0].Render(0, 0, Target);
-				LogoSurface.Render(Dimensions::ScreenWidth - LogoSurface.GetWidth(), Dimensions::ScreenHeight - LogoSurface.GetHeight(), Target, SCALE_NONE);
-			}
-			else if ((Scene == SCENE_GAME_PLAY) || IN_DEMO)
-			{
-				Overlay[0].Render(0, Dimensions::EffectiveTableauHeight - 1, Target, SCALE_NONE);
-				Overlay[0].Render(0, (Dimensions::EffectiveTableauHeight * 2) - 1, Target, SCALE_NONE);
-
-				DiscardSurface.Render(3, Dimensions::FirstRowY, Target);
-				DrawCardSurface.Render(3, Dimensions::SecondRowY, Target);
-				DrawTextSurface.Render(3 + (((41 * Dimensions::ScaleFactor) - DrawTextSurface.GetWidth()) / 2), Dimensions::SecondRowY + 35, Target, SCALE_Y);
-			}
-			else if (Scene == SCENE_GAME_OVER)
-			{
-				int X = 0, Y = 0;
-
-				Overlay[0].Render(0, (Dimensions::ScreenHeight - Overlay[0].GetHeight()) / 2, Target, SCALE_NONE);
-				Overlay[1].Render((Dimensions::ScreenWidth - Overlay[1].GetWidth()) / 2, Dimensions::ScreenHeight - Overlay[1].GetHeight() - 12, Target, SCALE_NONE);
-
-				for (int i = 0; i < (SCORE_CATEGORY_COUNT + 1); ++i)
+				for (int j = 0; j < SCORE_COLUMN_COUNT; ++j)
 				{
-					for (int j = 0; j < SCORE_COLUMN_COUNT; ++j)
+					if (ScoreSurfaces[i][j])
 					{
-						if (ScoreSurfaces[i][j])
-						{
-							int Padding = 25;
+						int Padding = 25;
 
-							if (Dimensions::ScreenHeight < 480)
-								Padding = 10;
+						if (Dimensions::ScreenHeight < 480)
+							Padding = 10;
 
-							X = 12 + ((j > 0) ? 175 : 0) + ((j > 1) ? 75 : 0);
-							Y = Padding + (i * 26) + ((i > 0) ? Padding : 0) + ((i > (SCORE_CATEGORY_COUNT - 3)) ? Padding : 0) + ((i > (SCORE_CATEGORY_COUNT - 1)) ? Padding : 0);
-							ScoreSurfaces[i][j].Render(X, Y, Target);
-						}
+						X = 12 + ((j > 0) ? 175 : 0) + ((j > 1) ? 75 : 0);
+						Y = Padding + (i * 26) + ((i > 0) ? Padding : 0) + ((i > (SCORE_CATEGORY_COUNT - 3)) ? Padding : 0) + ((i > (SCORE_CATEGORY_COUNT - 1)) ? Padding : 0);
+						ScoreSurfaces[i][j].Render(X, Y, Target);
 					}
 				}
 			}
-			
-			else if ((Scene == SCENE_LEARN_1) || (Scene == SCENE_LEGAL))
+		}
+		else if ((Scene == SCENE_LEARN_1) || (Scene == SCENE_LEGAL))
+		{
+			Overlay[0].DrawPart(Portal, Target);
+
+			if ((Portal.x == 0) && (Portal.y == 0) && ((Overlay[0].GetWidth() > Dimensions::ScreenWidth) || (Overlay[0].GetHeight() > Dimensions::ScreenHeight)))
+				Overlay[1].Render((Dimensions::ScreenWidth - Overlay[1].GetWidth()) / 2, Dimensions::ScreenHeight - Overlay[1].GetHeight() - 5, Target, SCALE_NONE);
+
+			if (Scene == SCENE_LEGAL)
 			{
-				Overlay[0].DrawPart(Portal, Target);
+				if (Portal.y < (VersionSurface.GetHeight() + 1))
+					VersionSurface.Render(Dimensions::ScreenWidth - VersionSurface.GetWidth() - 1, 1 - Portal.y, Target, SCALE_NONE);
 
-				if ((Portal.x == 0) && (Portal.y == 0) && ((Overlay[0].GetWidth() > Dimensions::ScreenWidth) || (Overlay[0].GetHeight() > Dimensions::ScreenHeight)))
-					Overlay[1].Render((Dimensions::ScreenWidth - Overlay[1].GetWidth()) / 2, Dimensions::ScreenHeight - Overlay[1].GetHeight() - 5, Target, SCALE_NONE);
-
-				if (Scene == SCENE_LEGAL)
-				{
-					if (Portal.y < (VersionSurface.GetHeight() + 1))
-						VersionSurface.Render(Dimensions::ScreenWidth - VersionSurface.GetWidth() - 1, 1 - Portal.y, Target, SCALE_NONE);
-
-					Overlay[2].Render((Dimensions::ScreenWidth - Overlay[2].GetWidth()) / 2, 10, Target, SCALE_NONE);
-				}
+				Overlay[2].Render((Dimensions::ScreenWidth - Overlay[2].GetWidth()) / 2, 10, Target, SCALE_NONE);
 			}
 		}
 
@@ -2446,7 +2496,41 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 		}
 
 		if (Modal < MODAL_NONE)
-			ShowModal(Modal);
+		{
+			ShadowSurface.Render(0, 0, Target);	//Render shadow
+
+			if (Modal == MODAL_EXTENSION)
+			{
+				ModalSurface.Render(74, 193, Target);
+			}
+			else if ((Modal == MODAL_GAME_MENU) || (Modal == MODAL_STATS))
+			{
+				ModalSurface.Render(40, 80, Target);
+
+				if (Modal == MODAL_GAME_MENU)
+				{
+					for (int i = 0; i < (OPTION_COUNT + MENU_ITEM_COUNT); ++i)	//Render options and other menu items
+					{
+						MenuSurfaces[i][0].Render(50, 120 + (i * 40), Target);
+
+						if (i < OPTION_COUNT)
+							MenuSurfaces[i][1].Render(240, 120 + (i * 40), Target);
+					}
+				}
+				else
+				{
+					for (int i = 0; i < STAT_CAPTIONS_SIZE; ++i)
+					{
+						MenuSurfaces[i][0].Render(50, 120 + (i * 40), Target);
+						MenuSurfaces[i][1].Render(220, 120 + (i * 40), Target);
+					}
+				}
+			}
+			else if (Modal == MODAL_NEW_GAME)
+			{
+				ModalSurface.Render(60, 165, Target);
+			}	
+		}
 	}
 
 	#ifdef DEBUG
@@ -2700,59 +2784,11 @@ void	Game::ShowMessage		(const char * Msg, bool SetDirty)
 
 bool	Game::ShowModal			(Uint8 ModalName)
 {
-	Uint32	Statistics[7];
-
 	if (ModalName < MODAL_NONE)
 	{
+		LastModal = Modal;
 		Modal = ModalName;
-
-		Surface::Draw(Window, Surface::Load("gfx/modals/shadow.png"), 0, 0, true);	//Render shadow
-
-		switch(Modal)
-		{
-		case MODAL_EXTENSION:
-			ModalSurface.SetImage("gfx/modals/extension.png");
-			ModalSurface.Render(74, 193, Window);
-			break;
-		case MODAL_GAME_MENU:
-			//OnRender(Window, true, false); //Re-render the background, but don't flip it.
-
-			ModalSurface.SetImage("gfx/modals/menu_top.png");
-			ModalSurface.Render(40, 80, Window);
-			for (int i = 0; i < (OPTION_COUNT + MENU_ITEM_COUNT); ++i)	//Render options and other menu items
-			{
-				if (i < OPTION_COUNT)
-				{
-					MenuSurfaces[i][0].SetText(OPTION_NAMES[i], GameOverBig, &White);
-					MenuSurfaces[i][1].SetText((GameOptions.GetOpt(i)) ? "ON" : "OFF", GameOverBig, &White);
-					MenuSurfaces[i][1].Render(240, 120 + (i * 40), Window);
-				}
-				else
-					MenuSurfaces[i][0].SetText(MENU_ITEM_NAMES[i - OPTION_COUNT], GameOverBig, &White);
-
-				MenuSurfaces[i][0].Render(50, 120 + (i * 40), Window);
-			}
-			break;
-		case MODAL_NEW_GAME:
-			ModalSurface.SetImage("gfx/modals/quit.png");
-			ModalSurface.Render(60, 165, Window);
-			break;
-		case	MODAL_STATS:
-			PlayerStats.GetStats(Statistics[0], Statistics[1], Statistics[2], Statistics[3], Statistics[4], Statistics[5], Statistics[6]);
-
-			ModalSurface.Render(40, 80, Window);
-
-			for (int i = 0; i < STAT_CAPTIONS_SIZE; ++i)
-			{
-				MenuSurfaces[i][0].SetText(STAT_CAPTIONS[i], GameOverBig, &White);
-				MenuSurfaces[i][1].SetInteger(Statistics[i], GameOverBig, true, &White);
-
-				MenuSurfaces[i][0].Render(50, 120 + (i * 40), Window);
-				MenuSurfaces[i][1].Render(220, 120 + (i * 40), Window);
-			}
-		}		
-
-		SDL_Flip(Window);
+		Dirty = true;
 
 		return true;
 	}

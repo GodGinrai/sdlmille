@@ -119,12 +119,13 @@ private:
 				LogoSurface,
 				MenuSurface,
 				MessageSurface,
-				MenuSurfaces[OPTION_COUNT + MENU_ITEM_COUNT][2],
+				MenuSurfaces[STAT_CAPTIONS_SIZE][2],
 				ModalSurface,
 				OrbSurface,
 				Overlay[3],
 				ResultTextSurface,
 				ScoreSurfaces[SCORE_CATEGORY_COUNT + 1][SCORE_COLUMN_COUNT],
+				ShadowSurface,
 				TargetSurface,
 				VersionSurface;
 	Player		Players[PLAYER_COUNT];
@@ -151,7 +152,7 @@ private:
 				Running;
 	Uint8		Current,				// Index of current player
 				DownIndex,
-				Modal,
+				Modal, LastModal,
 				Scene, LastScene,
 				DeckCount, OldDeckCount,
 				DiscardTop, OldDiscardTop,
