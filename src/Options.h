@@ -27,10 +27,10 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 namespace	_SDLMille
 {
 
-const	int		OPTION_COUNT = 3;
-const	Uint16	OPTION_VERSION = 2;
-const	char	OPTION_NAMES[OPTION_COUNT][14] = {"Card captions", "Fast game", "Animations"};
-enum	{OPTION_CARD_CAPTIONS = 0, OPTION_FAST_GAME, OPTION_ANIMATIONS};
+enum	{OPTION_CARD_CAPTIONS = 0, OPTION_FAST_GAME, OPTION_ANIMATIONS, OPTION_HARD_DIFFICULTY, OPTION_COUNT};
+
+const	Uint16	OPTION_VERSION = 3;
+const	char	OPTION_NAMES[OPTION_COUNT][16] = {"Card captions", "Fast game", "Animations", "Hard Difficulty"};
 
 class	Options
 {

@@ -31,11 +31,15 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 namespace _SDLMille
 {
 
+enum	{ANIMATION_PLAY = 0, ANIMATION_DISCARD, ANIMATION_RETURN, ANIMATION_COUP_FOURRE_BOUNCE, ANIMATION_SAFETY_SPAWN, ANIMATION_INVALID};
+
+enum	{DIFFICULTY_EASY = 0, DIFFICULTY_NORMAL, DIFFICULTY_HARD, DIFFICULTY_LEVEL_COUNT};
+
 const Uint8 MENU_ITEM_COUNT = 3,
 			PLAYER_COUNT = 2,
 			SCORE_CATEGORY_COUNT = 12,
 			SCORE_COLUMN_COUNT = 3,
-			MESSAGE_SIZE = 40;
+			MESSAGE_SIZE = 42;
 
 const	char	CARD_CAPTIONS[CARD_SAFETY_RIGHT_OF_WAY + 1][20] = {
 					"Crash HAZARD", "Fuel HAZARD", "Tire HAZARD", "Speed HAZARD", "Stop HAZARD",
@@ -44,10 +48,14 @@ const	char	CARD_CAPTIONS[CARD_SAFETY_RIGHT_OF_WAY + 1][20] = {
 const	int		HAND_COORDS[] =	{	146,
 									146,
 									3	};
+const	char	DIFFICULTY_TEXT[DIFFICULTY_LEVEL_COUNT][7] = {"Easy", "Normal", "Hard"};
+
 const	char	MENU_ITEM_NAMES[MENU_ITEM_COUNT][11] = {"New game", "Main menu", "Statistics"};
+
 const	char	SCORE_CAT_NAMES[SCORE_CATEGORY_COUNT][15] = {
 					"Mileage", "Safeties", "All 4", "Coup Fourres", "Completed Trip", "Delayed Action", "Safe Trip",
 					"Extension", "Shutout", "Subtotal", "Previous", "Total"	};
+
 const	char	TUTORIAL_TEXT[][MESSAGE_SIZE] = {
 					"This is the computer's area.",
 					"And this is your area.",
@@ -55,10 +63,10 @@ const	char	TUTORIAL_TEXT[][MESSAGE_SIZE] = {
 					"Click it again to play.",
 					"Or click here to discard.",
 					"Enjoy the game!"	};
-const	char	VERSION_TEXT[] = "0.5.4-4 (beta4 test4)";
-const	int		SAVE_FORMAT_VER = 8;
 
-enum	{ANIMATION_PLAY = 0, ANIMATION_DISCARD, ANIMATION_RETURN, ANIMATION_COUP_FOURRE_BOUNCE, ANIMATION_SAFETY_SPAWN, ANIMATION_INVALID};
+const	char	VERSION_TEXT[] = "0.5.4-5 (beta4 test5)";
+
+const	int		SAVE_FORMAT_VER = 8;
 
 class Game
 {
@@ -101,6 +109,7 @@ private:
 	void		ResetPortal		(void);
 	bool		Restore			(void);
 	bool		Save			(void);
+	void		SetDifficulty	(void);
 	void		ShowLoading		(void);
 	void		ShowMessage		(const char * Msg, bool SetDirty = true);
 	bool		ShowModal		(Uint8 ModalName);
@@ -122,7 +131,7 @@ private:
 				MenuSurfaces[STAT_CAPTIONS_SIZE][2],
 				ModalSurface,
 				OrbSurface,
-				Overlay[3],
+				Overlay[5],
 				ResultTextSurface,
 				ScoreSurfaces[SCORE_CATEGORY_COUNT + 1][SCORE_COLUMN_COUNT],
 				ShadowSurface,
@@ -134,7 +143,10 @@ private:
 	Stats		PlayerStats;
 	SDL_Rect	Portal;
 	SDL_Color	Black,
-				White;
+				Green,
+				Red,
+				White,
+				Yellow;
 	int			DownX, DownY,
 				DragX, DragY,
 				Scores[PLAYER_COUNT],
@@ -157,7 +169,8 @@ private:
 				DeckCount, OldDeckCount,
 				DiscardTop, OldDiscardTop,
 				ExposedCards[CARD_NULL_NULL],
-				Outcome;
+				Outcome,
+				Difficulty;
 	char		Message[MESSAGE_SIZE];
 	TTF_Font	*DrawFont, *GameOverBig, *GameOverSmall;
 

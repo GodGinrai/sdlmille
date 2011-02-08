@@ -82,7 +82,13 @@ namespace _SDLMille
 		OldDeckCount = DeckCount = SourceDeck->CardsLeft();
 
 	GameOptions.ReadOpts();
-	Tableau::EnableAnimation = GameOptions.GetOpt(OPTION_ANIMATIONS);
+
+	if (GameOptions.GetOpt(OPTION_HARD_DIFFICULTY))
+		Difficulty = DIFFICULTY_HARD;
+	else
+		Difficulty = DIFFICULTY_NORMAL;
+
+	//Tableau::EnableAnimation = GameOptions.GetOpt(OPTION_ANIMATIONS);
 
 	Message[0] = '\0';
 
@@ -91,7 +97,10 @@ namespace _SDLMille
 	GameOverSmall = TTF_OpenFont("LiberationMono-Regular.ttf", 14);
 
 	Black.r = 0; Black.g = 0; Black.b = 0;
+	Green.r = 120; Green.g = 192; Green.b = 86;
+	Red.r = 191; Red.g = Red.b = 0;
 	White.r = 255; White.g = 255; White.b = 255;
+	Yellow.r = Yellow.g = 191; Yellow.b = 0;
 }
 
 		Game::~Game				(void)
@@ -1468,6 +1477,7 @@ bool	Game::MayHaveRoW		(Uint8 PlayerIndex)								const
 void	Game::OnClick			(int X, int Y)
 {
 	static	Uint32	LastClick = 0;
+	static	bool	ChangedDifficulty = false;
 
 	if (Frozen)		//Don't register clicks when frozen
 	{
@@ -1515,6 +1525,10 @@ void	Game::OnClick			(int X, int Y)
 					if (Index < OPTION_COUNT)	//Clicked an option toggle
 					{
 						GameOptions.SwitchOpt(Index);
+						
+						if (Index == OPTION_HARD_DIFFICULTY)
+							ChangedDifficulty = true;
+
 						Dirty = true;
 						return;
 					}
@@ -1543,9 +1557,16 @@ void	Game::OnClick			(int X, int Y)
 				if ((Y >= 83) && (Y <= 109))	// Clicked the X button
 				{
 					GameOptions.SaveOpts();
+
+					if (ChangedDifficulty)
+					{
+						ShowMessage("Difficulty applies next game.");
+						ChangedDifficulty = false;
+					}
+
 					Modal = MODAL_NONE;
 					Dirty = true;
-					Tableau::EnableAnimation = GameOptions.GetOpt(OPTION_ANIMATIONS);
+					//Tableau::EnableAnimation = GameOptions.GetOpt(OPTION_ANIMATIONS);
 				}
 			}
 		}
@@ -1924,6 +1945,12 @@ bool	Game::OnInit			(void)
 		else if ((Modal == MODAL_GAME_MENU) || (Modal == MODAL_STATS))
 		{
 			ModalSurface.SetImage("gfx/modals/menu_top.png");
+			Overlay[1].SetText("Current game's difficulty:", GameOverSmall, &White, &Black);
+
+			if (Difficulty < DIFFICULTY_LEVEL_COUNT)
+				Overlay[2].SetText(DIFFICULTY_TEXT[Difficulty], GameOverBig, &White, &Black);
+			else
+				Overlay[2].SetText("Error", GameOverBig, &White);
 
 			if (Modal == MODAL_GAME_MENU)
 			{
@@ -1976,7 +2003,21 @@ bool	Game::OnInit			(void)
 		}
 
 		if (Message[0] != '\0')
-			MessageSurface.SetText(Message, GameOverBig, &Black);
+		{
+			SDL_Color MessageBg;
+
+			if ((Scene == SCENE_GAME_PLAY) && Players[1].IsRolling())
+			{
+				if (Players[1].IsLimited())
+					MessageBg = Yellow;
+				else
+					MessageBg = Green;
+			}
+			else
+				MessageBg = Red;
+
+			MessageSurface.SetText(Message, GameOverBig, &Black, &MessageBg);
+		}
 
 		if (Scene == SCENE_MAIN)
 		{
@@ -2262,7 +2303,12 @@ void	Game::OnLoop			(void)
 			ChangePlayer();
 
 		if (Current == 1)
-			ComputerSmartMove();
+		{
+			if (Difficulty == DIFFICULTY_HARD)
+				ComputerSmartMove();
+			else
+				ComputerMove();
+		}
 	}
 }
 
@@ -2507,6 +2553,9 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 			{
 				ModalSurface.Render(40, 80, Target);
 
+				Overlay[1].Render((Dimensions::ScreenWidth - Overlay[1].GetWidth()) / 2, 10, Target, SCALE_Y);
+				Overlay[2].Render((Dimensions::ScreenWidth - Overlay[2].GetWidth()) / 2, 20 + Overlay[1].GetHeight(), Target, SCALE_Y);
+
 				if (Modal == MODAL_GAME_MENU)
 				{
 					for (int i = 0; i < (OPTION_COUNT + MENU_ITEM_COUNT); ++i)	//Render options and other menu items
@@ -2613,6 +2662,8 @@ void	Game::Pop				(Uint8 Index)
 
 void	Game::Reset				(bool SaveStats)
 {
+	bool NewGame = true;
+
 	if (SaveStats)
 		PlayerStats.ProcessHand(Outcome, ScoreBreakdown[0][9], ScoreBreakdown[0][11]);
 
@@ -2632,7 +2683,13 @@ void	Game::Reset				(bool SaveStats)
 		
 		for (int j = 0; j < SCORE_CATEGORY_COUNT; ++j)
 			ScoreBreakdown[i][j] = 0;
+
+		if (RunningScores[i] != 0)
+			NewGame = false;
 	}
+
+	if (NewGame)
+		SetDifficulty();
 
 	//Reset running scores if the round is over
 	for (int i = 0; i < PLAYER_COUNT; ++i)
@@ -2641,6 +2698,8 @@ void	Game::Reset				(bool SaveStats)
 		{
 			for (int j = 0; j < PLAYER_COUNT; ++j)
 				RunningScores[j] = 0;
+
+			SetDifficulty();
 
 			break;
 		}
@@ -2709,8 +2768,10 @@ bool	Game::Restore			(void)
 				fread(&ExtensionDeclined, sizeof(bool), 1, SaveFile);
 
 				if (SaveVersion >= 8)
+				{
+					fread(&Difficulty, sizeof(Uint8), 1, SaveFile);
 					fread(ExposedCards, sizeof(Uint8), CARD_NULL_NULL, SaveFile);
-
+				}
 				
 				if (SourceDeck != 0)
 					SourceDeck->Restore(SaveFile);
@@ -2748,6 +2809,7 @@ bool	Game::Save				(void)
 		fwrite(&ExtensionDeclined, sizeof(bool), 1, SaveFile);
 		
 		/* Added in version 8 (beta4) */
+		fwrite(&Difficulty, sizeof(Uint8), 1, SaveFile);
 		fwrite(ExposedCards, sizeof(Uint8), CARD_NULL_NULL, SaveFile);
 		/* End added in version 8 */
 		
@@ -2764,6 +2826,14 @@ bool	Game::Save				(void)
 
 	return Success;	
 
+}
+
+void	Game::SetDifficulty		(void)
+{
+	if (GameOptions.GetOpt(OPTION_HARD_DIFFICULTY))
+		Difficulty = DIFFICULTY_HARD;
+	else
+		Difficulty = DIFFICULTY_NORMAL;
 }
 
 void	Game::ShowLoading		(void)

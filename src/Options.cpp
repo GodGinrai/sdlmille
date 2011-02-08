@@ -47,7 +47,7 @@ bool	Options::ReadOpts	(void)
 			Uint16	SavedOptionVersion = 0;
 
 			fread(&SavedOptionVersion, sizeof(Uint16), 1, OptsFile);
-			if (SavedOptionVersion == OPTION_VERSION)
+			if ((SavedOptionVersion >= 2) && (SavedOptionVersion <= OPTION_VERSION))
 			{
 				fread(&Opts, sizeof(char), 1, OptsFile);
 				Success = true;
