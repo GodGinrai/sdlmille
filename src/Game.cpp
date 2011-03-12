@@ -1514,57 +1514,71 @@ void	Game::OnClick			(int X, int Y)
 				Save();
 			}
 		}
-		else if (Modal == MODAL_GAME_MENU)
+		else if (Modal <= MODAL_OPTIONS)
 		{
-			if ((X >= 50) && (X <= 270))
+			if (Modal != MODAL_STATS)
 			{
-				if ((Y >= 120) && (Y <= 400))
+				if ((X >= 50) && (X <= 270))
 				{
-					int Index = (Y - 120) / 40;
-
-					if (Index < OPTION_COUNT)	//Clicked an option toggle
+					if ((Y >= 120) && (Y <= 400))
 					{
-						GameOptions.SwitchOpt(Index);
-						
-						if (Index == OPTION_HARD_DIFFICULTY)
-							ChangedDifficulty = true;
+						int Index = (Y - 120) / 40;
 
-						Dirty = true;
-						return;
-					}
-					else if (Index < (OPTION_COUNT + MENU_ITEM_COUNT)) //Clicked a menu item
-					{
-						switch (Index - OPTION_COUNT)
+						if ((Modal == MODAL_OPTIONS) && (Index < OPTION_COUNT))	//Clicked an option toggle
 						{
-						case 0:
-							ShowModal(MODAL_NEW_GAME);
-							break;
-						case 1:
-							LastScene = Scene;
-							Scene = SCENE_MAIN;
-							Modal = MODAL_NONE;
+							GameOptions.SwitchOpt(Index);
+							
+							if (Index == OPTION_HARD_DIFFICULTY)
+								ChangedDifficulty = true;
+
 							Dirty = true;
-							break;
-						case 2:
-							ShowModal(MODAL_STATS);
-							break;
+							return;
+						}
+						else if ((Modal == MODAL_GAME_MENU) && (Index < MENU_ITEM_COUNT)) //Clicked a menu item
+						{
+							switch (Index)
+							{
+							case 0:
+								ShowModal(MODAL_OPTIONS);
+								break;
+							case 1:
+								ShowModal(MODAL_STATS);
+								break;
+							case 2:
+								ShowModal(MODAL_NEW_GAME);
+								break;
+							case 3:
+								LastScene = Scene;
+								Scene = SCENE_MAIN;
+								Modal = MODAL_NONE;
+								Dirty = true;
+								break;
+							}
 						}
 					}
 				}
-			}						
+			}
+
 			if ((X >= 251) && (X <= 277))
 			{
 				if ((Y >= 83) && (Y <= 109))	// Clicked the X button
 				{
-					GameOptions.SaveOpts();
+					if (Modal == MODAL_OPTIONS)
+						GameOptions.SaveOpts();
 
-					if (ChangedDifficulty)
+					if (Modal == MODAL_GAME_MENU)
 					{
-						ShowMessage("Difficulty applies next game.");
-						ChangedDifficulty = false;
-					}
+						if (ChangedDifficulty)
+						{
+							ShowMessage("Difficulty applies next game.");
+							ChangedDifficulty = false;
+						}
 
-					Modal = MODAL_NONE;
+						Modal = MODAL_NONE;
+					}
+					else
+						ShowModal(MODAL_GAME_MENU);
+
 					Dirty = true;
 					//Tableau::EnableAnimation = GameOptions.GetOpt(OPTION_ANIMATIONS);
 				}
@@ -1942,7 +1956,7 @@ bool	Game::OnInit			(void)
 
 			return true;
 		}
-		else if ((Modal == MODAL_GAME_MENU) || (Modal == MODAL_STATS))
+		else if (Modal <= MODAL_OPTIONS)
 		{
 			ModalSurface.SetImage("gfx/modals/menu_top.png");
 			Overlay[1].SetText("Current game's difficulty:", GameOverSmall, &White, &Black);
@@ -1954,18 +1968,13 @@ bool	Game::OnInit			(void)
 
 			if (Modal == MODAL_GAME_MENU)
 			{
-				for (int i = 0; i < (OPTION_COUNT + MENU_ITEM_COUNT); ++i)	//Render options and other menu items
+				for (int i = 0; i < MENU_ITEM_COUNT; ++i)	//Render options and other menu items
 				{
-					if (i < OPTION_COUNT)
-					{
-						MenuSurfaces[i][0].SetText(OPTION_NAMES[i], GameOverBig, &White);
-						MenuSurfaces[i][1].SetText((GameOptions.GetOpt(i)) ? "ON" : "OFF", GameOverBig, &White);
-					}
-					else
-						MenuSurfaces[i][0].SetText(MENU_ITEM_NAMES[i - OPTION_COUNT], GameOverBig, &White);
+					MenuSurfaces[i][0].SetText(MENU_ITEM_NAMES[i], GameOverBig, &White);
+					MenuSurfaces[i][1].Clear();
 				}
 			}
-			else
+			else if (Modal == MODAL_STATS)
 			{
 				Uint32	Statistics[7];
 
@@ -1975,6 +1984,14 @@ bool	Game::OnInit			(void)
 				{
 					MenuSurfaces[i][0].SetText(STAT_CAPTIONS[i], GameOverBig, &White);
 					MenuSurfaces[i][1].SetInteger(Statistics[i], GameOverBig, true, &White);
+				}
+			}
+			else if (Modal == MODAL_OPTIONS)
+			{
+				for (int i = 0; i < OPTION_COUNT; ++i)
+				{
+					MenuSurfaces[i][0].SetText(OPTION_NAMES[i], GameOverBig, &White);
+					MenuSurfaces[i][1].SetText((GameOptions.GetOpt(i)) ? "ON" : "OFF", GameOverBig, &White);
 				}
 			}
 
@@ -2549,29 +2566,37 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 			{
 				ModalSurface.Render(74, 193, Target);
 			}
-			else if ((Modal == MODAL_GAME_MENU) || (Modal == MODAL_STATS))
+			else if (Modal <= MODAL_OPTIONS)
 			{
 				ModalSurface.Render(40, 80, Target);
 
-				Overlay[1].Render((Dimensions::ScreenWidth - Overlay[1].GetWidth()) / 2, 10, Target, SCALE_Y);
-				Overlay[2].Render((Dimensions::ScreenWidth - Overlay[2].GetWidth()) / 2, 20 + Overlay[1].GetHeight(), Target, SCALE_Y);
+				if (Modal == MODAL_OPTIONS)
+				{
+					Overlay[1].Render((Dimensions::ScreenWidth - Overlay[1].GetWidth()) / 2, 10, Target, SCALE_Y);
+					Overlay[2].Render((Dimensions::ScreenWidth - Overlay[2].GetWidth()) / 2, 20 + Overlay[1].GetHeight(), Target, SCALE_Y);
+				}
 
 				if (Modal == MODAL_GAME_MENU)
 				{
-					for (int i = 0; i < (OPTION_COUNT + MENU_ITEM_COUNT); ++i)	//Render options and other menu items
+					for (int i = 0; i < MENU_ITEM_COUNT; ++i)	//Render options and other menu items
 					{
 						MenuSurfaces[i][0].Render(50, 120 + (i * 40), Target);
-
-						if (i < OPTION_COUNT)
-							MenuSurfaces[i][1].Render(240, 120 + (i * 40), Target);
 					}
 				}
-				else
+				else if (Modal == MODAL_STATS)
 				{
 					for (int i = 0; i < STAT_CAPTIONS_SIZE; ++i)
 					{
 						MenuSurfaces[i][0].Render(50, 120 + (i * 40), Target);
 						MenuSurfaces[i][1].Render(220, 120 + (i * 40), Target);
+					}
+				}
+				else
+				{
+					for (int i = 0; i < OPTION_COUNT; ++i)
+					{
+						MenuSurfaces[i][0].Render(50, 120 + (i * 40), Target);
+						MenuSurfaces[i][1].Render(240, 120 + (i * 40), Target);
 					}
 				}
 			}
