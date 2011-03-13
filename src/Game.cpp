@@ -911,12 +911,12 @@ void	Game::ComputerSmartMove	(void)
 					Weight[i][1] += (MileValue / 25) * 6;
 				}
 
-				if (MyselfRolling && IsOneCardAway(Opponent) && (MileValue <= MyRemaining))
-				{
-					// Game is almost over. Play some mileage to help even the score
-					printf("D90: Opponent could close it up. Play some mileage now\n");
-					Weight[i][1] = std::min(90, 50 + Value - MILEAGE_OFFSET);
-				}
+				//if (MyselfRolling && IsOneCardAway(Opponent) && (MileValue <= MyRemaining))
+				//{
+				//	// Game is almost over. Play some mileage to help even the score
+				//	printf("D90: Opponent could close it up. Play some mileage now\n");
+				//	Weight[i][1] = std::min(90, 50 + Value - MILEAGE_OFFSET);
+				//}
 
 				//	22 paths for mileage
 			}
@@ -1968,9 +1968,32 @@ bool	Game::OnInit			(void)
 
 			if (Modal == MODAL_GAME_MENU)
 			{
-				for (int i = 0; i < MENU_ITEM_COUNT; ++i)	//Render options and other menu items
+				char	CurrScoreText[20];
+
+				bool	BoundsSafe = true;
+
+				for (int i = 0; i < PLAYER_COUNT; ++i)
 				{
-					MenuSurfaces[i][0].SetText(MENU_ITEM_NAMES[i], GameOverBig, &White);
+					if ((RunningScores[i] < 0) || (RunningScores[i] >= 10000))
+						BoundsSafe = false;
+				}
+
+				if (BoundsSafe && (PLAYER_COUNT > 1))
+					sprintf(CurrScoreText, "H: %u, C: %u", RunningScores[0], RunningScores[1]);
+				else
+					CurrScoreText[0] = '\0';
+
+				printf("%s\n", CurrScoreText);
+
+				for (int i = 0; i < MENU_SURFACE_COUNT; ++i)	//Render options and other menu items
+				{
+					if (i < MENU_ITEM_COUNT)
+						MenuSurfaces[i][0].SetText(MENU_ITEM_NAMES[i], GameOverBig, &White);
+					else if (i == (MENU_SURFACE_COUNT - 1))
+						MenuSurfaces[i][0].SetText(CurrScoreText, GameOverBig, &White);
+					else
+						MenuSurfaces[i][0].Clear();
+
 					MenuSurfaces[i][1].Clear();
 				}
 			}
@@ -1988,6 +2011,13 @@ bool	Game::OnInit			(void)
 			}
 			else if (Modal == MODAL_OPTIONS)
 			{
+					Overlay[1].SetText("Current game's difficulty:", GameOverSmall, &White, &Black);
+
+				if (Difficulty < DIFFICULTY_LEVEL_COUNT)
+					Overlay[2].SetText(DIFFICULTY_TEXT[Difficulty], GameOverBig, &White, &Black);
+				else
+					Overlay[2].SetText("Error", GameOverBig, &White);
+
 				for (int i = 0; i < OPTION_COUNT; ++i)
 				{
 					MenuSurfaces[i][0].SetText(OPTION_NAMES[i], GameOverBig, &White);
@@ -2578,7 +2608,7 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 
 				if (Modal == MODAL_GAME_MENU)
 				{
-					for (int i = 0; i < MENU_ITEM_COUNT; ++i)	//Render options and other menu items
+					for (int i = 0; i < MENU_SURFACE_COUNT; ++i)	//Render options and other menu items
 					{
 						MenuSurfaces[i][0].Render(50, 120 + (i * 40), Target);
 					}

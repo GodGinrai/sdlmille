@@ -36,6 +36,7 @@ enum	{ANIMATION_PLAY = 0, ANIMATION_DISCARD, ANIMATION_RETURN, ANIMATION_COUP_FO
 enum	{DIFFICULTY_EASY = 0, DIFFICULTY_NORMAL, DIFFICULTY_HARD, DIFFICULTY_LEVEL_COUNT};
 
 const Uint8 MENU_ITEM_COUNT = 4,
+			MENU_SURFACE_COUNT = STAT_CAPTIONS_SIZE,
 			PLAYER_COUNT = 2,
 			SCORE_CATEGORY_COUNT = 12,
 			SCORE_COLUMN_COUNT = 3,
@@ -64,7 +65,7 @@ const	char	TUTORIAL_TEXT[][MESSAGE_SIZE] = {
 					"Or click here to discard.",
 					"Enjoy the game!"	};
 
-const	char	VERSION_TEXT[] = "0.5.4-5 (beta4 test5)";
+const	char	VERSION_TEXT[] = "0.5.4-6 (beta4 test6)";
 
 const	int		SAVE_FORMAT_VER = 8;
 
@@ -128,7 +129,7 @@ private:
 				LogoSurface,
 				MenuSurface,
 				MessageSurface,
-				MenuSurfaces[STAT_CAPTIONS_SIZE][2],
+				MenuSurfaces[MENU_SURFACE_COUNT][2],
 				ModalSurface,
 				OrbSurface,
 				Overlay[5],
