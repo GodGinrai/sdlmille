@@ -1738,11 +1738,6 @@ void	Game::OnClick			(int X, int Y)
 
 void	Game::OnEvent			(SDL_Event * Event)
 {
-	char	DebugStr[31];
-
-	sprintf(DebugStr, "OnEvent() %u\n", SDL_GetTicks());
-	DEBUG_PRINT(DebugStr);
-
 	int	X = 0, Y = 0;
 
 	if (Event != 0)
@@ -1755,51 +1750,7 @@ void	Game::OnEvent			(SDL_Event * Event)
 		{
 			if (Event->button.which == 0)
 			{
-				double	Scale = Dimensions::ScaleFactor;
-				MouseDown = false;
-
-				X = Event->button.x;
-				Y = Event->button.y;
-
-				if ((Scene == SCENE_GAME_PLAY) && (Current == 0) && Dragging)
-				{
-
-					if (DownIndex < HAND_SIZE)
-					{
-						if (Y < (Dimensions::EffectiveTableauHeight * 2))
-						{
-							if (IsValidPlay(DownIndex))
-								Pop(DownIndex);
-							else
-								Animate(DownIndex, ANIMATION_RETURN);
-						}
-						else if (InDiscardPile(X / Scale, Y / Scale))
-							Discard();
-						else
-							Animate(DownIndex, ANIMATION_RETURN);
-
-						Players[0].UnPop(DownIndex);
-						DownIndex = 0xFF;
-
-						FloatSurface.Clear();
-					}
-
-					Dragging = false;
-				}
-
-				if ((abs(DownX - X) > 5) || (abs(DownY - Y) > 5))
-				{
-					if ((Scene != SCENE_GAME_PLAY) || (Hand::GetIndex(X / Scale, Y / Scale) != 0))
-						return;
-				}
-
-				if (Scale != 1)
-				{
-					X /= Scale;
-					Y /= Scale;
-				}
-
-				OnClick(X, Y);
+				OnMouseUp(Event->button.x, Event->button.y);
 			}
 		}
 		else if (Event->type == SDL_MOUSEBUTTONDOWN)
@@ -2257,10 +2208,16 @@ bool	Game::OnInit			(void)
 
 void	Game::OnLoop			(void)
 {
-	char	DebugStr[31];
+	int X, Y;
 
-	sprintf(DebugStr, "OnLoop() %u\n", SDL_GetTicks());
-	DEBUG_PRINT(DebugStr);
+	if (!(SDL_GetMouseState(&X, &Y) & SDL_BUTTON(1)))
+	{
+		if (MouseDown)
+		{
+			DEBUG_PRINT("Uncaught mouse-up event.\n");
+			OnMouseUp(X, Y);
+		}
+	}
 
 	if (Message[0] != '\0')	//Clear message if necessary
 	{
@@ -2359,6 +2316,53 @@ void	Game::OnLoop			(void)
 	}
 }
 
+void	Game::OnMouseUp			(int X, int Y)
+{
+	double	Scale = Dimensions::ScaleFactor;
+
+	MouseDown = false;
+
+	if (Dragging)
+	{
+		if ((Scene == SCENE_GAME_PLAY) && (Current == 0) && (DownIndex < HAND_SIZE))
+		{
+			if (Y < (Dimensions::EffectiveTableauHeight * 2))
+			{
+				if (IsValidPlay(DownIndex))
+					Pop(DownIndex);
+				else
+					Animate(DownIndex, ANIMATION_RETURN);
+			}
+			else if (InDiscardPile(X / Scale, Y / Scale))
+				Discard();
+			else
+				Animate(DownIndex, ANIMATION_RETURN);
+
+			Players[0].UnPop(DownIndex);
+
+			FloatSurface.Clear();
+		}
+
+		Dragging = false;
+	}
+
+	DownIndex = 0xFF;
+
+	if ((abs(DownX - X) > 5) || (abs(DownY - Y) > 5))
+	{
+		if ((Scene != SCENE_GAME_PLAY) || (Hand::GetIndex(X / Scale, Y / Scale) != 0))
+			return;
+	}
+
+	if (Scale != 1)
+	{
+		X /= Scale;
+		Y /= Scale;
+	}
+
+	OnClick(X, Y);
+}
+
 void	Game::OnPlay			(Uint8 Index, bool PlayerChange)
 {
 	// DiscardedCard places the correct card on top of the discard pile after a Coup Fourre.
@@ -2437,7 +2441,6 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 
 	if (LastRender < (TickCount - 1000))
 	{
-		DEBUG_PRINT("Forced render\n");
 		Dirty = true;
 		LastRender = TickCount;
 	}

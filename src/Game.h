@@ -103,6 +103,7 @@ private:
 	void		OnEvent			(SDL_Event * Event);
 	bool		OnInit			(void);
 	void		OnLoop			(void);
+	void		OnMouseUp		(int X, int Y);
 	void		OnPlay			(Uint8 Index, bool PlayerChange = true);
 	void		OnRender		(SDL_Surface *Target, bool Force = false, bool Flip = true);
 	void		Pop				(Uint8 Index);

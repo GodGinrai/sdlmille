@@ -17,9 +17,9 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 (See file LICENSE for full text of license)
 */
 
-//#define	ANDROID_DEVICE
+#define	ANDROID_DEVICE
 //#define	WEBOS_DEVICE
-//#define DEBUG
+#define DEBUG
 
 #ifdef	WEBOS_DEVICE
 	#define	SOFTWARE_MODE
