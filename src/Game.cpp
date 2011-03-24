@@ -1738,6 +1738,7 @@ void	Game::OnClick			(int X, int Y)
 
 void	Game::OnEvent			(SDL_Event * Event)
 {
+	char	DebugStr	[101];
 	int	X = 0, Y = 0;
 
 	if (Event != 0)
@@ -1748,6 +1749,9 @@ void	Game::OnEvent			(SDL_Event * Event)
 
 		if (Event->type == SDL_MOUSEBUTTONUP)	//Mouse click
 		{
+			sprintf(DebugStr, "EVENT: MouseUp (Button %u)\n", Event->button.which);
+			DEBUG_PRINT(DebugStr);
+
 			if (Event->button.which == 0)
 			{
 				OnMouseUp(Event->button.x, Event->button.y);
@@ -1755,19 +1759,28 @@ void	Game::OnEvent			(SDL_Event * Event)
 		}
 		else if (Event->type == SDL_MOUSEBUTTONDOWN)
 		{
+			sprintf(DebugStr, "EVENT: MouseDown (Button %u)\n", Event->button.which);
+			DEBUG_PRINT(DebugStr);
+
 			if (Event->button.which == 0)
 			{
-				MouseDown = true;
+				if (!MouseDown)		// Workaround for bugs on Android/Pre2
+				{
+					MouseDown = true;
 
-				DownX = Event->button.x;
-				DownY = Event->button.y;
+					DownX = Event->button.x;
+					DownY = Event->button.y;
 
-				if (Scene == SCENE_GAME_PLAY)
-					DownIndex = Hand::GetIndex(DownX / Dimensions::ScaleFactor, DownY / Dimensions::ScaleFactor) - 1;
+					if (Scene == SCENE_GAME_PLAY)
+						DownIndex = Hand::GetIndex(DownX / Dimensions::ScaleFactor, DownY / Dimensions::ScaleFactor) - 1;
+				}
 			}
 		}
 		else if (Event->type == SDL_MOUSEMOTION)
 		{
+			sprintf(DebugStr, "EVENT: MouseMotion. Relative motion (%i, %i)\n", Event->motion.xrel, Event->motion.yrel);
+			DEBUG_PRINT(DebugStr);
+
 			if (MouseDown)
 			{
 				int MotionX = Event->motion.xrel;
@@ -1815,7 +1828,9 @@ void	Game::OnEvent			(SDL_Event * Event)
 
 							if (!Dragging)
 							{
-								if ((abs(DownX - DragX) > 5) || (abs(DownY - DragY) > 5))
+								int	DeadDragZone = ceil(5 * Dimensions::ScaleFactor);
+
+								if ((abs(DownX - DragX) > DeadDragZone) || (abs(DownY - DragY) > DeadDragZone))
 								{
 									Dragging = true;
 
@@ -1875,6 +1890,7 @@ void	Game::OnEvent			(SDL_Event * Event)
 
 bool	Game::OnInit			(void)
 {
+	char	DebugStr	[101];
 	Dirty = false;
 
 	if (!Window)
@@ -1895,6 +1911,9 @@ bool	Game::OnInit			(void)
 		ResetPortal();
 
 		SDL_WM_SetCaption("SDL Mille", "SDL Mille");
+
+		sprintf(DebugStr, "0: %i | 1: %i\n", SDL_BUTTON(0), SDL_BUTTON(1));
+		DEBUG_PRINT(DebugStr);
 	}
 
 	if (Modal < MODAL_NONE)
@@ -2208,7 +2227,14 @@ bool	Game::OnInit			(void)
 
 void	Game::OnLoop			(void)
 {
+	char	DebugStr	[101];
 	int X, Y;
+
+	if (Dragging || MouseDown || (DownIndex < HAND_SIZE) || FloatSurface)
+	{
+		sprintf(DebugStr, "Dragging: %u | MouseDown: %u | DownIndex: %u | GetMouseState: %i\n", Dragging, MouseDown, DownIndex, SDL_GetMouseState(0, 0));
+		DEBUG_PRINT(DebugStr);
+	}
 
 	if (!(SDL_GetMouseState(&X, &Y) & SDL_BUTTON(1)))
 	{
