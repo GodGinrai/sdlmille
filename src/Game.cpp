@@ -1548,6 +1548,9 @@ void	Game::OnClick			(int X, int Y)
 								ShowModal(MODAL_NEW_GAME);
 								break;
 							case 3:
+								ShowModal(MODAL_CLEAR_STATS);
+								break;
+							case 4:
 								LastScene = Scene;
 								Scene = SCENE_MAIN;
 								Modal = MODAL_NONE;
@@ -1584,17 +1587,25 @@ void	Game::OnClick			(int X, int Y)
 				}
 			}
 		}
-		else if (Modal == MODAL_NEW_GAME)
+		else if (Modal <= MODAL_CLEAR_STATS)
 		{
 			if ((X >= 65) && (X <= 255) && (Y >= 220) && (Y <= 265))	// Clicked Cancel
 				ShowModal(MODAL_GAME_MENU);
 			else if ((X >= 130) && (X <= 190) && (Y >= 281) && (Y <= 311))	//Clicked Confirm
 			{
-				Reset(false);
-				for (int i = 0; i < PLAYER_COUNT; ++i)
-					RunningScores[i] = 0;
+				if (Modal == MODAL_NEW_GAME)
+				{
+					Reset(false);
+					for (int i = 0; i < PLAYER_COUNT; ++i)
+						RunningScores[i] = 0;
 
-				Save();
+					Save();
+				}
+				else
+				{
+					PlayerStats.Clear();
+					ShowMessage("Statistics cleared.");
+				}
 
 				Modal = MODAL_NONE;
 			}
@@ -1953,7 +1964,7 @@ bool	Game::OnInit			(void)
 				else
 					CurrScoreText[0] = '\0';
 
-				printf("%s\n", CurrScoreText);
+				//printf("%s\n", CurrScoreText);
 
 				for (int i = 0; i < MENU_SURFACE_COUNT; ++i)	//Render options and other menu items
 				{
@@ -1997,9 +2008,20 @@ bool	Game::OnInit			(void)
 
 			return true;
 		}
-		else if (Modal == MODAL_NEW_GAME)
+		else if (Modal <= MODAL_CLEAR_STATS)
 		{
-			ModalSurface.SetImage("gfx/modals/quit.png");
+			ModalSurface.SetImage("gfx/modals/warn_confirm.png");
+
+			if (Modal == MODAL_NEW_GAME)
+			{
+				Overlay[1].SetText("Current game will", GameOverBig, &White);
+				Overlay[2].SetText("be lost!", GameOverBig, &White);
+			}
+			else
+			{
+				Overlay[1].SetText("All statistics", GameOverBig, &White);
+				Overlay[2].SetText("will be erased!", GameOverBig, &White);
+			}
 
 			return true;
 		}
@@ -2227,8 +2249,9 @@ bool	Game::OnInit			(void)
 
 void	Game::OnLoop			(void)
 {
-	char	DebugStr	[101];
-	int X, Y;
+			char	DebugStr	[101];
+			int		X, Y;
+	static	bool	MouseMissDetected = false;
 
 	if (Dragging || MouseDown || (DownIndex < HAND_SIZE) || FloatSurface)
 	{
@@ -2240,8 +2263,14 @@ void	Game::OnLoop			(void)
 	{
 		if (MouseDown)
 		{
-			DEBUG_PRINT("Uncaught mouse-up event.\n");
-			OnMouseUp(X, Y);
+			if (MouseMissDetected)
+			{
+				DEBUG_PRINT("Uncaught mouse-up event.\n");
+				OnMouseUp(X, Y);
+				MouseMissDetected = false;
+			}
+			else
+				MouseMissDetected = true;
 		}
 	}
 
@@ -2659,9 +2688,11 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 					}
 				}
 			}
-			else if (Modal == MODAL_NEW_GAME)
+			else if (Modal <= MODAL_CLEAR_STATS)
 			{
 				ModalSurface.Render(60, 165, Target);
+				Overlay[1].Render((Dimensions::ScreenWidth - Overlay[1].GetWidth()) / 2, 173, Target, SCALE_Y);
+				Overlay[2].Render((Dimensions::ScreenWidth - Overlay[2].GetWidth()) / 2, 176 + Overlay[1].GetHeight(), Target, SCALE_Y);
 			}	
 		}
 	}

@@ -24,8 +24,13 @@ namespace	_SDLMille
 
 	Stats::Stats	(void)
 {
-	AverageGameScore = AverageHandScore = DrawCount = GameAveragesDone = GameRemainder = HandRemainder = HandAveragesDone =
-	HighGameScore = HighHandScore = LossCount = RunningGameScore = RunningHandCount = RunningHandScore = WinCount = 0;
+	Reset();
+}
+
+void	Stats::Clear		(void)
+{
+	Reset();
+	Save();
 }
 
 void	Stats::GetStats		(Uint32 &Wins, Uint32 &Losses, Uint32 &Draws, Uint32 &HighGame, Uint32 &AverageGame, Uint32 &HighHand, Uint32 &AverageHand)
@@ -201,6 +206,12 @@ bool	Stats::Load		(void)
 	}
 
 	return Success;
+}
+
+void	Stats::Reset	(void)
+{
+	AverageGameScore = AverageHandScore = DrawCount = GameAveragesDone = GameRemainder = HandRemainder = HandAveragesDone =
+	HighGameScore = HighHandScore = LossCount = RunningGameScore = RunningHandCount = RunningHandScore = WinCount = 0;
 }
 
 bool	Stats::Save		(void)

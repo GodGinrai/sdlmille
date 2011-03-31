@@ -35,7 +35,7 @@ enum	{ANIMATION_PLAY = 0, ANIMATION_DISCARD, ANIMATION_RETURN, ANIMATION_COUP_FO
 
 enum	{DIFFICULTY_EASY = 0, DIFFICULTY_NORMAL, DIFFICULTY_HARD, DIFFICULTY_LEVEL_COUNT};
 
-const Uint8 MENU_ITEM_COUNT = 4,
+const Uint8 MENU_ITEM_COUNT = 5,
 			MENU_SURFACE_COUNT = STAT_CAPTIONS_SIZE,
 			PLAYER_COUNT = 2,
 			SCORE_CATEGORY_COUNT = 12,
@@ -51,7 +51,7 @@ const	int		HAND_COORDS[] =	{	146,
 									3	};
 const	char	DIFFICULTY_TEXT[DIFFICULTY_LEVEL_COUNT][7] = {"Easy", "Normal", "Hard"};
 
-const	char	MENU_ITEM_NAMES[MENU_ITEM_COUNT][11] = {"Options", "Stats", "New game", "Main menu"};
+const	char	MENU_ITEM_NAMES[MENU_ITEM_COUNT][15] = {"Options", "Stats", "New game", "Reset Stats", "Main menu"};
 
 const	char	SCORE_CAT_NAMES[SCORE_CATEGORY_COUNT][15] = {
 					"Mileage", "Safeties", "All 4", "Coup Fourres", "Completed Trip", "Delayed Action", "Safe Trip",
@@ -65,7 +65,7 @@ const	char	TUTORIAL_TEXT[][MESSAGE_SIZE] = {
 					"Or click here to discard.",
 					"Enjoy the game!"	};
 
-const	char	VERSION_TEXT[] = "0.5.4-6 (beta4 test6)";
+const	char	VERSION_TEXT[] = "0.5.4-7 (beta4 test7)";
 
 const	int		SAVE_FORMAT_VER = 8;
 
@@ -180,7 +180,7 @@ private:
 	enum {	SCENE_MAIN = 0, SCENE_GAME_PLAY, SCENE_GAME_MENU, SCENE_GAME_OVER,
 			SCENE_LEARN_1, SCENE_LEARN_2, SCENE_LEARN_3, SCENE_LEARN_4, SCENE_LEARN_5, SCENE_LEARN_6, SCENE_LEARN_7,
 			SCENE_LEGAL, SCENE_INVALID };
-	enum {	MODAL_GAME_MENU = 0, MODAL_STATS, MODAL_OPTIONS, MODAL_EXTENSION, MODAL_NEW_GAME, MODAL_NONE };
+	enum {	MODAL_GAME_MENU = 0, MODAL_STATS, MODAL_OPTIONS, MODAL_EXTENSION, MODAL_NEW_GAME, MODAL_CLEAR_STATS, MODAL_NONE };
 };
 
 inline	Uint8		Game::UnknownCards	(Uint8 Value)
