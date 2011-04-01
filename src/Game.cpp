@@ -2955,7 +2955,7 @@ void	Game::SetDifficulty		(void)
 
 void	Game::ShowLoading		(void)
 {
-	Overlay[1].Render((Dimensions::ScreenWidth - Overlay[0].GetWidth()) / 2, (Dimensions::ScreenHeight - Overlay[0].GetHeight()) / 2, Window, SCALE_NONE);
+	Overlay[1].Render((Dimensions::ScreenWidth - Overlay[1].GetWidth()) / 2, (Dimensions::ScreenHeight - Overlay[1].GetHeight()) / 2, Window, SCALE_NONE);
 	SDL_Flip(Window);
 }
 
