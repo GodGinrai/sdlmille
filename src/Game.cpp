@@ -1599,6 +1599,8 @@ void	Game::OnClick			(int X, int Y)
 					for (int i = 0; i < PLAYER_COUNT; ++i)
 						RunningScores[i] = 0;
 
+					ChangedDifficulty = false;
+
 					Save();
 				}
 				else
