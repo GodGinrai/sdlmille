@@ -2253,7 +2253,7 @@ void	Game::OnLoop			(void)
 {
 			char	DebugStr	[101];
 			int		X, Y;
-	static	bool	MouseMissDetected = false;
+	//static	bool	MouseMissDetected = false;
 
 	if (Dragging || MouseDown || (DownIndex < HAND_SIZE) || FloatSurface)
 	{
@@ -2261,6 +2261,7 @@ void	Game::OnLoop			(void)
 		DEBUG_PRINT(DebugStr);
 	}
 
+	/*
 	if (!(SDL_GetMouseState(&X, &Y) & SDL_BUTTON(1)))
 	{
 		if (MouseDown)
@@ -2275,6 +2276,7 @@ void	Game::OnLoop			(void)
 				MouseMissDetected = true;
 		}
 	}
+	*/
 
 	if (Message[0] != '\0')	//Clear message if necessary
 	{
