@@ -65,7 +65,7 @@ const	char	TUTORIAL_TEXT[][MESSAGE_SIZE] = {
 					"Or click here to discard.",
 					"Enjoy the game!"	};
 
-const	char	VERSION_TEXT[] = "0.5.6 (beta4)";
+const	char	VERSION_TEXT[] = "0.9.1 (1.0 Preview 1)";
 
 const	int		SAVE_FORMAT_VER = 8;
 
