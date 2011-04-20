@@ -35,6 +35,8 @@ enum	{ANIMATION_PLAY = 0, ANIMATION_DISCARD, ANIMATION_RETURN, ANIMATION_COUP_FO
 
 enum	{DIFFICULTY_EASY = 0, DIFFICULTY_NORMAL, DIFFICULTY_HARD, DIFFICULTY_LEVEL_COUNT};
 
+enum	{UPPER_LEFT = 0, BOTTOM_LEFT, UPPER_RIGHT, BOTTOM_RIGHT, CORNER_COUNT};
+
 const Uint8 MENU_ITEM_COUNT = 5,
 			MENU_SURFACE_COUNT = STAT_CAPTIONS_SIZE,
 			PLAYER_COUNT = 2,
@@ -107,6 +109,7 @@ private:
 	void		OnPlay			(Uint8 Index, bool PlayerChange = true);
 	void		OnRender		(SDL_Surface *Target, bool Force = false, bool Flip = true);
 	void		Pop				(Uint8 Index);
+	Uint32		Radius			(int X1, int Y1, int X2, int Y2);
 	void		Reset			(bool SaveStats = false);
 	void		ResetPortal		(void);
 	bool		Restore			(void);
@@ -122,6 +125,7 @@ private:
 	Surface		ArrowSurfaces[2],
 				Background,
 				CaptionSurface,
+				Corners[CORNER_COUNT],
 				DebugSurface,
 				DiscardSurface,
 				DrawCardSurface, DrawTextSurface,
@@ -186,6 +190,11 @@ private:
 inline	Uint8		Game::UnknownCards	(Uint8 Value)
 {
 	return (EXISTING_CARDS[Value] - KnownCards(Value));
+}
+
+inline	Uint32		Game::Radius		(int X1, int Y1, int X2, int Y2)
+{
+	return sqrt(pow((double) X2 - X1, 2) + pow((double) Y2 - Y1, 2));
 }
 
 }

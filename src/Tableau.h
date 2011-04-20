@@ -73,7 +73,8 @@ private:
 	void		SetTopCard		(Uint8 Value);
 
 	/* Properties */
-	Surface		BattleSurface,
+	Surface		Backdrop,
+				BattleSurface,
 				LimitSurface,
 				MileageTextSurface,
 				SafetySurfaces[SAFETY_COUNT];

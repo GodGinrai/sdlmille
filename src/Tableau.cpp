@@ -304,11 +304,22 @@ void	Tableau::OnInit			(void)
 	}
 
 	// Refresh our surfaces
+	Backdrop.SetImage("gfx/overlays/tableau.png");
 	BattleSurface.SetImage(Card::GetFileFromValue(TopCard));
 	LimitSurface.SetImage(Card::GetFileFromValue(LimitCard));
 
 	ShadowSurface.SetImage("gfx/card_shadow.png");
 	ShadowSurfaceCF.SetImage("gfx/card_shadow_cf.png");
+
+	if (IsRolling())
+	{
+		if (HasSpeedLimit())
+			Backdrop.SetImage("gfx/overlays/tableau_yellow.png");
+		else
+			Backdrop.SetImage("gfx/overlays/tableau_green.png");
+	}
+	else
+		Backdrop.SetImage("gfx/overlays/tableau_red.png");
 
 	for (int i = 0; i < MILEAGE_PILES; ++i)
 		MileageSurfaces[i].SetImage(Card::GetFileFromValue(i + MILEAGE_OFFSET));
@@ -430,31 +441,35 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 				PlayerRect.y += Dimensions::EffectiveTableauHeight;
 			}
 			
-			/* Color-coding */
-			Uint8	Status = STATUS_STOPPED;
+			///* Color-coding */
+			//Uint8	Status = STATUS_STOPPED;
 
-			if (IsRolling())
-			{
-				if (HasSpeedLimit())
-					Status = STATUS_LIMITED;
-				else
-					Status = STATUS_ROLLING;
-			}
+			//if (IsRolling())
+			//{
+			//	if (HasSpeedLimit())
+			//		Status = STATUS_LIMITED;
+			//	else
+			//		Status = STATUS_ROLLING;
+			//}
 
-			if (Status != LastStatus)
-			{
-				switch(Status)
-				{
-				case	STATUS_ROLLING:
-					R = 120; G = 192; B = 86; break;
-				case	STATUS_LIMITED:
-					R = G = 191; break;
-				default:
-					R = 191;
-				}
+			//if (Status != LastStatus)
+			//{
+			//	switch(Status)
+			//	{
+			//	case	STATUS_ROLLING:
+			//		R = 120; G = 192; B = 86; break;
+			//	case	STATUS_LIMITED:
+			//		R = G = 191; break;
+			//	default:
+			//		R = 191;
+			//	}
 
-				SDL_FillRect(Target, &PlayerRect, SDL_MapRGB(Target->format, R, G, B));
-			}
+			//	Backdrop.SetRGBALoss(0, 255, 255, 0);
+
+			//	SDL_FillRect(Target, &PlayerRect, SDL_MapRGB(Target->format, R, G, B));
+			//}
+
+			Backdrop.Render(0, Y - 1, Target);
 
 			// Draw our stuff
 			for (int i = 0; i < MILEAGE_PILES; ++i)

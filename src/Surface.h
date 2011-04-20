@@ -18,7 +18,7 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 //#define	ANDROID_DEVICE
-#define	WEBOS_DEVICE
+//#define	WEBOS_DEVICE
 //#define DEBUG
 
 #ifdef	WEBOS_DEVICE
@@ -71,6 +71,7 @@ public:
 			void			SetAlpha		(int AlphaValue);
 			void			SetImage		(const char * File);
 			void			SetInteger		(int Value, TTF_Font * Font, bool ShowZero = true, SDL_Color *fgColor = 0, SDL_Color *bgColor = 0);
+			void			SetRGBALoss		(Uint8 R, Uint8 G, Uint8 B, Uint8 A);
 			void			SetText			(const char * Text, TTF_Font * Font, SDL_Color *fgColor = 0, SDL_Color *bgColor = 0);
 							operator bool	(void)																			const;
 

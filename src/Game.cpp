@@ -1497,23 +1497,24 @@ void	Game::OnClick			(int X, int Y)
 	{
 		if (Modal == MODAL_EXTENSION)
 		{
-			if ((Y >= 251) && (Y <= 276))
-			{
-				if ((X >= 81) && (X < 151))
-				{
-					Extended = true;
-					Modal = MODAL_NONE;
-					Dirty = true;
-					ChangePlayer();
-				}
-				else if ((X > 169) && (X <= 239))
-				{
-					Extended = false;
-					ExtensionDeclined = true;
-					Modal = MODAL_NONE;
-					Dirty = true;
-				}
+			int ButtonY = ((Dimensions::ScreenHeight - ModalSurface.GetHeight()) / (2 * Dimensions::ScaleFactor)) + 125,
+				CheckX = (Dimensions::ScreenWidth / (2 * Dimensions::ScaleFactor)) - 55,
+				CancelX = (Dimensions::ScreenWidth / (2 * Dimensions::ScaleFactor)) + 55;
 
+			if (Radius(X, Y, CheckX, ButtonY) < 22)
+			{
+				Extended = true;
+				Modal = MODAL_NONE;
+				Dirty = true;
+				ChangePlayer();
+				Save();
+			}
+			else if (Radius(X, Y, CancelX, ButtonY) < 22)
+			{
+				Extended = false;
+				ExtensionDeclined = true;
+				Modal = MODAL_NONE;
+				Dirty = true;
 				Save();
 			}
 		}
@@ -1570,7 +1571,7 @@ void	Game::OnClick			(int X, int Y)
 			else
 				CenterX = 64;
 
-			if (sqrt(pow((double) X - CenterX, 2) + pow((double) Y - CenterY, 2)) < 22) // Clicked X or back arrow
+			if (Radius(X, Y, CenterX, CenterY) < 22) // Clicked X or back arrow
 			{
 				if (Modal == MODAL_OPTIONS)
 					GameOptions.SaveOpts();
@@ -1870,9 +1871,9 @@ void	Game::OnEvent			(SDL_Event * Event)
 		}
 		else if (Event->type == SDL_KEYUP)	//Debugging purposes
 		{
-			return;
+			//return;
 
-			ShowModal(MODAL_STATS);
+			ShowModal(MODAL_EXTENSION);
 			//OnRender(Window, true, false);
 			//SDL_SaveBMP(Window, "screenshot.bmp");
 			/*
@@ -1940,13 +1941,16 @@ bool	Game::OnInit			(void)
 
 		if (Modal == MODAL_EXTENSION)
 		{
-			ModalSurface.SetImage("gfx/modals/extension.png");
+			ModalSurface.SetImage("gfx/modals/question_box.png");
+			Overlay[1].SetText("EXTEND TRIP?", GameOverBig, &White);
+			Overlay[2].SetImage("gfx/modals/menu_check.png");
+			Overlay[3].SetImage("gfx/modals/menu_x.png");
 
 			return true;
 		}
 		else if (Modal <= MODAL_OPTIONS)
 		{
-			ModalSurface.SetImage("gfx/modals/menu_top.png");
+			ModalSurface.SetImage("gfx/modals/menu_bg.png");
 			Overlay[1].SetText("Current game's difficulty:", GameOverSmall, &White, &Black);
 
 			if (Difficulty < DIFFICULTY_LEVEL_COUNT)
@@ -2087,6 +2091,8 @@ bool	Game::OnInit			(void)
 
 			Overlay[0].SetImage("gfx/overlays/main.png");
 			Overlay[1].SetImage("gfx/loading.png");
+			Overlay[2].SetImage("gfx/overlays/main_play.png");
+			Overlay[3].SetImage("gfx/overlays/main_learn.png");
 
 			return true;
 		}
@@ -2094,6 +2100,11 @@ bool	Game::OnInit			(void)
 		else if ((Scene == SCENE_GAME_PLAY) || (Scene == SCENE_LEARN_2))
 		{
 			Background.Clear();
+
+			Corners[UPPER_LEFT].SetImage("gfx/overlays/corner_up_left.png");
+			Corners[BOTTOM_LEFT].SetImage("gfx/overlays/corner_bottom_left.png");
+			Corners[UPPER_RIGHT].SetImage("gfx/overlays/corner_up_right.png");
+			Corners[BOTTOM_RIGHT].SetImage("gfx/overlays/corner_bottom_right.png");
 
 			Overlay[0].SetImage("gfx/overlays/game_play_1.png");
 
@@ -2564,16 +2575,36 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 		if (Scene == SCENE_MAIN)
 		{
 			Overlay[0].Render(0, 0, Target);
+			Overlay[2].Render(45, 280, Target);
+			Overlay[3].Render(53, 350, Target);
+
 			LogoSurface.Render(Dimensions::ScreenWidth - LogoSurface.GetWidth(), Dimensions::ScreenHeight - LogoSurface.GetHeight(), Target, SCALE_NONE);
 		}
 		else if ((Scene == SCENE_GAME_PLAY) || IN_DEMO)
 		{
-			Overlay[0].Render(0, Dimensions::EffectiveTableauHeight - 1, Target, SCALE_NONE);
-			Overlay[0].Render(0, (Dimensions::EffectiveTableauHeight * 2) - 1, Target, SCALE_NONE);
+			//Overlay[0].Render(0, Dimensions::EffectiveTableauHeight - 1, Target, SCALE_NONE);
+			//Overlay[0].Render(0, (Dimensions::EffectiveTableauHeight * 2) - 1, Target, SCALE_NONE);
 
 			DiscardSurface.Render(3, Dimensions::FirstRowY, Target);
 			DrawCardSurface.Render(3, Dimensions::SecondRowY, Target);
 			DrawTextSurface.Render(3 + (((41 * Dimensions::ScaleFactor) - DrawTextSurface.GetWidth()) / 2), Dimensions::SecondRowY + 35, Target, SCALE_Y);
+
+			Corners[UPPER_LEFT].Render(0, 0, Target, SCALE_NONE);
+			Corners[UPPER_LEFT].Render(0, Dimensions::EffectiveTableauHeight, Target, SCALE_NONE);
+			Corners[UPPER_LEFT].Render(0, Dimensions::EffectiveTableauHeight * 2, Target, SCALE_NONE);
+
+			Corners[BOTTOM_LEFT].Render(0, Dimensions::EffectiveTableauHeight - 5, Target, SCALE_NONE);
+			Corners[BOTTOM_LEFT].Render(0, (Dimensions::EffectiveTableauHeight * 2) - 5, Target, SCALE_NONE);
+			Corners[BOTTOM_LEFT].Render(0, Dimensions::ScreenHeight - 5, Target, SCALE_NONE);
+
+			Corners[UPPER_RIGHT].Render(Dimensions::ScreenWidth - 5, 0, Target, SCALE_NONE);
+			Corners[UPPER_RIGHT].Render(Dimensions::ScreenWidth - 5, Dimensions::EffectiveTableauHeight, Target, SCALE_NONE);
+			Corners[UPPER_RIGHT].Render(Dimensions::ScreenWidth - 5, Dimensions::EffectiveTableauHeight * 2, Target, SCALE_NONE);
+
+			Corners[BOTTOM_RIGHT].Render(Dimensions::ScreenWidth - 5, Dimensions::EffectiveTableauHeight - 5, Target, SCALE_NONE);
+			Corners[BOTTOM_RIGHT].Render(Dimensions::ScreenWidth - 5, (Dimensions::EffectiveTableauHeight * 2) - 5, Target, SCALE_NONE);
+			Corners[BOTTOM_RIGHT].Render(Dimensions::ScreenWidth - 5, Dimensions::ScreenHeight - 5, Target, SCALE_NONE);
+
 		}
 		else if (Scene == SCENE_GAME_OVER)
 		{
@@ -2670,7 +2701,13 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 
 			if (Modal == MODAL_EXTENSION)
 			{
-				ModalSurface.Render(74, 193, Target);
+				int BoxTop = (Dimensions::ScreenHeight - ModalSurface.GetHeight()) / 2;
+
+				ModalSurface.Render((Dimensions::ScreenWidth - ModalSurface.GetWidth()) / 2, BoxTop, Target, SCALE_NONE);
+
+				Overlay[1].Render((Dimensions::ScreenWidth - Overlay[1].GetWidth()) / 2, BoxTop + 30, Target, SCALE_NONE);
+				Overlay[2].Render((Dimensions::ScreenWidth / 2) - (75 * Dimensions::ScaleFactor), BoxTop + (105 * Dimensions::ScaleFactor), Target, SCALE_NONE);
+				Overlay[3].Render((Dimensions::ScreenWidth / 2) + (35 * Dimensions::ScaleFactor), BoxTop + (105 * Dimensions::ScaleFactor), Target, SCALE_NONE);
 			}
 			else if (Modal <= MODAL_OPTIONS)
 			{

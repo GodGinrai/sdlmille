@@ -234,6 +234,17 @@ void			Surface::SetInteger		(int Value, TTF_Font * Font, bool ShowZero, SDL_Colo
 	}
 }
 
+void			Surface::SetRGBALoss	(Uint8 R, Uint8 G, Uint8 B, Uint8 A)
+{
+	if (MySurface != 0)
+	{
+		MySurface->format->Rloss = R;
+		MySurface->format->Gloss = G;
+		MySurface->format->Bloss = B;
+		MySurface->format->Aloss = A;
+	}
+}
+
 void			Surface::SetText		(const char * Text, TTF_Font * Font, SDL_Color *fgColor, SDL_Color *bgColor)
 {
 	if (Font == 0)
