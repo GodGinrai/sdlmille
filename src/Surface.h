@@ -65,13 +65,18 @@ public:
 							~Surface		(void);
 			void			Clear			(void);
 			bool			DrawPart		(SDL_Rect &SourceRect, SDL_Surface *Destination);
+			void			GetCoords		(int &XCoord, int &YCoord)														const;
 			int				GetHeight		(void)																			const;
 			int				GetWidth		(void)																			const;
+			int				GetX			(void)																			const;
+			int				GetY			(void)																			const;
+			void			Render			(SDL_Surface *Destination)														const;
 			void			Render			(int X, int Y, SDL_Surface * Destination, int ScaleMode = SCALE_X_Y)			const;
 			void			SetAlpha		(int AlphaValue);
+			void			SetCoords		(int XCoord, int YCoord);
 			void			SetImage		(const char * File);
 			void			SetInteger		(int Value, TTF_Font * Font, bool ShowZero = true, SDL_Color *fgColor = 0, SDL_Color *bgColor = 0);
-			void			SetRGBALoss		(Uint8 R, Uint8 G, Uint8 B, Uint8 A);
+			//void			SetRGBALoss		(Uint8 R, Uint8 G, Uint8 B, Uint8 A);
 			void			SetText			(const char * Text, TTF_Font * Font, SDL_Color *fgColor = 0, SDL_Color *bgColor = 0);
 							operator bool	(void)																			const;
 
@@ -84,9 +89,20 @@ private:
 	SDL_Surface		*MySurface;
 	char			*Cached;
 	int				Integer,
-					Length;
+					Length,
+					X,
+					Y;
 };
 
+inline	int				Surface::GetX			(void)	const
+{
+	return X;
+}
+
+inline	int				Surface::GetY			(void)	const
+{
+	return Y;
+}
 
 inline					Surface::operator bool	(void)	const
 {

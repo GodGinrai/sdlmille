@@ -28,6 +28,8 @@ namespace _SDLMille
 	Cached = 0;
 	Integer = 0;
 	Length = 0;
+	X = 0;
+	Y = 0;
 }
 
 				Surface::~Surface		(void)
@@ -94,6 +96,12 @@ bool			Surface::DrawPart		(SDL_Rect &SourceRect, SDL_Surface *Destination)
 	return false;
 }
 
+void			Surface::GetCoords		(int &XCoord, int &YCoord)												const
+{
+	XCoord = X;
+	YCoord = Y;
+}
+
 int				Surface::GetHeight		(void)																	const
 {
 	if (MySurface != 0)
@@ -130,6 +138,11 @@ SDL_Surface *	Surface::Load			(const char * File)
 	}
 	else
 		return 0;
+}
+
+void			Surface::Render			(SDL_Surface *Destination)												const
+{
+	Render(X, Y, Destination, SCALE_NONE);
 }
 
 void			Surface::Render			(int X, int Y, SDL_Surface * Destination, int ScaleMode)				const
@@ -173,6 +186,12 @@ void			Surface::SetAlpha		(int AlphaValue)
 			MySurface = Temp;
 		}
 	}
+}
+
+void			Surface::SetCoords		(int XCoord, int YCoord)
+{
+	X = XCoord;
+	Y = YCoord;
 }
 
 void			Surface::SetImage		(const char * File)
@@ -234,16 +253,16 @@ void			Surface::SetInteger		(int Value, TTF_Font * Font, bool ShowZero, SDL_Colo
 	}
 }
 
-void			Surface::SetRGBALoss	(Uint8 R, Uint8 G, Uint8 B, Uint8 A)
-{
-	if (MySurface != 0)
-	{
-		MySurface->format->Rloss = R;
-		MySurface->format->Gloss = G;
-		MySurface->format->Bloss = B;
-		MySurface->format->Aloss = A;
-	}
-}
+//void			Surface::SetRGBALoss	(Uint8 R, Uint8 G, Uint8 B, Uint8 A)
+//{
+//	if (MySurface != 0)
+//	{
+//		MySurface->format->Rloss = R;
+//		MySurface->format->Gloss = G;
+//		MySurface->format->Bloss = B;
+//		MySurface->format->Aloss = A;
+//	}
+//}
 
 void			Surface::SetText		(const char * Text, TTF_Font * Font, SDL_Color *fgColor, SDL_Color *bgColor)
 {

@@ -67,7 +67,7 @@ const	char	TUTORIAL_TEXT[][MESSAGE_SIZE] = {
 					"Or click here to discard.",
 					"Enjoy the game!"	};
 
-const	char	VERSION_TEXT[] = "0.9.1 (1.0 Preview 1)";
+const	char	VERSION_TEXT[] = "0.9.1-2 (1.0p1 test2)";
 
 const	int		SAVE_FORMAT_VER = 8;
 
@@ -92,6 +92,7 @@ private:
 	void		DelayUntil		(Uint32 Ticks);
 	bool		Discard			(void);
 	bool		EndOfGame		(void)					const;
+	void		FillBackDrop	(SDL_Surface *Target)	const;
 	Uint8		FindPopped		(void)					const;
 	void		GetScores		(void);
 	void		IgnoreEvents	(void);

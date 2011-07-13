@@ -1113,6 +1113,20 @@ bool	Game::EndOfGame			(void)								const
 	return ReturnValue;
 }
 
+void	Game::FillBackDrop		(SDL_Surface *Target)				const
+{
+	if (Background && (Background.GetWidth() > 0) && (Background.GetHeight() > 0))
+	{
+		for (int i = 0; i < Dimensions::ScreenWidth; i += Background.GetWidth())
+		{
+			for (int j = 0; j < Dimensions::ScreenHeight; j += Background.GetHeight())
+			{
+				Background.Render(i, j, Target, SCALE_NONE);
+			}
+		}
+	}
+}
+
 Uint8	Game::FindPopped		(void)								const
 {
 	// Find which card in the hand is "popped"
@@ -1497,11 +1511,14 @@ void	Game::OnClick			(int X, int Y)
 	{
 		if (Modal == MODAL_EXTENSION)
 		{
-			int ButtonY = ((Dimensions::ScreenHeight - ModalSurface.GetHeight()) / (2 * Dimensions::ScaleFactor)) + 125,
-				CheckX = (Dimensions::ScreenWidth / (2 * Dimensions::ScaleFactor)) - 55,
-				CancelX = (Dimensions::ScreenWidth / (2 * Dimensions::ScaleFactor)) + 55;
+			const int CIRCLE_CLICK_PADDING = 3;
 
-			if (Radius(X, Y, CheckX, ButtonY) < 22)
+			int ButtonRadius = Overlay[2].GetHeight() / 2,
+				ButtonY = Overlay[2].GetY() + ButtonRadius,
+				CheckX = Overlay[2].GetX() + ButtonRadius,
+				CancelX = Overlay[3].GetX() + ButtonRadius;
+
+			if (Radius(X, Y, CheckX, ButtonY) < (ButtonRadius + CIRCLE_CLICK_PADDING))
 			{
 				Extended = true;
 				Modal = MODAL_NONE;
@@ -1509,7 +1526,7 @@ void	Game::OnClick			(int X, int Y)
 				ChangePlayer();
 				Save();
 			}
-			else if (Radius(X, Y, CancelX, ButtonY) < 22)
+			else if (Radius(X, Y, CancelX, ButtonY) < (ButtonRadius + CIRCLE_CLICK_PADDING))
 			{
 				Extended = false;
 				ExtensionDeclined = true;
@@ -1634,9 +1651,9 @@ void	Game::OnClick			(int X, int Y)
 
 	if (Scene == SCENE_MAIN)	//Main menu
 	{
-		if ((X >= 45) && (X <= 275))
+		if ((X >= Overlay[2].GetX()) && (X <= (Overlay[2].GetX() + Overlay[2].GetWidth())))
 		{
-			if ((Y >= 300) && (Y <= 355))	//Clicked Play
+			if ((Y >= Overlay[2].GetY()) && (Y <= (Overlay[2].GetY() + Overlay[2].GetHeight())))	//Clicked Play
 			{
 				ShowLoading();
 				Reset(false);
@@ -1644,15 +1661,18 @@ void	Game::OnClick			(int X, int Y)
 				Scene =		SCENE_GAME_PLAY;
 				Restore();
 			}
-			if ((Y >= 370) && (Y <= 415))	//Clicked Learn
+			else if ((X >= Overlay[3].GetX()) && (X <= (Overlay[3].GetX() + Overlay[3].GetWidth())))
 			{
-				ShowLoading();
-				Reset(false);
-				LastScene = SCENE_MAIN;
-				Scene =		SCENE_LEARN_1;
+				if ((Y >= Overlay[3].GetY()) && (Y <= (Overlay[3].GetY() + Overlay[3].GetHeight())))	//Clicked Learn
+				{
+					ShowLoading();
+					Reset(false);
+					LastScene = SCENE_MAIN;
+					Scene =		SCENE_LEARN_1;
+				}
 			}
 		}
-		if ((X >= ((Dimensions::ScreenWidth - LogoSurface.GetWidth()) / Dimensions::ScaleFactor)) && (Y >= ((Dimensions::ScreenHeight - LogoSurface.GetHeight()) / Dimensions::ScaleFactor)))		//Clicked GPL logo
+		if ((X >= LogoSurface.GetX()) && (Y >= LogoSurface.GetY()))		//Clicked GPL logo
 		{
 			LastScene = Scene;
 			Scene = SCENE_LEGAL;
@@ -1790,7 +1810,7 @@ void	Game::OnEvent			(SDL_Event * Event)
 					DownX = Event->button.x;
 					DownY = Event->button.y;
 
-					if (Scene == SCENE_GAME_PLAY)
+					if ((Scene == SCENE_GAME_PLAY) && (Modal == MODAL_NONE))
 						DownIndex = Hand::GetIndex(DownX / Dimensions::ScaleFactor, DownY / Dimensions::ScaleFactor) - 1;
 				}
 			}
@@ -1835,7 +1855,7 @@ void	Game::OnEvent			(SDL_Event * Event)
 						Dirty = true;
 					}
 				}
-				else if ((Scene == SCENE_GAME_PLAY) && (Current == 0))
+				else if ((Scene == SCENE_GAME_PLAY) && (Current == 0) && (Modal == MODAL_NONE))
 				{
 					if (DownIndex < HAND_SIZE)
 					{
@@ -1921,7 +1941,7 @@ bool	Game::OnInit			(void)
 		#ifdef SOFTWARE_MODE
 		if(!(Window = SDL_SetVideoMode(0, 0, 0, SDL_SWSURFACE)))
 		#else
-		if(!(Window = SDL_SetVideoMode(320, 480, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)))
+		if(!(Window = SDL_SetVideoMode(480, 640, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)))
 		#endif
 			return false;
 
@@ -1935,6 +1955,9 @@ bool	Game::OnInit			(void)
 		DEBUG_PRINT(DebugStr);
 	}
 
+	int ScreenHeight = Dimensions::ScreenHeight,
+		ScreenWidth = Dimensions::ScreenWidth;
+
 	if (Modal < MODAL_NONE)
 	{
 		ShadowSurface.SetImage("gfx/modals/shadow.png");	//Render shadow
@@ -1945,6 +1968,20 @@ bool	Game::OnInit			(void)
 			Overlay[1].SetText("EXTEND TRIP?", GameOverBig, &White);
 			Overlay[2].SetImage("gfx/modals/menu_check.png");
 			Overlay[3].SetImage("gfx/modals/menu_x.png");
+
+			int BoxHeight = ModalSurface.GetHeight(),
+				BoxWidth = ModalSurface.GetWidth(),
+				BoxTop = (Dimensions::ScreenHeight - BoxHeight) / 2,
+				BoxLeft = (Dimensions::ScreenWidth - BoxWidth) / 2,
+				BoxCenterX = BoxLeft + (BoxWidth / 2),
+				BoxCenterY = BoxTop + (BoxHeight / 2),
+				CircleRadius = Overlay[2].GetWidth() / 2;
+
+			ModalSurface.SetCoords(BoxLeft, BoxTop);
+
+			Overlay[1].SetCoords(BoxCenterX - (Overlay[1].GetWidth() / 2), BoxTop + ((BoxCenterY - BoxTop - Overlay[1].GetHeight()) / 2));
+			Overlay[2].SetCoords(BoxLeft + (((BoxWidth / 2) - Overlay[2].GetWidth()) / 2), BoxCenterY + (((BoxHeight / 2) - Overlay[2].GetHeight()) / 2));
+			Overlay[3].SetCoords(BoxCenterX + (((BoxWidth / 2) - Overlay[3].GetWidth()) / 2), BoxCenterY + (((BoxHeight / 2) - Overlay[3].GetHeight()) / 2));
 
 			return true;
 		}
@@ -2084,15 +2121,31 @@ bool	Game::OnInit			(void)
 			if (!Background)
 				return false;
 
-			if (Dimensions::ScreenHeight > 440)
-				LogoSurface.SetImage("gfx/gpl.png");
-			else
-				LogoSurface.SetImage("gfx/gpl_sideways.png");
-
 			Overlay[0].SetImage("gfx/overlays/main.png");
 			Overlay[1].SetImage("gfx/loading.png");
 			Overlay[2].SetImage("gfx/overlays/main_play.png");
 			Overlay[3].SetImage("gfx/overlays/main_learn.png");
+
+			LogoSurface.SetImage("gfx/gpl.png");
+			
+			int	BannerHeight = Overlay[0].GetHeight(),
+				ButtonsHeight = Overlay[2].GetHeight() + Overlay[3].GetHeight(),
+				LogoHeight = LogoSurface.GetHeight();
+
+			if ((BannerHeight + ButtonsHeight + LogoHeight + 30) > ScreenHeight)
+			{
+				LogoSurface.SetImage("gfx/gpl_sideways.png");
+				LogoHeight = 0;
+			}
+			
+			//int	ButtonCenter = ((ScreenHeight - LogoHeight - BannerHeight) / 2) + BannerHeight;
+			int	ButtonRoom = ScreenHeight - LogoHeight - BannerHeight;
+
+			Overlay[0].SetCoords((ScreenWidth - Overlay[0].GetWidth()) / 2, 0);
+			Overlay[2].SetCoords((ScreenWidth - Overlay[2].GetWidth()) / 2, BannerHeight + (ButtonRoom >> 2) - (Overlay[2].GetHeight() >> 1));
+			Overlay[3].SetCoords((ScreenWidth - Overlay[3].GetWidth()) / 2, BannerHeight + (ButtonRoom >> 1) + (ButtonRoom >> 2) - (Overlay[3].GetHeight() >> 1));
+
+			LogoSurface.SetCoords(ScreenWidth - LogoSurface.GetWidth(), ScreenHeight - LogoSurface.GetHeight());
 
 			return true;
 		}
@@ -2440,8 +2493,16 @@ void	Game::OnMouseUp			(int X, int Y)
 
 	if (Scale != 1)
 	{
-		X /= Scale;
-		Y /= Scale;
+		// TODO: Remove after scaling is completely gone
+		if ((Modal == MODAL_EXTENSION) || (Scene == SCENE_MAIN));
+		else
+		{
+		// END TODO
+
+			X /= Scale;
+			Y /= Scale;
+		}
+
 	}
 
 	OnClick(X, Y);
@@ -2570,15 +2631,15 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 		RefreshedSomething = true;
 	
 		// Render the appropriate surfaces
-		Background.Render(0, 0, Target);
+		FillBackDrop(Target);
 
 		if (Scene == SCENE_MAIN)
 		{
-			Overlay[0].Render(0, 0, Target);
-			Overlay[2].Render(45, 280, Target);
-			Overlay[3].Render(53, 350, Target);
+			Overlay[0].Render(Target);
+			Overlay[2].Render(Target);
+			Overlay[3].Render(Target);
 
-			LogoSurface.Render(Dimensions::ScreenWidth - LogoSurface.GetWidth(), Dimensions::ScreenHeight - LogoSurface.GetHeight(), Target, SCALE_NONE);
+			LogoSurface.Render(Target);
 		}
 		else if ((Scene == SCENE_GAME_PLAY) || IN_DEMO)
 		{
@@ -2593,17 +2654,17 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 			Corners[UPPER_LEFT].Render(0, Dimensions::EffectiveTableauHeight, Target, SCALE_NONE);
 			Corners[UPPER_LEFT].Render(0, Dimensions::EffectiveTableauHeight * 2, Target, SCALE_NONE);
 
-			Corners[BOTTOM_LEFT].Render(0, Dimensions::EffectiveTableauHeight - 5, Target, SCALE_NONE);
-			Corners[BOTTOM_LEFT].Render(0, (Dimensions::EffectiveTableauHeight * 2) - 5, Target, SCALE_NONE);
-			Corners[BOTTOM_LEFT].Render(0, Dimensions::ScreenHeight - 5, Target, SCALE_NONE);
+			Corners[BOTTOM_LEFT].Render(0, Dimensions::EffectiveTableauHeight - Corners[BOTTOM_LEFT].GetHeight(), Target, SCALE_NONE);
+			Corners[BOTTOM_LEFT].Render(0, (Dimensions::EffectiveTableauHeight * 2) - Corners[BOTTOM_LEFT].GetHeight(), Target, SCALE_NONE);
+			Corners[BOTTOM_LEFT].Render(0, Dimensions::ScreenHeight - Corners[BOTTOM_LEFT].GetHeight(), Target, SCALE_NONE);
 
-			Corners[UPPER_RIGHT].Render(Dimensions::ScreenWidth - 5, 0, Target, SCALE_NONE);
-			Corners[UPPER_RIGHT].Render(Dimensions::ScreenWidth - 5, Dimensions::EffectiveTableauHeight, Target, SCALE_NONE);
-			Corners[UPPER_RIGHT].Render(Dimensions::ScreenWidth - 5, Dimensions::EffectiveTableauHeight * 2, Target, SCALE_NONE);
+			Corners[UPPER_RIGHT].Render(Dimensions::ScreenWidth - Corners[UPPER_RIGHT].GetWidth(), 0, Target, SCALE_NONE);
+			Corners[UPPER_RIGHT].Render(Dimensions::ScreenWidth - Corners[UPPER_RIGHT].GetWidth(), Dimensions::EffectiveTableauHeight, Target, SCALE_NONE);
+			Corners[UPPER_RIGHT].Render(Dimensions::ScreenWidth - Corners[UPPER_RIGHT].GetWidth(), Dimensions::EffectiveTableauHeight * 2, Target, SCALE_NONE);
 
-			Corners[BOTTOM_RIGHT].Render(Dimensions::ScreenWidth - 5, Dimensions::EffectiveTableauHeight - 5, Target, SCALE_NONE);
-			Corners[BOTTOM_RIGHT].Render(Dimensions::ScreenWidth - 5, (Dimensions::EffectiveTableauHeight * 2) - 5, Target, SCALE_NONE);
-			Corners[BOTTOM_RIGHT].Render(Dimensions::ScreenWidth - 5, Dimensions::ScreenHeight - 5, Target, SCALE_NONE);
+			Corners[BOTTOM_RIGHT].Render(Dimensions::ScreenWidth - Corners[BOTTOM_RIGHT].GetWidth(), Dimensions::EffectiveTableauHeight - Corners[BOTTOM_RIGHT].GetHeight(), Target, SCALE_NONE);
+			Corners[BOTTOM_RIGHT].Render(Dimensions::ScreenWidth - Corners[BOTTOM_RIGHT].GetWidth(), (Dimensions::EffectiveTableauHeight * 2) - Corners[BOTTOM_RIGHT].GetHeight(), Target, SCALE_NONE);
+			Corners[BOTTOM_RIGHT].Render(Dimensions::ScreenWidth - Corners[BOTTOM_RIGHT].GetWidth(), Dimensions::ScreenHeight - Corners[BOTTOM_RIGHT].GetHeight(), Target, SCALE_NONE);
 
 		}
 		else if (Scene == SCENE_GAME_OVER)
@@ -2701,13 +2762,12 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 
 			if (Modal == MODAL_EXTENSION)
 			{
-				int BoxTop = (Dimensions::ScreenHeight - ModalSurface.GetHeight()) / 2;
 
-				ModalSurface.Render((Dimensions::ScreenWidth - ModalSurface.GetWidth()) / 2, BoxTop, Target, SCALE_NONE);
+				ModalSurface.Render(Target);
 
-				Overlay[1].Render((Dimensions::ScreenWidth - Overlay[1].GetWidth()) / 2, BoxTop + 30, Target, SCALE_NONE);
-				Overlay[2].Render((Dimensions::ScreenWidth / 2) - (75 * Dimensions::ScaleFactor), BoxTop + (105 * Dimensions::ScaleFactor), Target, SCALE_NONE);
-				Overlay[3].Render((Dimensions::ScreenWidth / 2) + (35 * Dimensions::ScaleFactor), BoxTop + (105 * Dimensions::ScaleFactor), Target, SCALE_NONE);
+				Overlay[1].Render(Target);
+				Overlay[2].Render(Target);
+				Overlay[3].Render(Target);
 			}
 			else if (Modal <= MODAL_OPTIONS)
 			{
