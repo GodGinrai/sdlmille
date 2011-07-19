@@ -1493,8 +1493,8 @@ void	Game::OnClick			(int X, int Y)
 	static	Uint32	LastClick = 0;
 	static	bool	ChangedDifficulty = false;
 	
-	int	CenterX,
-		CenterY = 93;
+	//int	CenterX,
+	//	CenterY = 93;
 
 	if (Frozen)		//Don't register clicks when frozen
 	{
@@ -1511,8 +1511,6 @@ void	Game::OnClick			(int X, int Y)
 	{
 		if (Modal == MODAL_EXTENSION)
 		{
-			const int CIRCLE_CLICK_PADDING = 3;
-
 			int ButtonRadius = Overlay[2].GetHeight() / 2,
 				ButtonY = Overlay[2].GetY() + ButtonRadius,
 				CheckX = Overlay[2].GetX() + ButtonRadius,
@@ -1537,13 +1535,17 @@ void	Game::OnClick			(int X, int Y)
 		}
 		else if (Modal <= MODAL_OPTIONS)
 		{
+			int	ButtonRadius = (Overlay[3].GetWidth() >> 1),
+				ButtonX = Overlay[3].GetX() + ButtonRadius,
+				ButtonY = Overlay[3].GetY() + ButtonRadius;
+
 			if (Modal != MODAL_STATS)
 			{
-				if ((X >= 50) && (X <= 270))
+				if ((X >= Dimensions::MenuColumn1X) && (X <= (Dimensions::MenuX + ModalSurface.GetWidth() - (Dimensions::MenuBorderPadding << 1))))
 				{
-					if ((Y >= 120) && (Y <= 400))
+					if ((Y >= Dimensions::MenuItemsTopY) && (Y <= (Dimensions::MenuY + ModalSurface.GetHeight())))
 					{
-						int Index = (Y - 125) / 40;
+						int Index = (Y - Dimensions::MenuItemsTopY) / Dimensions::MenuItemSpacing;
 
 						if ((Modal == MODAL_OPTIONS) && (Index < OPTION_COUNT))	//Clicked an option toggle
 						{
@@ -1583,12 +1585,12 @@ void	Game::OnClick			(int X, int Y)
 				}
 			}
 
-			if (Modal == MODAL_GAME_MENU)
-				CenterX = 256;
-			else
-				CenterX = 64;
+			//if (Modal == MODAL_GAME_MENU)
+			//	CenterX = 256;
+			//else
+			//	CenterX = 64;
 
-			if (Radius(X, Y, CenterX, CenterY) < 22) // Clicked X or back arrow
+			if (Radius(X, Y, ButtonX, ButtonY) < (ButtonRadius + CIRCLE_CLICK_PADDING)) // Clicked X or back arrow
 			{
 				if (Modal == MODAL_OPTIONS)
 					GameOptions.SaveOpts();
@@ -1941,11 +1943,13 @@ bool	Game::OnInit			(void)
 		#ifdef SOFTWARE_MODE
 		if(!(Window = SDL_SetVideoMode(0, 0, 0, SDL_SWSURFACE)))
 		#else
-		if(!(Window = SDL_SetVideoMode(480, 640, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)))
+		if(!(Window = SDL_SetVideoMode(640, 480, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)))
 		#endif
 			return false;
 
-		Dimensions::SetDimensions(Window->w, Window->h);
+		DiscardSurface.SetImage("gfx/null_null.png");
+
+		Dimensions::SetDimensions(Window->w, Window->h, DiscardSurface.GetWidth(), DiscardSurface.GetHeight());
 
 		ResetPortal();
 
@@ -1987,19 +1991,38 @@ bool	Game::OnInit			(void)
 		}
 		else if (Modal <= MODAL_OPTIONS)
 		{
+			int	TextRowCount = 0;
+
+			// Menu modals
 			ModalSurface.SetImage("gfx/modals/menu_bg.png");
+			//ModalSurface.SetCoords((ScreenWidth - ModalSurface.GetWidth()) / 2, (ScreenHeight - ModalSurface.GetHeight()) / 2 );
+			
+			//Dimensions::Menu2ndColumnX = ModalSurface.GetX() + (ModalSurface.GetWidth() * 0.8);
+			Dimensions::SetMenuMetrics(ModalSurface);
+
+			ModalSurface.SetCoords(Dimensions::MenuX, Dimensions::MenuY);
+
+			//const	int	BORDER_PADDING = ModalSurface.GetWidth() / 30,
+			//const	int	LEFT_RENDER_X = ModalSurface.GetX() + BORDER_PADDING;
+
+			Overlay[3].SetY(Dimensions::MenuY + Dimensions::MenuBorderPadding);
+
+			/*
 			Overlay[1].SetText("Current game's difficulty:", GameOverSmall, &White, &Black);
 
 			if (Difficulty < DIFFICULTY_LEVEL_COUNT)
 				Overlay[2].SetText(DIFFICULTY_TEXT[Difficulty], GameOverBig, &White, &Black);
 			else
 				Overlay[2].SetText("Error", GameOverBig, &White);
+			*/
 
 			if (Modal == MODAL_GAME_MENU)
 			{
 				char	CurrScoreText[20];
 
 				bool	BoundsSafe = true;
+
+				TextRowCount = MENU_SURFACE_COUNT;
 
 				for (int i = 0; i < PLAYER_COUNT; ++i)
 				{
@@ -2008,13 +2031,14 @@ bool	Game::OnInit			(void)
 				}
 
 				if (BoundsSafe && (PLAYER_COUNT > 1))
-					sprintf(CurrScoreText, "H: %u, C: %u", RunningScores[0], RunningScores[1]);
+					sprintf(CurrScoreText, "H: %u, C: %u", RunningScores[0], RunningScores[1]); // TODO: Add game difficulty here
 				else
 					CurrScoreText[0] = '\0';
 
 				//printf("%s\n", CurrScoreText);
 
 				Overlay[3].SetImage("gfx/modals/menu_x.png");
+				Overlay[3].SetX(Dimensions::MenuX + ModalSurface.GetWidth() - Overlay[3].GetWidth() - Dimensions::MenuBorderPadding);
 
 				for (int i = 0; i < MENU_SURFACE_COUNT; ++i)	//Render options and other menu items
 				{
@@ -2031,10 +2055,13 @@ bool	Game::OnInit			(void)
 			else
 			{
 				Overlay[3].SetImage("gfx/modals/menu_back.png");
+				Overlay[3].SetX(Dimensions::MenuColumn1X);
 
 				if (Modal == MODAL_STATS)
 				{
 					Uint32	Statistics[7];
+
+					TextRowCount = STAT_CAPTIONS_SIZE;
 
 					PlayerStats.GetStats(Statistics[0], Statistics[1], Statistics[2], Statistics[3], Statistics[4], Statistics[5], Statistics[6]);
 
@@ -2048,6 +2075,9 @@ bool	Game::OnInit			(void)
 				else
 				{
 					// Options
+					TextRowCount = OPTION_COUNT;
+					Dimensions::MenuColumn2X = ModalSurface.GetX() + (ModalSurface.GetWidth() * 0.825); //TODO: Smart column placement
+
 					Overlay[1].SetText("Current game's difficulty:", GameOverSmall, &White, &Black);
 
 					if (Difficulty < DIFFICULTY_LEVEL_COUNT)
@@ -2062,6 +2092,21 @@ bool	Game::OnInit			(void)
 					}
 				}
 			}
+
+			//NEW
+			//const	int	MENU_ITEMS_TOP = ModalSurface.GetY() + (ModalSurface.GetHeight() * 0.18),
+			//			MENU_ITEMS_SPACING = ModalSurface.GetHeight() * 0.12;
+
+			for (int i = 0; i < TextRowCount; ++i)	//Render options and other menu items
+			{
+				MenuSurfaces[i][0].SetCoords(Dimensions::MenuColumn1X, Dimensions::MenuItemsTopY + (i * Dimensions::MenuItemSpacing));
+				MenuSurfaces[i][1].SetCoords(Dimensions::MenuColumn2X, Dimensions::MenuItemsTopY + (i * Dimensions::MenuItemSpacing));
+			}
+
+			//Overlay[1].Render((Dimensions::ScreenWidth - Overlay[1].GetWidth()) / 2, 10, Target, SCALE_Y);
+			//Overlay[2].Render((Dimensions::ScreenWidth - Overlay[2].GetWidth()) / 2, 20 + Overlay[1].GetHeight(), Target, SCALE_Y);
+
+			//END NEW
 
 			return true;
 		}
@@ -2137,10 +2182,13 @@ bool	Game::OnInit			(void)
 				LogoSurface.SetImage("gfx/gpl_sideways.png");
 				LogoHeight = 0;
 			}
-			
+						
+			if ((BannerHeight + ButtonsHeight) > ScreenHeight)
+				BannerHeight = ScreenHeight - ButtonsHeight;
+
 			//int	ButtonCenter = ((ScreenHeight - LogoHeight - BannerHeight) / 2) + BannerHeight;
 			int	ButtonRoom = ScreenHeight - LogoHeight - BannerHeight;
-
+			
 			Overlay[0].SetCoords((ScreenWidth - Overlay[0].GetWidth()) / 2, 0);
 			Overlay[2].SetCoords((ScreenWidth - Overlay[2].GetWidth()) / 2, BannerHeight + (ButtonRoom >> 2) - (Overlay[2].GetHeight() >> 1));
 			Overlay[3].SetCoords((ScreenWidth - Overlay[3].GetWidth()) / 2, BannerHeight + (ButtonRoom >> 1) + (ButtonRoom >> 2) - (Overlay[3].GetHeight() >> 1));
@@ -2494,7 +2542,7 @@ void	Game::OnMouseUp			(int X, int Y)
 	if (Scale != 1)
 	{
 		// TODO: Remove after scaling is completely gone
-		if ((Modal == MODAL_EXTENSION) || (Scene == SCENE_MAIN));
+		if ((Modal <= MODAL_OPTIONS) || (Scene == SCENE_MAIN));
 		else
 		{
 		// END TODO
@@ -2771,40 +2819,53 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 			}
 			else if (Modal <= MODAL_OPTIONS)
 			{
-				ModalSurface.Render(35, 65, Target);
+				int	TextRowCount = 0;
+
+				ModalSurface.Render(Target);
+				Overlay[3].Render(Target);
 
 				if (Modal == MODAL_GAME_MENU)
 				{
-					Overlay[3].Render(236, 73, Target);
+					TextRowCount = MENU_SURFACE_COUNT;
+					//Overlay[3].Render(236, 73, Target);
 
-					for (int i = 0; i < MENU_SURFACE_COUNT; ++i)	//Render options and other menu items
-					{
-						MenuSurfaces[i][0].Render(50, 125 + (i * 40), Target);
-					}
+					//for (int i = 0; i < MENU_SURFACE_COUNT; ++i)	//Render options and other menu items
+					//{
+					//	MenuSurfaces[i][0].Render(50, 125 + (i * 40), Target);
+					//}
 				}
 				else
 				{
-					Overlay[3].Render(44, 73, Target);
-
+					//Overlay[3].Render(44, 73, Target);
+					
 					if (Modal == MODAL_STATS)
 					{
-						for (int i = 0; i < STAT_CAPTIONS_SIZE; ++i)
-						{
-							MenuSurfaces[i][0].Render(50, 125 + (i * 40), Target);
-							MenuSurfaces[i][1].Render(220, 125 + (i * 40), Target);
-						}
+						TextRowCount = STAT_CAPTIONS_SIZE;
+
+						//for (int i = 0; i < STAT_CAPTIONS_SIZE; ++i)
+						//{
+						//	MenuSurfaces[i][0].Render(50, 125 + (i * 40), Target);
+						//	MenuSurfaces[i][1].Render(220, 125 + (i * 40), Target);
+						//}
 					}
 					else
 					{
 						Overlay[1].Render((Dimensions::ScreenWidth - Overlay[1].GetWidth()) / 2, 10, Target, SCALE_Y);
 						Overlay[2].Render((Dimensions::ScreenWidth - Overlay[2].GetWidth()) / 2, 20 + Overlay[1].GetHeight(), Target, SCALE_Y);
 
-						for (int i = 0; i < OPTION_COUNT; ++i)
-						{
-							MenuSurfaces[i][0].Render(50, 125 + (i * 40), Target);
-							MenuSurfaces[i][1].Render(240, 125 + (i * 40), Target);
-						}
+						TextRowCount = OPTION_COUNT;
+						//for (int i = 0; i < OPTION_COUNT; ++i)
+						//{
+						//	MenuSurfaces[i][0].Render(50, 125 + (i * 40), Target);
+						//	MenuSurfaces[i][1].Render(240, 125 + (i * 40), Target);
+						//}
 					}
+				}
+
+				for (int i = 0; i < TextRowCount; ++i)
+				{
+					MenuSurfaces[i][0].Render(Target);
+					MenuSurfaces[i][1].Render(Target);
 				}
 			}
 			else if (Modal <= MODAL_CLEAR_STATS)

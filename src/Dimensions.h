@@ -21,24 +21,43 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 #define	_SDLMILLE_DIMENSIONS_H
 
 #include <stdlib.h>
+#include "Surface.h"
 
 namespace _SDLMille
 {
 
+const	int	SCREEN_EDGE_PADDING = 3,
+			TRAY_TOP_BOTTOM_PADDING = 8;
+
 class	Dimensions
 {
 public:
-	static	void	SetDimensions	(int Width, int Height);
+	static	void	SetDimensions		(int Width, int Height, int CardWidth, int CardHeight);
+	static	void	SetGamePlayMetrics	(int CardWidth, int CardHeight);
+	static	void	SetMenuMetrics		(Surface &MenuSurface);
 
 	static	double	ScaleFactor;
 	static	int		EffectiveTableauHeight,
 					FirstRowY,
+					GamePlayCardHeight,
+					GamePlayCardSpacingX,
+					GamePlayCardSpacingY,
+					GamePlayCardWidth,
+					GamePlayHandLeftX,
+					MenuBorderPadding,
+					MenuColumn1X,
+					MenuColumn2X,
+					MenuItemSpacing,
+					MenuItemsTopY,
+					MenuX,
+					MenuY,
 					PadLeft,
 					SecondRowY,
 					ScreenWidth,
 					ScreenHeight,
 					TableauHeight;
-	static	bool	MultiRowSafeties;
+	static	bool	MultiRowSafeties,
+					GamePlayMultiRowTray;
 };
 
 }

@@ -44,8 +44,6 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef _SDLMILLE_SURFACE_H
 #define _SDLMILLE_SURFACE_H
 
-#include "Dimensions.h"
-
 #include <stdio.h>
 #include <SDL.h>
 #include <SDL_image.h>
@@ -78,6 +76,8 @@ public:
 			void			SetInteger		(int Value, TTF_Font * Font, bool ShowZero = true, SDL_Color *fgColor = 0, SDL_Color *bgColor = 0);
 			//void			SetRGBALoss		(Uint8 R, Uint8 G, Uint8 B, Uint8 A);
 			void			SetText			(const char * Text, TTF_Font * Font, SDL_Color *fgColor = 0, SDL_Color *bgColor = 0);
+			void			SetX			(int XCoord);
+			void			SetY			(int YCoord);
 							operator bool	(void)																			const;
 
 	static	bool			Draw			(SDL_Surface * Destination, SDL_Surface * Source, int X, int Y, int ScaleMode = SCALE_X_Y, bool Free = false);
@@ -102,6 +102,16 @@ inline	int				Surface::GetX			(void)	const
 inline	int				Surface::GetY			(void)	const
 {
 	return Y;
+}
+
+inline	void			Surface::SetX			(int XCoord)
+{
+	X = XCoord;
+}
+
+inline	void			Surface::SetY			(int YCoord)
+{
+	Y = YCoord;
 }
 
 inline					Surface::operator bool	(void)	const

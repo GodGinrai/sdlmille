@@ -27,6 +27,7 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 #include "Options.h"
 #include "Stats.h"
 #include <algorithm>
+#include <cmath>
 
 namespace _SDLMille
 {
@@ -37,7 +38,8 @@ enum	{DIFFICULTY_EASY = 0, DIFFICULTY_NORMAL, DIFFICULTY_HARD, DIFFICULTY_LEVEL_
 
 enum	{UPPER_LEFT = 0, BOTTOM_LEFT, UPPER_RIGHT, BOTTOM_RIGHT, CORNER_COUNT};
 
-const Uint8 MENU_ITEM_COUNT = 5,
+const Uint8 CIRCLE_CLICK_PADDING = 3,
+			MENU_ITEM_COUNT = 5,
 			MENU_SURFACE_COUNT = STAT_CAPTIONS_SIZE,
 			PLAYER_COUNT = 2,
 			SCORE_CATEGORY_COUNT = 12,

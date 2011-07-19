@@ -176,19 +176,22 @@ bool	Hand::OnRender	(SDL_Surface * Target, bool Force)
 				/*	The next line is a fancy (and more efficient) way of multiplying i times 65 and then
 					adding 81. 65 is the horizontal distance between two cards, and 81 is the left edge
 					of our render. */
-				int	X = ((i << 6) + i + 81),
+				int	X = Dimensions::GamePlayHandLeftX + (i * (Dimensions::GamePlayCardWidth + Dimensions::GamePlayCardSpacingX)),
 					Y =	0;
 
-				if (i < 4)
-					// The first three cards get a right-shift one space. Y is set for the top row.
-					//X += 65;
-					Y = Dimensions::FirstRowY;
-				else
+				if ((i >= 4) && Dimensions::GamePlayMultiRowTray)
 				{
 					// The remaining cards get a left-shift four spaces (to account for the four spaces
 					// above). Y is set for the second row.
-					X -= (65 << 2);
+					X -= ((Dimensions::GamePlayCardWidth + Dimensions::GamePlayCardSpacingX) << 2);
 					Y = Dimensions::SecondRowY;
+				}
+				else
+				{
+					//TODO: Update comments
+					// The first three cards get a right-shift one space. Y is set for the top row.
+					//X += 65;
+					Y = Dimensions::FirstRowY;
 				}
 
 				if (i == 0)

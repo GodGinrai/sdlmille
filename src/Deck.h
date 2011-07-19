@@ -20,7 +20,7 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef _SDLMILLE_DECK_H
 #define	_SDLMILLE_DECK_H
 
-#include "Surface.h"
+#include "Dimensions.h"
 #include <time.h>
 
 namespace	_SDLMille

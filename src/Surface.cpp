@@ -62,7 +62,7 @@ bool			Surface::Draw			(SDL_Surface * Destination, SDL_Surface * Source, int X, 
 	if ((Destination == 0) || (Source == 0))
 		return false;
 
-	double Scale = Dimensions::ScaleFactor;
+	double Scale = 1;
 
 	if (Scale != 1)
 	{
