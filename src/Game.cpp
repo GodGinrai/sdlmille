@@ -1264,16 +1264,27 @@ void	Game::IgnoreEvents		(void)
 
 bool	Game::InDiscardPile		(int X, int Y)						const
 {
-	int MaxX = 48;
-	int MaxY = Dimensions::FirstRowY + 61;
+	//int MaxX = 48;
+	//int MaxY = Dimensions::FirstRowY + 61;
+
+	int MinX = DiscardSurface.GetX(),
+		MaxX = MinX + Dimensions::GamePlayCardWidth + 4,
+		MinY = DiscardSurface.GetY() - 3,
+		MaxY = MinY + Dimensions::GamePlayCardHeight + 4;
 
 	if (Dragging)
 	{
 		MaxX += 12;
 		MaxY += 3;
+
+		if (Dimensions::LandscapeMode)
+		{
+			MinX -= 4;
+			MinY -= 4;
+		}
 	}
 
-	return ((X >= 3) && (X <= MaxX) && (Y >= Dimensions::FirstRowY) && (Y <= MaxY));
+	return ((X >= MinX) && (X <= MaxX) && (Y >= MinY) && (Y <= MaxY));
 }
 
 bool	Game::IsOneCardAway		(Uint8 PlayerIndex)					const
@@ -1687,40 +1698,32 @@ void	Game::OnClick			(int X, int Y)
 	{
 		if (Current == 0) // Don't respond to clicks unless it's the human's turn
 		{
-			if (Y < Dimensions::TableauHeight)	//Clicked within opponent's tableau
+			if (X <= Dimensions::GamePlayTableauWidth)
 			{
-				if ((Y < 45) && (X < 80))		//Clicked Menu button
-					ShowModal(MODAL_GAME_MENU);
-				else
+				if (Y < Dimensions::TableauHeight)	//Clicked within opponent's tableau
 				{
-					// Play selected card, if it's a hazard
-					if (Players[Current].GetType(FindPopped()) == CARD_HAZARD)
-						Pop(FindPopped());
+					if ((Y < 45) && (X < 80))		//Clicked Menu button
+						ShowModal(MODAL_GAME_MENU);
+					else
+					{
+						// Play selected card, if it's a hazard
+						if (Players[Current].GetType(FindPopped()) == CARD_HAZARD)
+							Pop(FindPopped());
+					}
 				}
+				else if (Y < (Dimensions::TableauHeight * 2))	//Clicked within own tableau
+					Pop(FindPopped());	//Play selected card, if any
 			}
-			else if ((Y > Dimensions::TableauHeight) && (Y < (Dimensions::TableauHeight * 2)))	//Clicked within own tableau
-				Pop(FindPopped());	//Play selected card, if any
-			else if ((Y >= Dimensions::FirstRowY) && (Y <= (Dimensions::SecondRowY + 57)))	//Clicked within the two rows at the bottom of the screen
+			else if (InDiscardPile(X, Y))
+			{
+				Discard();
+			}
+			else
 			{
 				Uint8 Index = Hand::GetIndex(X, Y);
 				
-				if (Index == 0)
-				{
-					Players[0].UnPop(FindPopped());
-					return;
-				}
-				else
-				{
-					Index -= 1;
-
-					if (Index < HAND_SIZE)
-						Pop(Index);	//Clicked a card, so pop it
-					else
-					{
-						if (InDiscardPile(X, Y))	//Clicked the discard pile
-							Discard();
-					}
-				}
+				if (Index < HAND_SIZE)
+					Pop(Index);	//Clicked a card, so pop it
 			}
 		}
 	}
@@ -1813,7 +1816,7 @@ void	Game::OnEvent			(SDL_Event * Event)
 					DownY = Event->button.y;
 
 					if ((Scene == SCENE_GAME_PLAY) && (Modal == MODAL_NONE))
-						DownIndex = Hand::GetIndex(DownX / Dimensions::ScaleFactor, DownY / Dimensions::ScaleFactor) - 1;
+						DownIndex = Hand::GetIndex(DownX / Dimensions::ScaleFactor, DownY / Dimensions::ScaleFactor);
 				}
 			}
 		}
@@ -1943,7 +1946,7 @@ bool	Game::OnInit			(void)
 		#ifdef SOFTWARE_MODE
 		if(!(Window = SDL_SetVideoMode(0, 0, 0, SDL_SWSURFACE)))
 		#else
-		if(!(Window = SDL_SetVideoMode(640, 480, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)))
+		if(!(Window = SDL_SetVideoMode(640, 640, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)))
 		#endif
 			return false;
 
@@ -2217,9 +2220,37 @@ bool	Game::OnInit			(void)
 			else
 				DrawCardSurface.SetImage("gfx/card_bg.png");
 
+			if (Dimensions::LandscapeMode)
+			{
+				DiscardSurface.SetX(Dimensions::GamePlayHandLeftX);
+
+				if (Dimensions::GamePlayMultiRowTray)
+				{
+					DrawCardSurface.SetCoords(Dimensions::GamePlayHandLeftX + Dimensions::GamePlayCardWidth + Dimensions::GamePlayCardSpacingX, Dimensions::FirstRowY - ((Dimensions::GamePlayCardHeight + Dimensions::GamePlayCardSpacingY) << 1));
+					DiscardSurface.SetY(DrawCardSurface.GetY());
+				}
+				else
+				{
+					DrawCardSurface.SetCoords(Dimensions::GamePlayHandLeftX, Dimensions::FirstRowY - ((Dimensions::GamePlayCardHeight + Dimensions::GamePlayCardSpacingY) * 3));
+					DiscardSurface.SetY(DrawCardSurface.GetY() + Dimensions::GamePlayCardHeight + Dimensions::GamePlayCardSpacingY);
+				}
+			}
+			else
+			{
+				DrawCardSurface.SetCoords(SCREEN_EDGE_PADDING, ScreenHeight - TRAY_TOP_BOTTOM_PADDING - Dimensions::GamePlayCardHeight);
+
+				if (Dimensions::GamePlayMultiRowTray)
+					DiscardSurface.SetCoords(DrawCardSurface.GetX(), DrawCardSurface.GetY() - Dimensions::GamePlayCardHeight - Dimensions::GamePlayCardSpacingY);
+				else
+					DiscardSurface.SetCoords(DrawCardSurface.GetX() + Dimensions::GamePlayCardWidth + Dimensions::GamePlayCardSpacingX, DrawCardSurface.GetY());
+			}
+
 			if (DrawFont)
 			{
 				DrawTextSurface.SetInteger(DeckCount, DrawFont, true, &White);
+
+				DrawTextSurface.SetCoords(DrawCardSurface.GetX() + (Dimensions::GamePlayCardWidth >> 1) - (DrawTextSurface.GetWidth() >> 1), DrawCardSurface.GetY() + (Dimensions::GamePlayCardHeight * .75) - (DrawTextSurface.GetHeight() >> 1));
+
 				if ((Current == 0) && (FindPopped() < HAND_SIZE))
 				{
 					Uint8	Value = Players[Current].GetValue(FindPopped());
@@ -2694,9 +2725,9 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 			//Overlay[0].Render(0, Dimensions::EffectiveTableauHeight - 1, Target, SCALE_NONE);
 			//Overlay[0].Render(0, (Dimensions::EffectiveTableauHeight * 2) - 1, Target, SCALE_NONE);
 
-			DiscardSurface.Render(3, Dimensions::FirstRowY, Target);
-			DrawCardSurface.Render(3, Dimensions::SecondRowY, Target);
-			DrawTextSurface.Render(3 + (((41 * Dimensions::ScaleFactor) - DrawTextSurface.GetWidth()) / 2), Dimensions::SecondRowY + 35, Target, SCALE_Y);
+			DiscardSurface.Render(Target);
+			DrawCardSurface.Render(Target);
+			DrawTextSurface.Render(Target);
 
 			Corners[UPPER_LEFT].Render(0, 0, Target, SCALE_NONE);
 			Corners[UPPER_LEFT].Render(0, Dimensions::EffectiveTableauHeight, Target, SCALE_NONE);

@@ -28,8 +28,10 @@ int		Dimensions::EffectiveTableauHeight,
 		Dimensions::GamePlayCardHeight,
 		Dimensions::GamePlayCardSpacingX,
 		Dimensions::GamePlayCardSpacingY,
+		Dimensions::GamePlayCardsPerRow,
 		Dimensions::GamePlayCardWidth,
 		Dimensions::GamePlayHandLeftX,
+		Dimensions::GamePlayTableauWidth,
 		Dimensions::MenuBorderPadding,
 		Dimensions::MenuColumn1X,
 		Dimensions::MenuColumn2X,
@@ -42,7 +44,8 @@ int		Dimensions::EffectiveTableauHeight,
 		Dimensions::ScreenHeight,
 		Dimensions::ScreenWidth,
 		Dimensions::TableauHeight;
-bool	Dimensions::MultiRowSafeties,
+bool	Dimensions::LandscapeMode,
+		Dimensions::MultiRowSafeties,
 		Dimensions::GamePlayMultiRowTray;
 
 void	Dimensions::SetDimensions	(int Width, int Height, int CardWidth, int CardHeight)
@@ -88,21 +91,61 @@ void	Dimensions::SetGamePlayMetrics	(int CardWidth, int CardHeight)
 	GamePlayCardSpacingX = CardWidth * .586;
 	GamePlayCardSpacingY = CardWidth * .088;
 
+	if (ScreenWidth >= ScreenHeight)
+		LandscapeMode = true;
+	else
+		LandscapeMode = false;
+
 	if ((CardWidth > 0) && ((CardWidth * 13) <= ScreenWidth))
 	{
-		GamePlayMultiRowTray = false;
-		CardsPerRow = 7;	//TODO: No literal
-		SecondRowY = FirstRowY = ScreenHeight - TRAY_TOP_BOTTOM_PADDING - CardHeight;
+		if (LandscapeMode)
+		{
+			if (CardHeight * 11 <= ScreenHeight)
+			{
+				GamePlayMultiRowTray = false;
+				FirstRowY = ScreenHeight - TRAY_TOP_BOTTOM_PADDING - (CardHeight * 7) - (GamePlayCardSpacingY * 6); //TODO: literals
+			}
+			else if (CardHeight * 7 <= ScreenHeight)
+			{
+				GamePlayMultiRowTray = true;
+				FirstRowY = ScreenHeight - TRAY_TOP_BOTTOM_PADDING - (CardHeight << 2) - (GamePlayCardSpacingY * 3);
+			}
+			else
+				LandscapeMode = false;
+		}
+		if (!LandscapeMode)
+		{			
+			GamePlayMultiRowTray = false;
+			SecondRowY = FirstRowY = ScreenHeight - TRAY_TOP_BOTTOM_PADDING - CardHeight;
+		}
 	}
 	else
 	{
 		GamePlayMultiRowTray = true;
-		CardsPerRow = 4;	//TODO: No literal
 		SecondRowY = ScreenHeight - TRAY_TOP_BOTTOM_PADDING - CardHeight;
 		FirstRowY = SecondRowY - GamePlayCardSpacingY - CardHeight;
 	}
 
+	if (GamePlayMultiRowTray)
+	{
+		if (LandscapeMode)
+			CardsPerRow = 2;
+		else
+			CardsPerRow = 4;	//TODO: No literal
+	}
+	else if (LandscapeMode)
+		CardsPerRow = 1;
+	else
+		CardsPerRow = 7;	//TODO: No literal
+
+	GamePlayCardsPerRow = CardsPerRow;
+
 	GamePlayHandLeftX = ScreenWidth - SCREEN_EDGE_PADDING - (CardWidth * CardsPerRow) - (GamePlayCardSpacingX * (CardsPerRow - 1));
+
+	if (LandscapeMode)
+		GamePlayTableauWidth = GamePlayHandLeftX - SCREEN_EDGE_PADDING;
+	else
+		GamePlayTableauWidth = ScreenWidth;
 }
 
 void	Dimensions::SetMenuMetrics	(Surface &MenuSurface)

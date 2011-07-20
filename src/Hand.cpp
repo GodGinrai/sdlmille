@@ -82,20 +82,34 @@ Uint8	Hand::GetIndex			(int X, int Y)
 {
 	Uint8	Invalid = 0xFF;
 
-	if ((Y >= Dimensions::FirstRowY) && (Y <= (Dimensions::SecondRowY + 57)))
+	int ColCount = Dimensions::GamePlayCardsPerRow,
+		RowCount = ceil((double) HAND_SIZE / Dimensions::GamePlayCardsPerRow),
+		MinX = Dimensions::GamePlayHandLeftX,
+		MaxX = MinX + (ColCount * Dimensions::GamePlayCardWidth) + ((ColCount - 1) * Dimensions::GamePlayCardSpacingX),
+		MinY = Dimensions::FirstRowY,
+		MaxY = MinY + (RowCount * Dimensions::GamePlayCardHeight) + ((RowCount - 1) * Dimensions::GamePlayCardSpacingY),
+		XIncrement = Dimensions::GamePlayCardWidth + Dimensions::GamePlayCardSpacingX,
+		YIncrement = Dimensions::GamePlayCardHeight + Dimensions::GamePlayCardSpacingY;
+
+	if ((Y >= MinY) && (Y <= MaxY))
 	{
-		Uint8	Add = 0,
+		Uint8	RowIndex = 0,
 				Index = 0;
 
-		if (Y >= Dimensions::SecondRowY)	// Clicked the bottom row. Add 4 to the index
-			Add = 4;
-		else if (Y >= (Dimensions::FirstRowY + 57))	//Clicked in the dead zone
+		//if (Y >= Dimensions::SecondRowY)	// Clicked the bottom row. Add 4 to the index
+		//	Add = 4;
+		//else if (Y >= (Dimensions::FirstRowY + 57))	//Clicked in the dead zone
+		//	return Invalid;
+
+		if ((Y - MinY) % YIncrement < Dimensions::GamePlayCardHeight)
+			RowIndex = (Y - MinY) / YIncrement;
+		else
 			return Invalid;
 
-		if (X >= 81)	//Clicked within hand
+		if ((X >= MinX) && (X <= MaxX))	//Clicked within hand
 		{
-			if (((X - 81) % 65) < 41)	//Click was not in horizontal dead zone
-				return (((X - 81) / 65) + Add);
+			if (((X - MinX) % XIncrement) < Dimensions::GamePlayCardWidth)	//Click was not in horizontal dead zone
+				return (((X - MinX) / XIncrement) + (RowIndex * Dimensions::GamePlayCardsPerRow));
 		}
 	}
 
@@ -171,42 +185,52 @@ bool	Hand::OnRender	(SDL_Surface * Target, bool Force)
 
 			Overlay.Render(0, Dimensions::EffectiveTableauHeight * 2, Target, SCALE_NONE);
 
-			for (int i = 0; i < (HAND_SIZE + 1); ++i)
+			int	XIncrement = Dimensions::GamePlayCardWidth + Dimensions::GamePlayCardSpacingX,
+				YIncrement = Dimensions::GamePlayCardHeight + Dimensions::GamePlayCardSpacingY;
+
+			for (int i = 0; i < HAND_SIZE; ++i)
 			{
 				/*	The next line is a fancy (and more efficient) way of multiplying i times 65 and then
 					adding 81. 65 is the horizontal distance between two cards, and 81 is the left edge
 					of our render. */
-				int	X = Dimensions::GamePlayHandLeftX + (i * (Dimensions::GamePlayCardWidth + Dimensions::GamePlayCardSpacingX)),
-					Y =	0;
 
-				if ((i >= 4) && Dimensions::GamePlayMultiRowTray)
-				{
-					// The remaining cards get a left-shift four spaces (to account for the four spaces
-					// above). Y is set for the second row.
-					X -= ((Dimensions::GamePlayCardWidth + Dimensions::GamePlayCardSpacingX) << 2);
-					Y = Dimensions::SecondRowY;
-				}
-				else
-				{
-					//TODO: Update comments
-					// The first three cards get a right-shift one space. Y is set for the top row.
-					//X += 65;
-					Y = Dimensions::FirstRowY;
-				}
+				int RowNum = i / Dimensions::GamePlayCardsPerRow,
+					ColNum = i % Dimensions::GamePlayCardsPerRow;
 
-				if (i == 0)
-					CancelSurface.Render(X, Y, Target);
-				else
-				{
-					int	Index = i - 1;
-					if (CardSurfaces[Index])
-					{
-						CardSurfaces[Index].Render(X, Y, Target);	//Draw the cards
+				int X = Dimensions::GamePlayHandLeftX + (ColNum * XIncrement),
+					Y = Dimensions::FirstRowY + (RowNum * YIncrement);
 
-						if (Popped[Index] && OrbSurface && !Detached[Index])	//If this card is popped, render the orb over it
-							OrbSurface.Render(X, Y + 8, Target);
-					}
+				//int	X = Dimensions::GamePlayHandLeftX + (i * (Dimensions::GamePlayCardWidth + Dimensions::GamePlayCardSpacingX)),
+				//	Y =	Dimensions::FirstRowY;
+
+				//if ((i >= 4) && Dimensions::GamePlayMultiRowTray)
+				//{
+				//	// The remaining cards get a left-shift four spaces (to account for the four spaces
+				//	// above). Y is set for the second row.
+				//	X -= ((Dimensions::GamePlayCardWidth + Dimensions::GamePlayCardSpacingX) << 2);
+				//	Y = Dimensions::SecondRowY;
+				//}
+				//else
+				//{
+				//	//TODO: Update comments
+				//	// The first three cards get a right-shift one space. Y is set for the top row.
+				//	//X += 65;
+				//	Y = Dimensions::FirstRowY;
+				//}
+
+				//if (i == 0)
+				//	CancelSurface.Render(X, Y, Target);
+				//else
+				//{
+					//int	Index = i - 1;
+				if (CardSurfaces[i])
+				{
+					CardSurfaces[i].Render(X, Y, Target);	//Draw the cards
+
+					if (Popped[i] && OrbSurface && !Detached[i])	//If this card is popped, render the orb over it
+						OrbSurface.Render(X, Y + (Dimensions::GamePlayCardHeight >> 1) - (OrbSurface.GetHeight() >> 1), Target);
 				}
+				//}
 			}
 		}
 	}

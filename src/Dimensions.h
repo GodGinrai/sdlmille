@@ -42,8 +42,10 @@ public:
 					GamePlayCardHeight,
 					GamePlayCardSpacingX,
 					GamePlayCardSpacingY,
+					GamePlayCardsPerRow,
 					GamePlayCardWidth,
 					GamePlayHandLeftX,
+					GamePlayTableauWidth,
 					MenuBorderPadding,
 					MenuColumn1X,
 					MenuColumn2X,
@@ -56,7 +58,8 @@ public:
 					ScreenWidth,
 					ScreenHeight,
 					TableauHeight;
-	static	bool	MultiRowSafeties,
+	static	bool	LandscapeMode,
+					MultiRowSafeties,
 					GamePlayMultiRowTray;
 };
 
