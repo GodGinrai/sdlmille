@@ -108,8 +108,16 @@ Uint8	Hand::GetIndex			(int X, int Y)
 
 		if ((X >= MinX) && (X <= MaxX))	//Clicked within hand
 		{
-			if (((X - MinX) % XIncrement) < Dimensions::GamePlayCardWidth)	//Click was not in horizontal dead zone
-				return (((X - MinX) / XIncrement) + (RowIndex * Dimensions::GamePlayCardsPerRow));
+			if (((X - MinX) % XIncrement) < Dimensions::GamePlayCardWidth)
+			{
+				int Index = (((X - MinX) / XIncrement) + (RowIndex * Dimensions::GamePlayCardsPerRow));
+
+				if (Dimensions::GamePlayMultiRowTray)
+					--Index;
+
+				if (Index < HAND_SIZE)
+					return Index;
+			}
 		}
 	}
 
@@ -183,7 +191,7 @@ bool	Hand::OnRender	(SDL_Surface * Target, bool Force)
 				Dirty = false;
 			}
 
-			Overlay.Render(0, Dimensions::EffectiveTableauHeight * 2, Target, SCALE_NONE);
+			//Overlay.Render(0, Dimensions::EffectiveTableauHeight * 2, Target, SCALE_NONE);
 
 			int	XIncrement = Dimensions::GamePlayCardWidth + Dimensions::GamePlayCardSpacingX,
 				YIncrement = Dimensions::GamePlayCardHeight + Dimensions::GamePlayCardSpacingY;
@@ -194,8 +202,10 @@ bool	Hand::OnRender	(SDL_Surface * Target, bool Force)
 					adding 81. 65 is the horizontal distance between two cards, and 81 is the left edge
 					of our render. */
 
-				int RowNum = i / Dimensions::GamePlayCardsPerRow,
-					ColNum = i % Dimensions::GamePlayCardsPerRow;
+				int	IndexVal = (Dimensions::GamePlayMultiRowTray) ? i + 1 : i;
+
+				int RowNum = IndexVal / Dimensions::GamePlayCardsPerRow,
+					ColNum = IndexVal % Dimensions::GamePlayCardsPerRow;
 
 				int X = Dimensions::GamePlayHandLeftX + (ColNum * XIncrement),
 					Y = Dimensions::FirstRowY + (RowNum * YIncrement);

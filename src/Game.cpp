@@ -1702,7 +1702,7 @@ void	Game::OnClick			(int X, int Y)
 			{
 				if (Y < Dimensions::TableauHeight)	//Clicked within opponent's tableau
 				{
-					if ((Y < 45) && (X < 80))		//Clicked Menu button
+					if ((Y >= MenuSurface.GetY()) && (Y <= MenuSurface.GetY() + MenuSurface.GetHeight()) && (X >= MenuSurface.GetX()) && (X <= MenuSurface.GetX() + MenuSurface.GetWidth()))		//Clicked Menu button
 						ShowModal(MODAL_GAME_MENU);
 					else
 					{
@@ -1714,17 +1714,15 @@ void	Game::OnClick			(int X, int Y)
 				else if (Y < (Dimensions::TableauHeight * 2))	//Clicked within own tableau
 					Pop(FindPopped());	//Play selected card, if any
 			}
-			else if (InDiscardPile(X, Y))
+			if (InDiscardPile(X, Y))
 			{
 				Discard();
 			}
-			else
-			{
-				Uint8 Index = Hand::GetIndex(X, Y);
+			
+			Uint8 Index = Hand::GetIndex(X, Y);
 				
-				if (Index < HAND_SIZE)
-					Pop(Index);	//Clicked a card, so pop it
-			}
+			if (Index < HAND_SIZE)
+				Pop(Index);	//Clicked a card, so pop it
 		}
 	}
 
@@ -1896,11 +1894,12 @@ void	Game::OnEvent			(SDL_Event * Event)
 		}
 		else if (Event->type == SDL_KEYUP)	//Debugging purposes
 		{
-			//return;
+			SDL_SaveBMP(Window, "screenshot.bmp");
+			return;
 
 			ShowModal(MODAL_EXTENSION);
 			//OnRender(Window, true, false);
-			//SDL_SaveBMP(Window, "screenshot.bmp");
+			
 			/*
 			for (int i = 0; i < CARD_NULL_NULL; ++i)
 				printf("%2u %2u\n", i, ExposedCards[i]);
@@ -1946,7 +1945,7 @@ bool	Game::OnInit			(void)
 		#ifdef SOFTWARE_MODE
 		if(!(Window = SDL_SetVideoMode(0, 0, 0, SDL_SWSURFACE)))
 		#else
-		if(!(Window = SDL_SetVideoMode(640, 640, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)))
+		if(!(Window = SDL_SetVideoMode(683, 512, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)))
 		#endif
 			return false;
 
@@ -2210,7 +2209,13 @@ bool	Game::OnInit			(void)
 			Corners[UPPER_RIGHT].SetImage("gfx/overlays/corner_up_right.png");
 			Corners[BOTTOM_RIGHT].SetImage("gfx/overlays/corner_bottom_right.png");
 
-			Overlay[0].SetImage("gfx/overlays/game_play_1.png");
+			//Overlay[0].SetImage("gfx/overlays/game_play_1.png");
+			Overlay[0].SetImage("gfx/scenes/green_bg.png");
+			Overlay[1].SetImage("gfx/overlays/line_h.png");
+
+			if (Dimensions::LandscapeMode)
+				Overlay[2].SetImage("gfx/overlays/line_v.png");
+
 
 			DiscardSurface.SetImage(Card::GetFileFromValue(DiscardTop));
 			TargetSurface.SetImage("gfx/drop_target.png");
@@ -2220,30 +2225,33 @@ bool	Game::OnInit			(void)
 			else
 				DrawCardSurface.SetImage("gfx/card_bg.png");
 
-			if (Dimensions::LandscapeMode)
-			{
-				DiscardSurface.SetX(Dimensions::GamePlayHandLeftX);
+			//if (Dimensions::LandscapeMode)
+			//{
+			//	DiscardSurface.SetX(Dimensions::GamePlayHandLeftX);
 
-				if (Dimensions::GamePlayMultiRowTray)
-				{
-					DrawCardSurface.SetCoords(Dimensions::GamePlayHandLeftX + Dimensions::GamePlayCardWidth + Dimensions::GamePlayCardSpacingX, Dimensions::FirstRowY - ((Dimensions::GamePlayCardHeight + Dimensions::GamePlayCardSpacingY) << 1));
-					DiscardSurface.SetY(DrawCardSurface.GetY());
-				}
-				else
-				{
-					DrawCardSurface.SetCoords(Dimensions::GamePlayHandLeftX, Dimensions::FirstRowY - ((Dimensions::GamePlayCardHeight + Dimensions::GamePlayCardSpacingY) * 3));
-					DiscardSurface.SetY(DrawCardSurface.GetY() + Dimensions::GamePlayCardHeight + Dimensions::GamePlayCardSpacingY);
-				}
-			}
-			else
-			{
-				DrawCardSurface.SetCoords(SCREEN_EDGE_PADDING, ScreenHeight - TRAY_TOP_BOTTOM_PADDING - Dimensions::GamePlayCardHeight);
+			//	if (Dimensions::GamePlayMultiRowTray)
+			//	{
+			//		DrawCardSurface.SetCoords(Dimensions::GamePlayHandLeftX + Dimensions::GamePlayCardWidth + Dimensions::GamePlayCardSpacingX, Dimensions::FirstRowY - ((Dimensions::GamePlayCardHeight + Dimensions::GamePlayCardSpacingY) << 1));
+			//		DiscardSurface.SetY(DrawCardSurface.GetY());
+			//	}
+			//	else
+			//	{
+			//		DrawCardSurface.SetCoords(Dimensions::GamePlayHandLeftX, Dimensions::FirstRowY - ((Dimensions::GamePlayCardHeight + Dimensions::GamePlayCardSpacingY) * 3));
+			//		DiscardSurface.SetY(DrawCardSurface.GetY() + Dimensions::GamePlayCardHeight + Dimensions::GamePlayCardSpacingY);
+			//	}
+			//}
+			//else
+			//{
+			//	DrawCardSurface.SetCoords(SCREEN_EDGE_PADDING, ScreenHeight - TRAY_TOP_BOTTOM_PADDING - Dimensions::GamePlayCardHeight);
 
-				if (Dimensions::GamePlayMultiRowTray)
-					DiscardSurface.SetCoords(DrawCardSurface.GetX(), DrawCardSurface.GetY() - Dimensions::GamePlayCardHeight - Dimensions::GamePlayCardSpacingY);
-				else
-					DiscardSurface.SetCoords(DrawCardSurface.GetX() + Dimensions::GamePlayCardWidth + Dimensions::GamePlayCardSpacingX, DrawCardSurface.GetY());
-			}
+			//	if (Dimensions::GamePlayMultiRowTray)
+			//		DiscardSurface.SetCoords(DrawCardSurface.GetX(), DrawCardSurface.GetY() - Dimensions::GamePlayCardHeight - Dimensions::GamePlayCardSpacingY);
+			//	else
+			//		DiscardSurface.SetCoords(DrawCardSurface.GetX() + Dimensions::GamePlayCardWidth + Dimensions::GamePlayCardSpacingX, DrawCardSurface.GetY());
+			//}
+
+			DiscardSurface.SetCoords(Dimensions::TrayDiscardX, Dimensions::TrayDiscardY);
+			DrawCardSurface.SetCoords(Dimensions::TrayDrawX, Dimensions::TrayDrawY);
 
 			if (DrawFont)
 			{
@@ -2264,7 +2272,10 @@ bool	Game::OnInit			(void)
 			}
 
 			if (Scene == SCENE_GAME_PLAY)
+			{
 				MenuSurface.SetImage("gfx/menu.png");
+				MenuSurface.SetCoords(2, 5);
+			}
 			else
 				OrbSurface.SetImage("gfx/orb.png");
 
@@ -2542,7 +2553,7 @@ void	Game::OnMouseUp			(int X, int Y)
 	{
 		if ((Scene == SCENE_GAME_PLAY) && (Current == 0) && (DownIndex < HAND_SIZE))
 		{
-			if (Y < (Dimensions::EffectiveTableauHeight * 2))
+			if ((X < Dimensions::GamePlayTableauWidth) && (Y < (Dimensions::EffectiveTableauHeight * 2)))
 			{
 				if (IsValidPlay(DownIndex))
 					Pop(DownIndex);
@@ -2692,21 +2703,18 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 	if ((Modal < MODAL_NONE) && Dirty)
 		SceneChanged = true;
 
+	for (int i = 0; i < PLAYER_COUNT; ++i)
+		Force |= Players[i].IsDirty();
+
 	if (SceneChanged)
 		Force = true;
-
-	if ((Scene == SCENE_GAME_PLAY) || IN_DEMO)
-	{
-		for (int i = (PLAYER_COUNT - 1); i >= 0; --i)
-			RefreshedSomething |= Players[i].OnRender(Target, i, Force);
-	}
 
 	if (Force)
 	{
 		if (SceneChanged || (Message[0] != '\0'))
 			OnInit(); //Refresh our surfaces
 
-		Force = true;
+		//Force = true;
 		RefreshedSomething = true;
 	
 		// Render the appropriate surfaces
@@ -2725,26 +2733,63 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 			//Overlay[0].Render(0, Dimensions::EffectiveTableauHeight - 1, Target, SCALE_NONE);
 			//Overlay[0].Render(0, (Dimensions::EffectiveTableauHeight * 2) - 1, Target, SCALE_NONE);
 
+			int FillX,
+				FillY;
+
+			if (Dimensions::LandscapeMode)
+			{
+				FillX = Dimensions::GamePlayTableauWidth;
+				FillY = 0;
+			}
+			else
+			{
+				FillX = 0;
+				FillY = (Dimensions::TableauHeight << 1);
+			}
+
+			for (int i = (PLAYER_COUNT - 1); i >= 0; --i)
+				Players[i].OnRender(Target, i, Force);
+
+			Overlay[0].Fill(FillX, FillY, Dimensions::ScreenWidth, Dimensions::ScreenHeight, Target);
+			Overlay[1].RepeatX(0, Dimensions::TableauHeight, Dimensions::GamePlayTableauWidth, Target);
+
+			if (Dimensions::LandscapeMode)
+				Overlay[1].RepeatY(0, Dimensions::GamePlayTableauWidth, Dimensions::ScreenHeight, Target);
+			else
+				Overlay[1].RepeatX(0, Dimensions::TableauHeight << 1, Dimensions::ScreenWidth, Target);
+
+			Players[0].OnRenderHand(Target, Force);
+
 			DiscardSurface.Render(Target);
 			DrawCardSurface.Render(Target);
 			DrawTextSurface.Render(Target);
-
+			
 			Corners[UPPER_LEFT].Render(0, 0, Target, SCALE_NONE);
 			Corners[UPPER_LEFT].Render(0, Dimensions::EffectiveTableauHeight, Target, SCALE_NONE);
-			Corners[UPPER_LEFT].Render(0, Dimensions::EffectiveTableauHeight * 2, Target, SCALE_NONE);
-
+			
 			Corners[BOTTOM_LEFT].Render(0, Dimensions::EffectiveTableauHeight - Corners[BOTTOM_LEFT].GetHeight(), Target, SCALE_NONE);
 			Corners[BOTTOM_LEFT].Render(0, (Dimensions::EffectiveTableauHeight * 2) - Corners[BOTTOM_LEFT].GetHeight(), Target, SCALE_NONE);
-			Corners[BOTTOM_LEFT].Render(0, Dimensions::ScreenHeight - Corners[BOTTOM_LEFT].GetHeight(), Target, SCALE_NONE);
 
-			Corners[UPPER_RIGHT].Render(Dimensions::ScreenWidth - Corners[UPPER_RIGHT].GetWidth(), 0, Target, SCALE_NONE);
-			Corners[UPPER_RIGHT].Render(Dimensions::ScreenWidth - Corners[UPPER_RIGHT].GetWidth(), Dimensions::EffectiveTableauHeight, Target, SCALE_NONE);
-			Corners[UPPER_RIGHT].Render(Dimensions::ScreenWidth - Corners[UPPER_RIGHT].GetWidth(), Dimensions::EffectiveTableauHeight * 2, Target, SCALE_NONE);
+			Corners[UPPER_RIGHT].Render(Dimensions::GamePlayTableauWidth - Corners[UPPER_RIGHT].GetWidth(), 0, Target, SCALE_NONE);
+			Corners[UPPER_RIGHT].Render(Dimensions::GamePlayTableauWidth - Corners[UPPER_RIGHT].GetWidth(), Dimensions::EffectiveTableauHeight, Target, SCALE_NONE);
 
-			Corners[BOTTOM_RIGHT].Render(Dimensions::ScreenWidth - Corners[BOTTOM_RIGHT].GetWidth(), Dimensions::EffectiveTableauHeight - Corners[BOTTOM_RIGHT].GetHeight(), Target, SCALE_NONE);
-			Corners[BOTTOM_RIGHT].Render(Dimensions::ScreenWidth - Corners[BOTTOM_RIGHT].GetWidth(), (Dimensions::EffectiveTableauHeight * 2) - Corners[BOTTOM_RIGHT].GetHeight(), Target, SCALE_NONE);
-			Corners[BOTTOM_RIGHT].Render(Dimensions::ScreenWidth - Corners[BOTTOM_RIGHT].GetWidth(), Dimensions::ScreenHeight - Corners[BOTTOM_RIGHT].GetHeight(), Target, SCALE_NONE);
+			Corners[BOTTOM_RIGHT].Render(Dimensions::GamePlayTableauWidth - Corners[BOTTOM_RIGHT].GetWidth(), Dimensions::EffectiveTableauHeight - Corners[BOTTOM_RIGHT].GetHeight(), Target, SCALE_NONE);
+			Corners[BOTTOM_RIGHT].Render(Dimensions::GamePlayTableauWidth - Corners[BOTTOM_RIGHT].GetWidth(), (Dimensions::EffectiveTableauHeight * 2) - Corners[BOTTOM_RIGHT].GetHeight(), Target, SCALE_NONE);
 
+			if (Dimensions::LandscapeMode)
+			{
+				Corners[UPPER_LEFT].Render(Dimensions::GamePlayTableauWidth, Dimensions::EffectiveTableauHeight * 2, Target, SCALE_NONE);
+				Corners[BOTTOM_LEFT].Render(Dimensions::GamePlayTableauWidth, Dimensions::ScreenHeight - Corners[BOTTOM_LEFT].GetHeight(), Target, SCALE_NONE);
+				Corners[UPPER_RIGHT].Render(Dimensions::ScreenWidth - Corners[UPPER_RIGHT].GetWidth(), Dimensions::EffectiveTableauHeight * 2, Target, SCALE_NONE);
+				Corners[BOTTOM_RIGHT].Render(Dimensions::ScreenWidth - Corners[BOTTOM_RIGHT].GetWidth(), Dimensions::ScreenHeight - Corners[BOTTOM_RIGHT].GetHeight(), Target, SCALE_NONE);
+			}
+			else
+			{
+				//Corners[UPPER_LEFT].Render(0, Dimensions::EffectiveTableauHeight * 2, Target, SCALE_NONE);
+				//Corners[BOTTOM_LEFT].Render(0, Dimensions::ScreenHeight - Corners[BOTTOM_LEFT].GetHeight(), Target, SCALE_NONE);
+				//Corners[UPPER_RIGHT].Render(Dimensions::GamePlayTableauWidth - Corners[UPPER_RIGHT].GetWidth(), Dimensions::EffectiveTableauHeight * 2, Target, SCALE_NONE);
+				//Corners[BOTTOM_RIGHT].Render(Dimensions::GamePlayTableauWidth - Corners[BOTTOM_RIGHT].GetWidth(), Dimensions::ScreenHeight - Corners[BOTTOM_RIGHT].GetHeight(), Target, SCALE_NONE);
+			}
 		}
 		else if (Scene == SCENE_GAME_OVER)
 		{
@@ -2794,7 +2839,7 @@ void	Game::OnRender			(SDL_Surface *Target, bool Force, bool Flip)
 				CaptionSurface.Render((320 - CaptionSurface.GetWidth()) / 2, ((Dimensions::TableauHeight * 2) - CaptionSurface.GetHeight()) - 10, Target);
 
 			if (Scene == SCENE_GAME_PLAY)
-				MenuSurface.Render(2, 5, Target);
+				MenuSurface.Render(Target);
 		}
 
 		if (IN_TUTORIAL)

@@ -22,6 +22,7 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <stdlib.h>
 #include "Surface.h"
+#include <cmath>
 
 namespace _SDLMille
 {
@@ -35,6 +36,7 @@ public:
 	static	void	SetDimensions		(int Width, int Height, int CardWidth, int CardHeight);
 	static	void	SetGamePlayMetrics	(int CardWidth, int CardHeight);
 	static	void	SetMenuMetrics		(Surface &MenuSurface);
+	static	void	SetTableauMetrics	(void);
 
 	static	double	ScaleFactor;
 	static	int		EffectiveTableauHeight,
@@ -57,7 +59,16 @@ public:
 					SecondRowY,
 					ScreenWidth,
 					ScreenHeight,
-					TableauHeight;
+					TableauBattleX,
+					TableauHeight,
+					TableauLimitX,
+					TableauPileSpacing,
+					TableauSpacingX,
+					TableauSpacingY,
+					TrayDiscardX,
+					TrayDiscardY,
+					TrayDrawX,
+					TrayDrawY;
 	static	bool	LandscapeMode,
 					MultiRowSafeties,
 					GamePlayMultiRowTray;

@@ -96,6 +96,20 @@ bool			Surface::DrawPart		(SDL_Rect &SourceRect, SDL_Surface *Destination)
 	return false;
 }
 
+void			Surface::Fill			(int X, int Y, int ScreenWidth, int ScreenHeight, SDL_Surface *Target)
+{
+	if ((MySurface != 0) && (GetHeight() > 0) && (GetWidth() > 0))
+	{
+		for (int i = X; i < ScreenWidth; i += GetWidth())
+		{
+			for (int j = Y; j < ScreenHeight; j += GetHeight())
+			{
+				Render(i, j, Target, SCALE_NONE);
+			}
+		}
+	}
+}
+
 void			Surface::GetCoords		(int &XCoord, int &YCoord)												const
 {
 	XCoord = X;
@@ -170,6 +184,24 @@ SDL_Surface *	Surface::RenderText		(const char *Text, TTF_Font *Font, SDL_Color 
 	}
 
 	return 0;
+}
+
+void			Surface::RepeatX		(int StartX, int Y, int ScreenWidth, SDL_Surface *Target)				const
+{
+	if ((MySurface != 0) && (GetWidth() > 0))
+	{
+		for (int i = StartX; i <= ScreenWidth; i += GetWidth())
+			Render(i, Y, Target);
+	}
+}
+
+void			Surface::RepeatY		(int StartY, int X, int ScreenHeight, SDL_Surface *Target)				const
+{
+	if ((MySurface != 0) && (GetHeight() > 0))
+	{
+		for (int i = StartY; i <= ScreenHeight; i += GetHeight())
+			Render(X, i, Target);
+	}
 }
 
 void			Surface::SetAlpha		(int AlphaValue)

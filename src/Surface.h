@@ -63,6 +63,7 @@ public:
 							~Surface		(void);
 			void			Clear			(void);
 			bool			DrawPart		(SDL_Rect &SourceRect, SDL_Surface *Destination);
+			void			Fill			(int X, int Y, int ScreenWidth, int ScreenHeight, SDL_Surface *Target);
 			void			GetCoords		(int &XCoord, int &YCoord)														const;
 			int				GetHeight		(void)																			const;
 			int				GetWidth		(void)																			const;
@@ -70,6 +71,8 @@ public:
 			int				GetY			(void)																			const;
 			void			Render			(SDL_Surface *Destination)														const;
 			void			Render			(int X, int Y, SDL_Surface * Destination, int ScaleMode = SCALE_X_Y)			const;
+			void			RepeatX			(int StartX, int Y, int ScreenWidth, SDL_Surface *Target)						const;
+			void			RepeatY			(int StartY, int X, int ScreenHeight, SDL_Surface *Target)						const;
 			void			SetAlpha		(int AlphaValue);
 			void			SetCoords		(int XCoord, int YCoord);
 			void			SetImage		(const char * File);

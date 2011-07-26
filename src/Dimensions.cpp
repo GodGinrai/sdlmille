@@ -43,7 +43,16 @@ int		Dimensions::EffectiveTableauHeight,
 		Dimensions::SecondRowY,
 		Dimensions::ScreenHeight,
 		Dimensions::ScreenWidth,
-		Dimensions::TableauHeight;
+		Dimensions::TableauBattleX,
+		Dimensions::TableauHeight,
+		Dimensions::TableauLimitX,
+		Dimensions::TableauPileSpacing,
+		Dimensions::TableauSpacingX,
+		Dimensions::TableauSpacingY,
+		Dimensions::TrayDiscardX,
+		Dimensions::TrayDiscardY,
+		Dimensions::TrayDrawX,
+		Dimensions::TrayDrawY;
 bool	Dimensions::LandscapeMode,
 		Dimensions::MultiRowSafeties,
 		Dimensions::GamePlayMultiRowTray;
@@ -63,23 +72,32 @@ void	Dimensions::SetDimensions	(int Width, int Height, int CardWidth, int CardHe
 	//		ScaleFactor = 1.5;
 	//}
 		
-	PadLeft = (ScreenWidth - (320 * ScaleFactor)) / 2;
+	//PadLeft = (ScreenWidth - (320 * ScaleFactor)) / 2;
 
-	TableauHeight = (ScreenHeight - (130 * ScaleFactor)) / (ScaleFactor * 2);
-	EffectiveTableauHeight = TableauHeight * ScaleFactor;
+	//TableauHeight = (ScreenHeight - (130 * ScaleFactor)) / (ScaleFactor * 2);
+	//EffectiveTableauHeight = TableauHeight * ScaleFactor;
 
-	FirstRowY = (TableauHeight * 2) + 8;
-	SecondRowY = FirstRowY + 62;
+	//FirstRowY = (TableauHeight * 2) + 8;
+	//SecondRowY = FirstRowY + 62;
+
+	GamePlayCardHeight = CardHeight;
+	GamePlayCardWidth = CardWidth;
+	
+	SetGamePlayMetrics(CardWidth, CardHeight);
+
+	if (LandscapeMode)
+		TableauHeight = ScreenHeight / 2;
+	else
+		TableauHeight = (FirstRowY - TRAY_TOP_BOTTOM_PADDING) / 2;
+
+	EffectiveTableauHeight = TableauHeight;
 
 	if (TableauHeight >= 175)
 		MultiRowSafeties = true;
 	else
 		MultiRowSafeties = false;
 
-	GamePlayCardHeight = CardHeight;
-	GamePlayCardWidth = CardWidth;
-	
-	SetGamePlayMetrics(CardWidth, CardHeight);
+	SetTableauMetrics();
 }
 
 void	Dimensions::SetGamePlayMetrics	(int CardWidth, int CardHeight)
@@ -88,30 +106,35 @@ void	Dimensions::SetGamePlayMetrics	(int CardWidth, int CardHeight)
 
 	int	CardsPerRow;
 
-	GamePlayCardSpacingX = CardWidth * .586;
-	GamePlayCardSpacingY = CardWidth * .088;
+	GamePlayCardHeight = CardHeight;
+	GamePlayCardWidth = CardWidth;
 
-	if (ScreenWidth >= ScreenHeight)
-		LandscapeMode = true;
-	else
+	GamePlayCardSpacingX = CardWidth * .586;
+	GamePlayCardSpacingY = CardHeight * .088;
+
+	//if (ScreenWidth >= ScreenHeight)
+	//	LandscapeMode = true;
+	//else
 		LandscapeMode = false;
 
-	if ((CardWidth > 0) && ((CardWidth * 13) <= ScreenWidth))
+	if ((CardWidth > 0) && ((CardWidth * 11) <= ScreenWidth))
 	{
 		if (LandscapeMode)
 		{
-			if (CardHeight * 11 <= ScreenHeight)
+			if (((CardHeight + GamePlayCardSpacingY) * 9) + (TRAY_TOP_BOTTOM_PADDING << 1) + CardHeight <= ScreenHeight)
 			{
 				GamePlayMultiRowTray = false;
 				FirstRowY = ScreenHeight - TRAY_TOP_BOTTOM_PADDING - (CardHeight * 7) - (GamePlayCardSpacingY * 6); //TODO: literals
 			}
-			else if (CardHeight * 7 <= ScreenHeight)
+			else if (((CardHeight + GamePlayCardSpacingY) << 2) + TRAY_TOP_BOTTOM_PADDING + CardHeight <= ScreenHeight)
 			{
 				GamePlayMultiRowTray = true;
 				FirstRowY = ScreenHeight - TRAY_TOP_BOTTOM_PADDING - (CardHeight << 2) - (GamePlayCardSpacingY * 3);
 			}
 			else
 				LandscapeMode = false;
+
+			printf("Needed height: %u\n", ((CardHeight + GamePlayCardSpacingY) << 2) + (TRAY_TOP_BOTTOM_PADDING << 1) + CardHeight);
 		}
 		if (!LandscapeMode)
 		{			
@@ -121,6 +144,7 @@ void	Dimensions::SetGamePlayMetrics	(int CardWidth, int CardHeight)
 	}
 	else
 	{
+		LandscapeMode = false;
 		GamePlayMultiRowTray = true;
 		SecondRowY = ScreenHeight - TRAY_TOP_BOTTOM_PADDING - CardHeight;
 		FirstRowY = SecondRowY - GamePlayCardSpacingY - CardHeight;
@@ -143,9 +167,42 @@ void	Dimensions::SetGamePlayMetrics	(int CardWidth, int CardHeight)
 	GamePlayHandLeftX = ScreenWidth - SCREEN_EDGE_PADDING - (CardWidth * CardsPerRow) - (GamePlayCardSpacingX * (CardsPerRow - 1));
 
 	if (LandscapeMode)
+	{
 		GamePlayTableauWidth = GamePlayHandLeftX - SCREEN_EDGE_PADDING;
+
+		TrayDiscardX = GamePlayHandLeftX;
+
+		if (GamePlayMultiRowTray)
+		{
+			TrayDrawX = TrayDiscardX + CardWidth + GamePlayCardSpacingX;
+			TrayDrawY = std::max(SCREEN_EDGE_PADDING, FirstRowY - ((CardHeight + GamePlayCardSpacingY) << 1));
+			TrayDiscardY = TrayDrawY;
+		}
+		else
+		{
+			TrayDrawX = TrayDiscardX;
+			TrayDrawY = FirstRowY - ((CardHeight + GamePlayCardSpacingY) * 3);
+			TrayDiscardY = TrayDrawY + CardHeight + GamePlayCardSpacingY;
+		}
+	}
 	else
+	{
 		GamePlayTableauWidth = ScreenWidth;
+
+		TrayDrawX = SCREEN_EDGE_PADDING;
+		TrayDrawY = ScreenHeight - TRAY_TOP_BOTTOM_PADDING - CardHeight;
+
+		if (GamePlayMultiRowTray)
+		{
+			TrayDiscardX = TrayDrawX;
+			TrayDiscardY = TrayDrawY - CardHeight - GamePlayCardSpacingY;
+		}
+		else
+		{
+			TrayDiscardX = TrayDrawX + CardWidth + GamePlayCardSpacingX;
+			TrayDiscardY = TrayDrawY;
+		}
+	}
 }
 
 void	Dimensions::SetMenuMetrics	(Surface &MenuSurface)
@@ -160,6 +217,14 @@ void	Dimensions::SetMenuMetrics	(Surface &MenuSurface)
 	
 	MenuItemSpacing = MenuSurface.GetHeight() * 0.12;
 	MenuItemsTopY = MenuY + (MenuSurface.GetHeight() * 0.18);
+}
+
+void	Dimensions::SetTableauMetrics	(void)
+{
+	TableauSpacingX = (GamePlayTableauWidth - (GamePlayCardWidth * 7)) / 10;
+
+	TableauLimitX = GamePlayTableauWidth - GamePlayCardWidth - (TableauSpacingX << 1);
+	TableauBattleX = TableauLimitX - GamePlayCardWidth - (TableauSpacingX << 1);
 }
 
 }

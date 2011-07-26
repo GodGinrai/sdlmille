@@ -135,12 +135,18 @@ bool	Player::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 
 	DidSomething |= MyTableau.OnRender(Target, PlayerIndex, Force);
 
-	if (PlayerIndex == 0)		//Render the human player's hand
-		DidSomething = PlayerHand.OnRender(Target, Force);
+	//if (PlayerIndex == 0)		//Render the human player's hand
+	//	DidSomething = PlayerHand.OnRender(Target, Force);
+	
+	//TODO: Remove PlayerIndex parameter
 
 	return DidSomething;
 }
 
+bool	Player::OnRenderHand	(SDL_Surface *Target, bool Force)
+{
+	return PlayerHand.OnRender(Target, Force);	//TODO: Inline
+}	
 
 bool	Player::ReceiveHazard	(Uint8 Value)
 {

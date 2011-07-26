@@ -54,6 +54,7 @@ public:
 	int			MileageInHand	(void)						const;
 	Uint8		OnPlay			(Uint8 Index);
 	bool		OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force = false);
+	bool		OnRenderHand	(SDL_Surface *Target, bool Force = false);
 	void		Pop				(Uint8 Index);
 	bool		ReceiveHazard	(Uint8 Value);
 	void		Reset			(void);

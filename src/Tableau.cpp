@@ -204,9 +204,9 @@ void	Tableau::GetTargetCoords	(Uint8 Value, Uint8 PlayerIndex, int &X, int &Y, b
 		if ((Type == CARD_HAZARD) || (Type == CARD_REMEDY))
 		{
 			if ((Value == CARD_HAZARD_SPEED_LIMIT) || (Value == CARD_REMEDY_END_LIMIT))
-				X = LimitX;
+				X = Dimensions::TableauLimitX;
 			else
-				X = BattleX;
+				X = Dimensions::TableauBattleX;
 		}
 		else if (Type == CARD_MILEAGE)
 		{
@@ -414,9 +414,9 @@ void	Tableau::OnPlay			(Uint8 Value, bool CoupFourre, bool SpeedLimit)
 
 bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 {
-			SDL_Rect	PlayerRect =	{0, 0, Dimensions::ScreenWidth, Dimensions::EffectiveTableauHeight - 1};
-	static	bool		RectSetUp =		false;
-	static	Uint8		LastStatus =	0xFF;
+			SDL_Rect	PlayerRect =	{0, 0, Dimensions::GamePlayTableauWidth, Dimensions::EffectiveTableauHeight};
+	//static	bool		RectSetUp =		false;
+	//static	Uint8		LastStatus =	0xFF;
 			bool		WasDirty =		Dirty;
 
 	//if ((Card::GetTypeFromValue(TopCard) == CARD_HAZARD) && (TopCard != CARD_HAZARD_STOP) && HasSafety(Card::GetMatchingSafety(TopCard)))
@@ -442,34 +442,41 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 			}
 			
 			///* Color-coding */
-			//Uint8	Status = STATUS_STOPPED;
+			Uint8	Status = STATUS_STOPPED;
 
-			//if (IsRolling())
-			//{
-			//	if (HasSpeedLimit())
-			//		Status = STATUS_LIMITED;
-			//	else
-			//		Status = STATUS_ROLLING;
-			//}
+			if (IsRolling())
+			{
+				if (HasSpeedLimit())
+					Status = STATUS_LIMITED;
+				else
+					Status = STATUS_ROLLING;
+			}
 
 			//if (Status != LastStatus)
 			//{
-			//	switch(Status)
-			//	{
-			//	case	STATUS_ROLLING:
-			//		R = 120; G = 192; B = 86; break;
-			//	case	STATUS_LIMITED:
-			//		R = G = 191; break;
-			//	default:
-			//		R = 191;
-			//	}
+				switch(Status)
+				{
+				case	STATUS_ROLLING:
+					R = 20; G = 153; B = 23; break;
+				case	STATUS_LIMITED:
+					R = 180; G = 165; B = 1; break;
+				default:
+					R = 164; B = 1;
+				}
 
 			//	Backdrop.SetRGBALoss(0, 255, 255, 0);
 
-			//	SDL_FillRect(Target, &PlayerRect, SDL_MapRGB(Target->format, R, G, B));
+				SDL_FillRect(Target, &PlayerRect, SDL_MapRGB(Target->format, R, G, B));
+
+				if (Status == STATUS_LIMITED)
+					Backdrop.SetX(Dimensions::TableauLimitX + (Dimensions::GamePlayCardWidth >> 1) - (Backdrop.GetWidth() >> 1));
+				else
+					Backdrop.SetX(Dimensions::TableauBattleX + (Dimensions::GamePlayCardWidth >> 1) - (Backdrop.GetWidth() >> 1));
+
+				Backdrop.SetY(Y - 1);
 			//}
 
-			Backdrop.Render(0, Y - 1, Target);
+			Backdrop.Render(Target);
 
 			// Draw our stuff
 			for (int i = 0; i < MILEAGE_PILES; ++i)
@@ -477,15 +484,15 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 				if (CardCount[i])
 				{
 					for (int j = 0; j < CardCount[i]; ++j)
-						BlitWithShadow(MileageSurfaces[i], (i * 42) + 2, Y + (j * 8), Target);
+						BlitWithShadow(MileageSurfaces[i], (i * (Dimensions::GamePlayCardWidth + Dimensions::TableauSpacingX)) + Dimensions::TableauSpacingX, Y + (j * 8), Target);
 				}
 				//for (int j = 0; j < MAX_PILE_SIZE; ++ j)
 				//	BlitWithShadow(PileSurfaces[i][j], (i * 42) + 2, Y + (j * 8), Target);
 			}
 
-			BlitWithShadow(BattleSurface, BattleX, Y, Target);
+			BlitWithShadow(BattleSurface, Dimensions::TableauBattleX, Y, Target);
 
-			BlitWithShadow(LimitSurface, LimitX, Y, Target);
+			BlitWithShadow(LimitSurface, Dimensions::TableauLimitX, Y, Target);
 
 			for (int i = 0; i < SAFETY_COUNT; ++i)
 			{
