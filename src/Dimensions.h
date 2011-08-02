@@ -21,21 +21,20 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 #define	_SDLMILLE_DIMENSIONS_H
 
 #include <stdlib.h>
-#include "Surface.h"
-#include <cmath>
+#include <algorithm>
 
 namespace _SDLMille
 {
 
 const	int	SCREEN_EDGE_PADDING = 3,
-			TRAY_TOP_BOTTOM_PADDING = 8;
+			TRAY_TOP_BOTTOM_PADDING = 5;
 
 class	Dimensions
 {
 public:
-	static	void	SetDimensions		(int Width, int Height, int CardWidth, int CardHeight);
-	static	void	SetGamePlayMetrics	(int CardWidth, int CardHeight);
-	static	void	SetMenuMetrics		(Surface &MenuSurface);
+	static	void	SetDimensions		(int Width, int Height, int CardWidth, int CardHeight, bool VerticalTray);
+	static	void	SetGamePlayMetrics	(int CardWidth, int CardHeight, bool VerticalTray);
+	static	void	SetMenuMetrics		(int MenuWidth, int MenuHeight);
 	static	void	SetTableauMetrics	(void);
 
 	static	double	ScaleFactor;

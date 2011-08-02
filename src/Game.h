@@ -69,7 +69,7 @@ const	char	TUTORIAL_TEXT[][MESSAGE_SIZE] = {
 					"Or click here to discard.",
 					"Enjoy the game!"	};
 
-const	char	VERSION_TEXT[] = "0.9.1-2 (1.0p1 test2)";
+const	char	VERSION_TEXT[] = "0.9.1 (1.0 HD Preview 1)";
 
 const	int		SAVE_FORMAT_VER = 8;
 
@@ -94,7 +94,7 @@ private:
 	void		DelayUntil		(Uint32 Ticks);
 	bool		Discard			(void);
 	bool		EndOfGame		(void)					const;
-	void		FillBackDrop	(SDL_Surface *Target)	const;
+	//void		FillBackDrop	(SDL_Surface *Target)	const;
 	Uint8		FindPopped		(void)					const;
 	void		GetScores		(void);
 	void		IgnoreEvents	(void);
@@ -111,6 +111,8 @@ private:
 	void		OnMouseUp		(int X, int Y);
 	void		OnPlay			(Uint8 Index, bool PlayerChange = true);
 	void		OnRender		(SDL_Surface *Target, bool Force = false, bool Flip = true);
+	void		OnRenderModal	(SDL_Surface *Target);
+	void		OnRenderScene	(SDL_Surface *Target);
 	void		Pop				(Uint8 Index);
 	Uint32		Radius			(int X1, int Y1, int X2, int Y2);
 	void		Reset			(bool SaveStats = false);
@@ -122,6 +124,7 @@ private:
 	void		ShowMessage		(const char * Msg, bool SetDirty = true);
 	bool		ShowModal		(Uint8 ModalName);
 	Uint8		UnknownCards	(Uint8 Value);
+	void		UpdateMetrics	(void);
 
 	/* Properties */
 	SDL_Surface	*Window;

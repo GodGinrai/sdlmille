@@ -17,6 +17,8 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 (See file LICENSE for full text of license)
 */
 
+#include <stdio.h>
+#include <cmath>
 #include "Dimensions.h"
 
 namespace _SDLMille
@@ -57,7 +59,7 @@ bool	Dimensions::LandscapeMode,
 		Dimensions::MultiRowSafeties,
 		Dimensions::GamePlayMultiRowTray;
 
-void	Dimensions::SetDimensions	(int Width, int Height, int CardWidth, int CardHeight)
+void	Dimensions::SetDimensions	(int Width, int Height, int CardWidth, int CardHeight, bool VerticalTray)
 {
 	ScreenHeight = Height;
 	ScreenWidth = Width;
@@ -83,13 +85,14 @@ void	Dimensions::SetDimensions	(int Width, int Height, int CardWidth, int CardHe
 	GamePlayCardHeight = CardHeight;
 	GamePlayCardWidth = CardWidth;
 	
-	SetGamePlayMetrics(CardWidth, CardHeight);
+	SetGamePlayMetrics(CardWidth, CardHeight, VerticalTray);
 
 	if (LandscapeMode)
 		TableauHeight = ScreenHeight / 2;
 	else
 		TableauHeight = (FirstRowY - TRAY_TOP_BOTTOM_PADDING) / 2;
 
+	printf ("%i", TableauHeight);
 	EffectiveTableauHeight = TableauHeight;
 
 	if (TableauHeight >= 175)
@@ -100,7 +103,7 @@ void	Dimensions::SetDimensions	(int Width, int Height, int CardWidth, int CardHe
 	SetTableauMetrics();
 }
 
-void	Dimensions::SetGamePlayMetrics	(int CardWidth, int CardHeight)
+void	Dimensions::SetGamePlayMetrics	(int CardWidth, int CardHeight, bool VerticalTray)
 {
 	//TODO: Remove parameters?
 
@@ -112,9 +115,9 @@ void	Dimensions::SetGamePlayMetrics	(int CardWidth, int CardHeight)
 	GamePlayCardSpacingX = CardWidth * .586;
 	GamePlayCardSpacingY = CardHeight * .088;
 
-	//if (ScreenWidth >= ScreenHeight)
-	//	LandscapeMode = true;
-	//else
+	if (VerticalTray && (ScreenWidth >= ScreenHeight))
+		LandscapeMode = true;
+	else
 		LandscapeMode = false;
 
 	if ((CardWidth > 0) && ((CardWidth * 11) <= ScreenWidth))
@@ -205,26 +208,30 @@ void	Dimensions::SetGamePlayMetrics	(int CardWidth, int CardHeight)
 	}
 }
 
-void	Dimensions::SetMenuMetrics	(Surface &MenuSurface)
+void	Dimensions::SetMenuMetrics	(int MenuWidth, int MenuHeight)
 {
-	MenuX = (ScreenWidth - MenuSurface.GetWidth()) / 2;
-	MenuY = (ScreenHeight - MenuSurface.GetHeight()) / 2;
+	MenuX = (ScreenWidth - MenuWidth) / 2;
+	MenuY = (ScreenHeight - MenuHeight) / 2;
 
-	MenuBorderPadding = MenuSurface.GetWidth() / 30;
+	MenuBorderPadding = MenuWidth / 30;
 
 	MenuColumn1X = MenuX + MenuBorderPadding;
-	MenuColumn2X = MenuX + MenuSurface.GetWidth() * 0.8;
+	MenuColumn2X = MenuX + MenuWidth * 0.8;
 	
-	MenuItemSpacing = MenuSurface.GetHeight() * 0.12;
-	MenuItemsTopY = MenuY + (MenuSurface.GetHeight() * 0.18);
+	MenuItemSpacing = MenuHeight * 0.12;
+	MenuItemsTopY = MenuY + (MenuHeight * 0.18);
 }
 
 void	Dimensions::SetTableauMetrics	(void)
 {
+	int	TableauRowCount = (MultiRowSafeties) ? 3 : 2;
+
 	TableauSpacingX = (GamePlayTableauWidth - (GamePlayCardWidth * 7)) / 10;
 
 	TableauLimitX = GamePlayTableauWidth - GamePlayCardWidth - (TableauSpacingX << 1);
 	TableauBattleX = TableauLimitX - GamePlayCardWidth - (TableauSpacingX << 1);
+
+	TableauSpacingY = (TableauHeight - (GamePlayCardHeight * TableauRowCount)) / (TableauRowCount + 1);
 }
 
 }

@@ -41,6 +41,15 @@ namespace _SDLMille
 		delete [] Cached;
 }
 
+void			Surface::Center			(Uint8 CenterMode)
+{
+	if (CenterMode & CENTER_X)
+		X = ((Dimensions::ScreenWidth - GetWidth()) >> 1);
+
+	if (CenterMode & CENTER_Y)
+		Y = ((Dimensions::ScreenHeight - GetHeight()) >> 1);
+}
+
 void			Surface::Clear			(void)
 {
 	if (MySurface != 0)
@@ -96,13 +105,13 @@ bool			Surface::DrawPart		(SDL_Rect &SourceRect, SDL_Surface *Destination)
 	return false;
 }
 
-void			Surface::Fill			(int X, int Y, int ScreenWidth, int ScreenHeight, SDL_Surface *Target)
+void			Surface::Fill			(int X, int Y, SDL_Surface *Target)
 {
 	if ((MySurface != 0) && (GetHeight() > 0) && (GetWidth() > 0))
 	{
-		for (int i = X; i < ScreenWidth; i += GetWidth())
+		for (int i = X; i < Dimensions::ScreenWidth; i += GetWidth())
 		{
-			for (int j = Y; j < ScreenHeight; j += GetHeight())
+			for (int j = Y; j < Dimensions::ScreenHeight; j += GetHeight())
 			{
 				Render(i, j, Target, SCALE_NONE);
 			}
@@ -186,20 +195,20 @@ SDL_Surface *	Surface::RenderText		(const char *Text, TTF_Font *Font, SDL_Color 
 	return 0;
 }
 
-void			Surface::RepeatX		(int StartX, int Y, int ScreenWidth, SDL_Surface *Target)				const
+void			Surface::RepeatX		(int StartX, int Y, SDL_Surface *Target)				const
 {
 	if ((MySurface != 0) && (GetWidth() > 0))
 	{
-		for (int i = StartX; i <= ScreenWidth; i += GetWidth())
+		for (int i = StartX; i <= Dimensions::ScreenWidth; i += GetWidth())
 			Render(i, Y, Target);
 	}
 }
 
-void			Surface::RepeatY		(int StartY, int X, int ScreenHeight, SDL_Surface *Target)				const
+void			Surface::RepeatY		(int StartY, int X, SDL_Surface *Target)				const
 {
 	if ((MySurface != 0) && (GetHeight() > 0))
 	{
-		for (int i = StartY; i <= ScreenHeight; i += GetHeight())
+		for (int i = StartY; i <= Dimensions::ScreenHeight; i += GetHeight())
 			Render(X, i, Target);
 	}
 }

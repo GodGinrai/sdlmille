@@ -197,7 +197,9 @@ void	Tableau::GetTargetCoords	(Uint8 Value, Uint8 PlayerIndex, int &X, int &Y, b
 
 	if (Type < CARD_NULL)
 	{
-		Y = 1;
+		//Y = 1;
+		Y = Dimensions::TableauSpacingY;
+
 		if (PlayerIndex == 0)
 			Y += Dimensions::TableauHeight;
 
@@ -216,19 +218,22 @@ void	Tableau::GetTargetCoords	(Uint8 Value, Uint8 PlayerIndex, int &X, int &Y, b
 		}
 		else if (Type == CARD_SAFETY)
 		{
+			int	SafetyYIncrement = Dimensions::GamePlayCardHeight + Dimensions::TableauSpacingY,
+				SafetyXIncrement = Dimensions::GamePlayCardWidth + Dimensions::TableauSpacingX;
+
 			if (Dimensions::MultiRowSafeties)
 			{
-				X = 213;
-				Y += 58;
+				X = Dimensions::TableauBattleX;
+				Y += SafetyYIncrement;
 				if ((Value - SAFETY_OFFSET) > 1)
-					Y += 58;
+					Y += SafetyYIncrement;
 				if ((Value - SAFETY_OFFSET) % 2 == 0)
-				X += 58;
+					X = Dimensions::TableauLimitX;
 			}
 			else
 			{
-				Y += 75;
-				X = 97 + ((Value - SAFETY_OFFSET) * 58);
+				Y += SafetyYIncrement;
+				X = Dimensions::TableauLimitX - ((SAFETY_COUNT - (Value - SAFETY_OFFSET)) * SafetyXIncrement);
 			}
 
 			if (CoupFourre)
@@ -433,12 +438,13 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 			}
 
 			int	R, G = 0, B = 0,
-				X, Y = 1, SafetyY;
+				X = 0, Y = Dimensions::TableauSpacingY, SafetyY = 0, TopY = 0;
 
 			if (PlayerIndex == 0)
 			{
 				Y += Dimensions::TableauHeight;
 				PlayerRect.y += Dimensions::EffectiveTableauHeight;
+				TopY += Dimensions::TableauHeight;
 			}
 			
 			///* Color-coding */
@@ -473,7 +479,7 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 				else
 					Backdrop.SetX(Dimensions::TableauBattleX + (Dimensions::GamePlayCardWidth >> 1) - (Backdrop.GetWidth() >> 1));
 
-				Backdrop.SetY(Y - 1);
+				Backdrop.SetY(Y - Dimensions::TableauSpacingY);
 			//}
 
 			Backdrop.Render(Target);
@@ -504,7 +510,7 @@ bool	Tableau::OnRender		(SDL_Surface * Target, Uint8 PlayerIndex, bool Force)
 				}
 			}
 
-			MileageTextSurface.Render(65 - MileageTextSurface.GetWidth(), Y + (Dimensions::TableauHeight - 25), Target, SCALE_Y);
+			MileageTextSurface.Render(65 - MileageTextSurface.GetWidth(), TopY + Dimensions::TableauHeight - MileageTextSurface.GetHeight() - 5, Target);
 		}
 	}
 

@@ -4,6 +4,8 @@
 /ipch/
 /LiberationMono-Regular.ttf
 /options.dat
+/pkg*/*.elf
+/pkg-hd/gfx*/
 /SDLMille.ncb
 /SDLMille.sdf
 /SDLMille.suo

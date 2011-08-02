@@ -85,6 +85,7 @@
     <ClCompile Include="src\Deck.cpp" />
     <ClCompile Include="src\Dimensions.cpp" />
     <ClCompile Include="src\Game.cpp" />
+    <ClCompile Include="src\Game_Graphics.cpp" />
     <ClCompile Include="src\Hand.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Options.cpp" />

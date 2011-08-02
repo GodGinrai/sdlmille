@@ -50,20 +50,24 @@ along with SDL Mille.  If not, see <http://www.gnu.org/licenses/>.
 #include <SDL_ttf.h>
 #include <cmath>
 #include <fstream>
+#include "Dimensions.h"
 
 namespace _SDLMille
 {
 
 enum {SCALE_NONE, SCALE_X, SCALE_Y, SCALE_X_Y};
 
+enum	{CENTER_X = 1, CENTER_Y, CENTER_X_Y};
+
 class Surface
 {
 public:
 							Surface			(void);
 							~Surface		(void);
+			void			Center			(Uint8 CenterMode);
 			void			Clear			(void);
 			bool			DrawPart		(SDL_Rect &SourceRect, SDL_Surface *Destination);
-			void			Fill			(int X, int Y, int ScreenWidth, int ScreenHeight, SDL_Surface *Target);
+			void			Fill			(int X, int Y, SDL_Surface *Target);
 			void			GetCoords		(int &XCoord, int &YCoord)														const;
 			int				GetHeight		(void)																			const;
 			int				GetWidth		(void)																			const;
@@ -71,8 +75,8 @@ public:
 			int				GetY			(void)																			const;
 			void			Render			(SDL_Surface *Destination)														const;
 			void			Render			(int X, int Y, SDL_Surface * Destination, int ScaleMode = SCALE_X_Y)			const;
-			void			RepeatX			(int StartX, int Y, int ScreenWidth, SDL_Surface *Target)						const;
-			void			RepeatY			(int StartY, int X, int ScreenHeight, SDL_Surface *Target)						const;
+			void			RepeatX			(int StartX, int Y, SDL_Surface *Target)						const;
+			void			RepeatY			(int StartY, int X, SDL_Surface *Target)						const;
 			void			SetAlpha		(int AlphaValue);
 			void			SetCoords		(int XCoord, int YCoord);
 			void			SetImage		(const char * File);

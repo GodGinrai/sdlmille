@@ -54,6 +54,9 @@ bool	Options::ReadOpts	(void)
 			}
 
 			fclose(OptsFile);
+
+			if (SavedOptionVersion < 4)
+				SetOpt(OPTION_VERTICAL_TRAY, true);
 		}
 	}
 
